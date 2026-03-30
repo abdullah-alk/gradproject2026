@@ -31,20 +31,16 @@ except Exception as e:
     rag_engine = None
 
 # --- 3. إعدادات قاعدة البيانات ---
-DB_CONFIG = {
-    "dbname": "ecc_compliance",
-    "user": "postgres",
-    "password": "post123",
-    "host": "localhost",
-    "port": "5432"
-}
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 UPLOAD_DIR = "secure_evidence_vault"
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 
 def get_db_connection():
-    return psycopg2.connect(**DB_CONFIG, cursor_factory=RealDictCursor)
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL is not set")
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 # --- 4. وظائف الحماية وتشفير الباسورد ---
 
