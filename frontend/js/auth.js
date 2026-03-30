@@ -1,5 +1,5 @@
 // CyberGuard - Auth Logic v4
-const API_BASE_URL = 'https://YOUR-BACKEND-NAME.onrender.com';
+const API_BASE_URL = 'https://gradproject2026.onrender.com';
 
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
