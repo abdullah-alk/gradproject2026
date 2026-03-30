@@ -1,10 +1,13 @@
 // CyberGuard - Auth Logic v4
+const API_BASE_URL = 'https://YOUR-BACKEND-NAME.onrender.com';
+
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     if (loginForm) loginForm.addEventListener('submit', handleLogin);
+
     const registerForm = document.getElementById('registerForm');
     if (registerForm) registerForm.addEventListener('submit', handleRegister);
-    // Protect login page
+
     if (localStorage.getItem('authToken') && window.location.pathname.includes('login')) {
         window.location.href = 'index.html';
     }
@@ -12,12 +15,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function handleLogin(e) {
     e.preventDefault();
+
     const formData = new FormData();
     formData.append('username', document.getElementById('username').value.trim());
     formData.append('password', document.getElementById('password').value);
+
     try {
-        const res = await fetch('http://127.0.0.1:8000/api/auth/login', { method: 'POST', body: formData });
+        const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+            method: 'POST',
+            body: formData
+        });
+
         const result = await res.json();
+
         if (res.ok) {
             localStorage.setItem('authToken', result.access_token);
             localStorage.setItem('userInfo', JSON.stringify(result.user));
@@ -26,22 +36,38 @@ async function handleLogin(e) {
         } else {
             alert(result.detail || 'Login failed');
         }
-    } catch { alert('Server connection failed'); }
+    } catch (err) {
+        console.error(err);
+        alert('Server connection failed');
+    }
 }
 
 async function handleRegister(e) {
     e.preventDefault();
+
     const payload = {
         full_name: document.getElementById('full_name').value.trim(),
         username: document.getElementById('username').value.trim(),
         email: document.getElementById('email').value.trim(),
         password: document.getElementById('password').value
     };
+
     try {
-        const res = await fetch('http://127.0.0.1:8000/api/register', {
-            method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+        const res = await fetch(`${API_BASE_URL}/api/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
-        if (res.ok) { alert('Account created!'); window.location.href = 'login.html'; }
-        else { const err = await res.json(); alert(err.detail || 'Registration failed'); }
-    } catch { alert('Server connection failed'); }
+
+        if (res.ok) {
+            alert('Account created!');
+            window.location.href = 'login.html';
+        } else {
+            const err = await res.json();
+            alert(err.detail || 'Registration failed');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Server connection failed');
+    }
 }
