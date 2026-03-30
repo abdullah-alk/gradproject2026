@@ -1,3 +1,4 @@
+const API_BASE = "https://your-backend-name.onrender.com";
 // CyberGuard - Auth Logic v4
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
@@ -16,7 +17,7 @@ async function handleLogin(e) {
     formData.append('username', document.getElementById('username').value.trim());
     formData.append('password', document.getElementById('password').value);
     try {
-        const res = await fetch('http://127.0.0.1:8000/api/auth/login', { method: 'POST', body: formData });
+        const res = await fetch(`${API_BASE}/api/auth/login`, { method: 'POST', body: formData });
         const result = await res.json();
         if (res.ok) {
             localStorage.setItem('authToken', result.access_token);
@@ -38,7 +39,7 @@ async function handleRegister(e) {
         password: document.getElementById('password').value
     };
     try {
-        const res = await fetch('http://127.0.0.1:8000/api/register', {
+        const res = await fetch(`${API_BASE}/api/register`, {
             method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
         });
         if (res.ok) { alert('Account created!'); window.location.href = 'login.html'; }
