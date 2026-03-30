@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CyberGuard GRC Platform</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .progress-circle{position:relative;width:180px;height:180px;margin:0 auto;}
+        .progress-circle svg{transform:rotate(-90deg);}
+        .progress-circle-value{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:32px;font-weight:700;}
+        .chart-container{position:relative;height:300px;padding:20px;}
+        .gap-badge{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;border-radius:50%;font-weight:600;font-size:14px;}
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="logo-text"><h1>CyberGuard</h1><p>GRC Platform v3.2</p></div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item "><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="dashboard.html" class="nav-item active"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+                <a href="evidence.html" class="nav-item "><i class="fas fa-folder-open"></i><span>Evidence</span></a>
+                <a href="chatbot.html" class="nav-item "><i class="fas fa-robot"></i><span>ECC Chatbot</span></a>
+                <a href="scheduler.html" class="nav-item "><i class="fas fa-calendar-alt"></i><span>Audit Scheduler</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="user-initials">?</div>
+                    <div class="user-info">
+                        <h4 id="user-name">Loading...</h4>
+                        <p id="user-role">User</p>
+                    </div>
+                    <button onclick="logout()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:auto" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+        </aside>
+        <main class="main-content">
+            <div class="content-wrapper">
+                <div style="margin-bottom:32px">
+                    <h1 style="font-size:32px;font-weight:700;margin-bottom:8px">Compliance Dashboard</h1>
+                    <p style="color:var(--text-muted);font-size:16px">Real-time overview of your organization's cybersecurity posture</p>
+                </div>
+                <div class="stats-grid">
+                    <div class="card" style="text-align:center">
+                        <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;text-transform:uppercase;letter-spacing:.5px">Overall Compliance Score</div>
+                        <div class="progress-circle">
+                            <svg width="180" height="180">
+                                <circle cx="90" cy="90" r="80" fill="none" stroke="#334155" stroke-width="12"/>
+                                <circle id="compliance-circle" cx="90" cy="90" r="80" fill="none" stroke="#10b981" stroke-width="12" stroke-dasharray="502.65" stroke-dashoffset="502.65" stroke-linecap="round"/>
+                            </svg>
+                            <div class="progress-circle-value"><span id="overall-compliance-score">—%</span></div>
+                        </div>
+                        <div style="margin-top:16px;font-size:13px;color:var(--text-muted)">Target: 95%</div>
+                    </div>
+                    <div class="card">
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                            <div class="stat-icon" style="background:rgba(239,68,68,.15)"><i class="fas fa-circle-exclamation" style="color:var(--accent-danger)"></i></div>
+                            <div style="font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Total Gaps Identified</div>
+                        </div>
+                        <div id="total-gaps-count" style="font-size:48px;font-weight:700;margin-bottom:16px">—</div>
+                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                            <span class="gap-badge" style="background:rgba(239,68,68,.15);color:var(--accent-danger)"><span id="critical-gaps-badge">0</span></span>
+                            <span style="font-size:13px;color:var(--accent-danger);font-weight:600">CRITICAL</span>
+                            <span class="gap-badge" style="background:rgba(245,158,11,.15);color:var(--accent-warning)"><span id="medium-gaps-badge">0</span></span>
+                            <span style="font-size:13px;color:var(--accent-warning);font-weight:600">PARTIAL</span>
+                            <span class="gap-badge" style="background:rgba(16,185,129,.15);color:var(--accent-success)"><span id="low-gaps-badge">0</span></span>
+                            <span style="font-size:13px;color:var(--accent-success);font-weight:600">COMPLIANT</span>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                            <div class="stat-icon" style="background:rgba(6,182,212,.15)"><i class="fas fa-list-check" style="color:var(--accent-primary)"></i></div>
+                            <div style="font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Audit Progress</div>
+                        </div>
+                        <div id="audit-progress-percentage" style="font-size:48px;font-weight:700;margin-bottom:8px">—%</div>
+                        <div style="width:100%;height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;margin-bottom:12px">
+                            <div id="audit-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--accent-primary),var(--accent-secondary));width:0%;transition:width .8s ease"></div>
+                        </div>
+                        <div id="audit-progress-text" style="font-size:13px;color:var(--text-muted)">Loading...</div>
+                    </div>
+                    <div class="card">
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                            <div class="stat-icon" style="background:rgba(245,158,11,.15)"><i class="fas fa-clock" style="color:var(--accent-warning)"></i></div>
+                            <div style="font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Time to Next Audit</div>
+                        </div>
+                        <div id="next-audit-days" style="font-size:48px;font-weight:700;color:var(--accent-warning);margin-bottom:8px">—</div>
+                        <div id="next-audit-date" style="font-size:13px;color:var(--text-muted)">Loading...</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-6" style="margin-bottom:32px">
+                    <div class="card"><h3 style="font-size:18px;font-weight:600;margin-bottom:20px">ECC Domains Maturity</h3><div class="chart-container"><canvas id="domainsRadarChart"></canvas></div></div>
+                    <div class="card"><h3 style="font-size:18px;font-weight:600;margin-bottom:20px">Compliance by Domain</h3><div class="chart-container"><canvas id="categoryBarChart"></canvas></div></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="loader" class="loader"><div class="spinner"></div></div>
+    <script src="js/api.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

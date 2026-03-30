@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - CyberGuard GRC Platform</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .hero-section{background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(139,92,246,.08));border:1px solid var(--border-color);border-radius:16px;padding:48px;margin-bottom:32px;position:relative;overflow:hidden;}
+        .hero-section::before{content:'';position:absolute;top:-50%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(6,182,212,.12),transparent 70%);}
+        .hero-content{position:relative;z-index:1;}
+        .hero-title{font-size:36px;font-weight:800;margin-bottom:12px;background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+        .quick-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;margin-top:32px;}
+        .action-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:24px;text-decoration:none;display:block;transition:all var(--transition-base);}
+        .action-card:hover{transform:translateY(-4px);border-color:var(--accent-primary);box-shadow:0 8px 24px rgba(6,182,212,.15);}
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="logo-text"><h1>CyberGuard</h1><p>GRC Platform v3.2</p></div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item active"><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="dashboard.html" class="nav-item "><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+                <a href="evidence.html" class="nav-item "><i class="fas fa-folder-open"></i><span>Evidence</span></a>
+                <a href="chatbot.html" class="nav-item "><i class="fas fa-robot"></i><span>ECC Chatbot</span></a>
+                <a href="scheduler.html" class="nav-item "><i class="fas fa-calendar-alt"></i><span>Audit Scheduler</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="user-initials">?</div>
+                    <div class="user-info">
+                        <h4 id="user-name">Loading...</h4>
+                        <p id="user-role">User</p>
+                    </div>
+                    <button onclick="logout()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:auto" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+        </aside>
+        <main class="main-content">
+            <div class="content-wrapper">
+                <section class="hero-section">
+                    <div class="hero-content">
+                        <h1 class="hero-title" id="welcome-message">Welcome to CyberGuard GRC</h1>
+                        <p style="font-size:18px;color:var(--text-secondary);margin-bottom:32px">Your AI-Powered Internal Audit Automation Platform for ECC-2023</p>
+                        <a href="chatbot.html" class="btn btn-primary" style="text-decoration:none"><i class="fas fa-play"></i> Start New Audit</a>
+                    </div>
+                </section>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">System Health</div><div id="system-health-status" class="stat-value" style="font-size:20px">Operational</div></div>
+                    <div class="stat-card"><div class="stat-label">Compliance Score</div><div id="compliance-score-value" class="stat-value">—%</div></div>
+                    <div class="stat-card"><div class="stat-label">Critical Gaps</div><div id="critical-gaps-count" class="stat-value">—</div></div>
+                    <div class="stat-card"><div class="stat-label">Controls Audited</div><div id="audited-controls-count" class="stat-value">—</div></div>
+                </div>
+                <h2 style="margin:32px 0 20px">Quick Access</h2>
+                <div class="quick-actions">
+                    <a href="chatbot.html" class="action-card">
+                        <div style="width:56px;height:56px;border-radius:12px;background:rgba(6,182,212,.15);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--accent-primary);margin-bottom:16px"><i class="fas fa-robot"></i></div>
+                        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Launch AI Audit</h3>
+                        <p style="font-size:14px;color:var(--text-muted)">Start an interactive ECC-2023 compliance audit with AI-powered guidance</p>
+                    </a>
+                    <a href="dashboard.html" class="action-card">
+                        <div style="width:56px;height:56px;border-radius:12px;background:rgba(139,92,246,.15);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--accent-secondary);margin-bottom:16px"><i class="fas fa-chart-pie"></i></div>
+                        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">View Dashboard</h3>
+                        <p style="font-size:14px;color:var(--text-muted)">Real-time compliance metrics and domain maturity radar</p>
+                    </a>
+                    <a href="evidence.html" class="action-card">
+                        <div style="width:56px;height:56px;border-radius:12px;background:rgba(16,185,129,.15);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--accent-success);margin-bottom:16px"><i class="fas fa-folder-open"></i></div>
+                        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Evidence Repository</h3>
+                        <p style="font-size:14px;color:var(--text-muted)">Manage and review audit findings and compliance artifacts</p>
+                    </a>
+                    <a href="scheduler.html" class="action-card">
+                        <div style="width:56px;height:56px;border-radius:12px;background:rgba(245,158,11,.15);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--accent-warning);margin-bottom:16px"><i class="fas fa-calendar-alt"></i></div>
+                        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Audit Scheduler</h3>
+                        <p style="font-size:14px;color:var(--text-muted)">Plan and schedule upcoming compliance audit sessions</p>
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="loader" class="loader"><div class="spinner"></div></div>
+    <script src="js/api.js"></script>
+    <script src="js/home.js"></script>
+</body>
+</html>

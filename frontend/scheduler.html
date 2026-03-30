@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Scheduler - CyberGuard GRC Platform</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .countdown-container{background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(6,182,212,0.08));border:1px solid var(--border-color);border-radius:16px;padding:48px;text-align:center;margin-bottom:32px;}
+        .countdown-value{font-size:56px;font-weight:800;line-height:1;margin-bottom:8px;color:var(--text-primary);}
+        .countdown-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;}
+        .scheduler-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;}
+        .toggle-switch{position:relative;display:inline-block;width:52px;height:26px;}
+        .toggle-switch input{opacity:0;width:0;height:0;}
+        .toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--bg-secondary);border:1px solid var(--border-color);transition:0.3s;border-radius:26px;}
+        .toggle-slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:var(--text-muted);transition:0.3s;border-radius:50%;}
+        input:checked+.toggle-slider{background:var(--accent-primary);border-color:var(--accent-primary);}
+        input:checked+.toggle-slider:before{transform:translateX(26px);background:white;}
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="logo-text"><h1>CyberGuard</h1><p>GRC Platform v3.2</p></div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item "><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="dashboard.html" class="nav-item "><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+                <a href="evidence.html" class="nav-item "><i class="fas fa-folder-open"></i><span>Evidence</span></a>
+                <a href="chatbot.html" class="nav-item "><i class="fas fa-robot"></i><span>ECC Chatbot</span></a>
+                <a href="scheduler.html" class="nav-item active"><i class="fas fa-calendar-alt"></i><span>Audit Scheduler</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="user-initials">??</div>
+                    <div class="user-info">
+                        <h4 id="user-name">Loading...</h4>
+                        <p id="user-role">User</p>
+                    </div>
+                    <button onclick="logout()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:auto;" title="Sign Out"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+        </aside>
+        <main class="main-content">
+            <div class="content-wrapper">
+                <div style="margin-bottom:32px;">
+                    <h1 style="font-size:32px;font-weight:700;margin-bottom:8px;">Audit Scheduler</h1>
+                    <p style="color:var(--text-muted);font-size:16px;">Schedule and manage compliance audits across all ECC-2023 domains</p>
+                </div>
+                <div class="countdown-container">
+                    <h2 style="font-size:22px;font-weight:700;margin-bottom:8px;background:linear-gradient(135deg,var(--accent-secondary),var(--accent-primary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Next Compliance Audit</h2>
+                    <p style="color:var(--text-muted);margin-bottom:32px;font-size:14px;">Comprehensive ECC-2023 assessment across all domains</p>
+                    <div style="display:flex;justify-content:center;gap:40px;margin-bottom:8px;">
+                        <div><div id="countdown-days" class="countdown-value">—</div><div class="countdown-label">Days</div></div>
+                        <div style="font-size:48px;color:var(--border-color);align-self:flex-start;line-height:1.2;">:</div>
+                        <div><div id="countdown-hours" class="countdown-value">—</div><div class="countdown-label">Hours</div></div>
+                        <div style="font-size:48px;color:var(--border-color);align-self:flex-start;line-height:1.2;">:</div>
+                        <div><div id="countdown-minutes" class="countdown-value">—</div><div class="countdown-label">Minutes</div></div>
+                    </div>
+                </div>
+                <div class="scheduler-grid">
+                    <div class="card">
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+                            <div class="stat-icon" style="background:rgba(6,182,212,0.15);"><i class="fas fa-user-pen" style="color:var(--accent-primary);"></i></div>
+                            <div><h3 style="font-size:17px;font-weight:600;margin-bottom:2px;">Manual Scheduling</h3><p style="font-size:12px;color:var(--text-muted);margin:0;">Set custom audit dates and scope for your team</p></div>
+                        </div>
+                        <div class="form-group"><label class="form-label">Audit Date</label><input type="date" id="manual-audit-date" class="form-input"></div>
+                        <div class="form-group"><label class="form-label">Audit Scope</label>
+                            <select id="audit-scope-select" class="form-select">
+                                <option value="full">Full Audit (All 10 Controls)</option>
+                                <option value="governance">Governance Domain</option>
+                                <option value="data">Data Protection Domain</option>
+                                <option value="identity">Identity &amp; Access Domain</option>
+                                <option value="network">Network Hardening Domain</option>
+                                <option value="custom">Custom Scope</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label class="form-label">Assigned Auditor</label>
+                            <select id="assigned-auditor-select" class="form-select">
+                                <option value="security-team">Security Team</option>
+                                <option value="compliance-team">Compliance Team</option>
+                                <option value="external-auditor">External Auditor</option>
+                            </select>
+                        </div>
+                        <button id="schedule-manual-audit-btn" class="btn btn-primary" style="width:100%;"><i class="fas fa-calendar-plus"></i> Schedule Audit</button>
+                    </div>
+                    <div class="card">
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+                            <div class="stat-icon" style="background:rgba(139,92,246,0.15);"><i class="fas fa-robot" style="color:var(--accent-secondary);"></i></div>
+                            <div><h3 style="font-size:17px;font-weight:600;margin-bottom:2px;">AI-Automated Scheduling</h3><p style="font-size:12px;color:var(--text-muted);margin:0;">Risk-based intelligent scheduling powered by AI</p></div>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--bg-secondary);border-radius:8px;margin-bottom:20px;">
+                            <div><div style="font-weight:600;font-size:14px;margin-bottom:2px;">Automatic Scheduling</div><div style="font-size:12px;color:var(--text-muted);">AI determines optimal audit timing</div></div>
+                            <label class="toggle-switch"><input type="checkbox" id="enable-auto-scheduling" checked><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="form-group"><label class="form-label">Audit Frequency</label>
+                            <select class="form-select">
+                                <option value="quarterly">Quarterly (Recommended)</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="semi-annual">Semi-Annual</option>
+                                <option value="annual">Annual</option>
+                            </select>
+                        </div>
+                        <div style="background:rgba(139,92,246,0.07);border:1px solid rgba(139,92,246,0.25);border-radius:8px;padding:16px;margin-bottom:20px;">
+                            <div style="display:flex;align-items:flex-start;gap:10px;">
+                                <i class="fas fa-lightbulb" style="color:var(--accent-secondary);font-size:16px;margin-top:2px;flex-shrink:0;"></i>
+                                <div>
+                                    <div style="font-weight:700;margin-bottom:6px;color:var(--accent-secondary);font-size:13px;">AI Recommendation</div>
+                                    <div id="ai-recommendation-content" style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Analyzing compliance data...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn" style="width:100%;background:var(--accent-secondary);color:white;"><i class="fas fa-sparkles"></i> Enable AI Scheduling</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="loader" class="loader"><div class="spinner"></div></div>
+    <script src="js/api.js"></script>
+    <script src="js/scheduler.js"></script>
+</body>
+</html>

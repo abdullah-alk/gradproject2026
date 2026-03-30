@@ -1,0 +1,478 @@
+{
+  "1-1": {
+    "control_id": "1-1",
+    "objective": "To ensure that cybersecurity  plans, goals, initiatives  and projects  are contributing  to \ncompliance  with related  laws and regulations.",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  Strategy  \nObjective  To ensure that cybersecurity  plans, goals, initiatives  and projects  are contributing  to \ncompliance  with related  laws and regulations.  \nControls  \n1-1-1 A cybersecurity  strategy  must be defined,  documented  and approved.  It must be \nsupported  by the head of the organization  or his/her  delegate  (referred  to in this \ndocument  as Authorizing  Official).  The strategy  goals must be in-line with related \nlaws and regulations.  \n Relevant  cybersecurity  tools: \n • All cybersecurity  strategy  models  and roadmap \n Control  implementation  guidelines:  \n • Conduct  a workshop  with stakeholders  in the organization  to align the \nobjectives  of the cybersecurity  strategy  with the organization's  strategic \nobjectives.  \n • Develop and document cybersecurity the strategy of the organization in order  \nto align the organization's  cybersecurity  strategic  objectives  with related laws \nand regulations,  including  but not limited to (CC"
+  },
+  "1-1-1": {
+    "control_id": "1-1-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "A cybersecurity  strategy  must be defined,  documented  and approved.  It must be \nsupported  by the head of the organization  or his/her  delegate  (referred  to in this \ndocument  as Authorizing  Official).  The strategy  goals must be in-line with related \nlaws and regulations.  \n Relevant  cybersecurity  tools: \n • All cybersecurity  strategy  models  and roadmap \n Control  implementation  guidelines:  \n • Conduct  a workshop  with stakeholders  in the organization  to align the \nobjectives  of the cybersecurity  strategy  with the organization's  strategic \nobjectives.  \n • Develop and document cybersecurity the strategy of the organization in order  \nto align the organization's  cybersecurity  strategic  objectives  with related laws \nand regulations,  including  but not limited to (CCC, CSCC).  A cybersecurity \nstrategy often  includes  the following:  \n o Vision  \no Mission  \no Strategic  Objectives  \no Strategy  Implementation  Plan \no Projects  \no Initiatives  \n • In order f"
+  },
+  "1-1-2": {
+    "control_id": "1-1-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "A roadmap  must be executed  to implement  the cybersecurity  strategy.  \nRelevant  cybersecurity  tools \n• All cybersecurity  strategy  models  and roadmap.  \n• Cybersecurity  performance  report and measurement  template.  \nControl  implementation  guidelines  \n• Develop a roadmap for implementing the cybersecurity strategy including the  \nexecution  of the strategy's  initiatives  and projects  to: \no Define cybersecurity  priorities.  \no Make recommendations  related  to cybersecurity  works in the \norganization  in a manner  consistent with  the nature of  its work.  \no Monitor  the implementation  of cybersecurity  strategy  projects  and \ninitiatives  and take corrective  steps if necessary.  \no Ensure  the implementation  of initiatives  and projects  according  to \nrequirements.  \no Provide  a clear and unified vision and communicate  it to all internal \nand external stakeholders.  \no Obtain NCA's approval  for any cybersecurity  initiatives  that are \nbeyond  the scope  of th"
+  },
+  "1-1-3": {
+    "control_id": "1-1-3",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The cybersecurity  strategy  must be reviewed  periodically  according  to planned \nintervals  or upon changes  to related laws and regulations.  \nControl  implementation  guidelines:  \n• Review  and update  the cybersecurity  strategy  periodically  according  to a \ndocumented  and approved  review plan as follows \n"
+  },
+  "1-2": {
+    "control_id": "1-2",
+    "objective": "cybersecurity  programs  within the organization  as per related laws and regulations",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  Management  \nObjective   \n \ncybersecurity  programs  within the organization  as per related laws and regulations  \nControls  \n1-2-1 A dedicated  cybersecurity  function  (e.g., division,  department)  must be established \nwithin the organization.  This function  must be independent  from the Information \nTechnology/Information  Communication  and Technology  (IT/ICT)  functions  (as \nper the Royal Decree  number  37140 dated 14/8/1438H).  It is highly recommended \nthat this cybersecurity  function  reports  directly  to the head of the organization  or \nhis/her delegate  while ensuring  that this does not result in a conflict of interest.  \nRelevant  cybersecurity  tools \n• Cybersecurity  Function  Organizational  Structure \n• Cybersecurity  Roles and Responsibilities  Template \n• Cybersecurity  General  Policy Template \n"
+  },
+  "1-2-1": {
+    "control_id": "1-2-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "A dedicated  cybersecurity  function  (e.g., division,  department)  must be established \nwithin the organization.  This function  must be independent  from the Information \nTechnology/Information  Communication  and Technology  (IT/ICT)  functions  (as \nper the Royal Decree  number  37140 dated 14/8/1438H).  It is highly recommended \nthat this cybersecurity  function  reports  directly  to the head of the organization  or \nhis/her delegate  while ensuring  that this does not result in a conflict of interest.  \nRelevant  cybersecurity  tools \n• Cybersecurity  Function  Organizational  Structure \n• Cybersecurity  Roles and Responsibilities  Template \n• Cybersecurity  General  Policy Template \n"
+  },
+  "1-2-2": {
+    "control_id": "1-2-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The position  of cybersecurity  function  head (e.g., CISO), and related supervisory  and \ncritical positions  within the function,  must be filled with full-time and experienced \nSaudi cybersecurity  professionals.  \nControl  implementation  guidelines:  \n• Appoint full -time and highly qualified Saudi cybersecurity  professionals to  fill \nthe following  job roles and positions \no Head of the cybersecurity  function,  who is responsible  for leading  the \ncybersecurity  operations  within the organization,  setting the vision \nand direction  for cybersecurity,  strategies,  resources  and related  \n"
+  },
+  "1-2-3": {
+    "control_id": "1-2-3",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "A cybersecurity  steering  committee  must be established  by the Authorizing  Official  to \nensure  the support  and implementation  of the cybersecurity  programs  and \ninitiatives  within the organization.  Committee  members,  roles and responsibilities, \nand governance  framework  must be defined,  documented  and approved.  The \ncommittee  must include the head of the cybersecurity  function  as one of its members. \nIt is highly recommended  that the committee  reports  directly  to the head of the \norganization  or his/her delegate  while ensuring  that this does not result in a conflict \nof interest.  \nRelevant  cybersecurity  tools \n• Cybersecurity  supervisory  committee  governance  document  template \nControl  implementation  guidelines:  \n• Establish  the cybersecurity  supervisory  committee  as a committee  specialized \nin directing  and leading  cybersecurity  affairs,  processes,  programs,  and \ninitiatives  in the organization.  The committee's  must be directly repo"
+  },
+  "1-3": {
+    "control_id": "1-3",
+    "objective": "To ensure that cybersecurity  requirements  are documented,  communicated  and \ncomplied  with by the organization  as per related laws and regulations,  and \norganizational requirements.",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  Policies  and Procedures  \nObjective  To ensure that cybersecurity  requirements  are documented,  communicated  and \ncomplied  with by the organization  as per related laws and regulations,  and \norganizational requirements.  \nControls  \n1-3-1 Cybersecurity  policies  and procedures  must be defined  and documented  by the \ncybersecurity  function,  approved  by the Authorizing  Official,  and disseminated  to \nrelevant  parties inside and outside  the organization.  \nRelevant  cybersecurity  tools \n• All policies,  procedures,  and standard  controls  templates  included  within \ncybersecurity  toolkit \nControl  implementation  guidelines:  \n• Define and document  cybersecurity  requirements  in cybersecurity  policies, \nprocedures,  and standard  controls,  and approve  them by the organization's \nrepresentative  based on the authority  matrix approved  by the organization  \n"
+  },
+  "1-3-1": {
+    "control_id": "1-3-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  policies  and procedures  must be defined  and documented  by the \ncybersecurity  function,  approved  by the Authorizing  Official,  and disseminated  to \nrelevant  parties inside and outside  the organization.  \nRelevant  cybersecurity  tools \n• All policies,  procedures,  and standard  controls  templates  included  within \ncybersecurity  toolkit \nControl  implementation  guidelines:  \n• Define and document  cybersecurity  requirements  in cybersecurity  policies, \nprocedures,  and standard  controls,  and approve  them by the organization's \nrepresentative  based on the authority  matrix approved  by the organization  \n"
+  },
+  "1-3-2": {
+    "control_id": "1-3-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The cybersecurity function must ensure that the cybersecurity policies and procedures \nare implemented.  \nRelevant  cybersecurity  tools \n• A template of personnel  acknowledgment and  approval to follow  the \ncybersecurity  policies \n• A template  of personnel  acknowledgment and  approval to maintain \ninformation confidentiality \nControl  implementation  guidelines:  \n• Develop  an action plan to implement  cybersecurity  policies,  procedures,  and \nstandard controls. Such plan  must include  all internal and  external \nstakeholders,  to whom the organization's  policies,  procedures,  and standard \ncontrols  apply. Such stakeholders  must be followed - up and monitored \nperiodically to ensure the full and effective implementation of all \nrequirements \n• The cybersecurity  function  must ensure the implementation  of cybersecurity \ncontrols  and adherence  to the approved  and documented  cybersecurity \npolicies,  procedures,  and standard  controls \n• Ensure the implementation of c"
+  },
+  "1-3-3": {
+    "control_id": "1-3-3",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The cybersecurity  policies  and procedures  must be supported  by technical  security \nstandards  (e.g., operating  systems,  databases  and firewall  technical  security \nstandards).  \nRelevant  cybersecurity  tools \n• A template  of all standard  controls  included  in cybersecurity  tools. \nControl  implementation  guidelines:  \n• Define,  document,  and approve  technical  standard  controls  to cover the \norganization's  information  and technology  assets (e.g., firewall  technical \nsecurity  standard  controls,  network  devices,  databases,  server operating \nsystems, BYOD  operating systems,  secure development  standard, \ncryptography standard,  etc.). \n• Communicate  the technical  standard  controls  to the relevant  departments  in \nthe organization  (e.g., IT department)  and ensure  that they are applied \nperiodically to information and technology assets \nExpected  deliverables \n• The organization's  approved  technical  cybersecurity  standard  controls \ndocuments \n1-3"
+  },
+  "1-3-4": {
+    "control_id": "1-3-4",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The cybersecurity  policies  and procedures  must be reviewed  periodically  according  to \nplanned  intervals  or upon changes  to related  laws and regulations.  Changes  and \nreviews  must be approved  and documented.  \nControl  implementation  guidelines:  \n• Review  the cybersecurity  policies,  procedures,  and standard  controls  in the \norganization  periodically  according  to a documented  and approved  plan for \nreview and based on a period specified  in the policy (e.g., periodic  review must \nbe conducted annually) \n• Review  and update  the cybersecurity  policies,  procedures,  and standard \ncontrols  in the organization  in the event of changes  in the relevant  laws and \nregulations  (for example,  when a new cybersecurity  law is issued that applies \nto the organization).  \n• Document  the review and changes  to the cybersecurity  policies,  procedures, \nand standard  controls  and approve  them by the head of the organization  or \nhis/her deputy \n"
+  },
+  "1-4": {
+    "control_id": "1-4",
+    "objective": "To ensure that roles and responsibilities  are defined  for all parties participating  in \nimplementing the cybersecurity  controls within  the organization.",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  Roles and Responsibilities  \nObjective  To ensure that roles and responsibilities  are defined  for all parties participating  in \nimplementing the cybersecurity  controls within  the organization.  \nControls  \n1-4-1 Cybersecurity  organizational  structure  and related roles and responsibilities  must be \ndefined,  documented,  approved,  supported  and assigned  by the Authorizing  Official \nwhile ensuring that this does not result  in a conflict of  interest.  \nRelevant  cybersecurity  tools \n• Cybersecurity  Roles and Responsibilities  Template \nControl  implementation  guidelines:  \n• Define and document  cybersecurity  roles and responsibilities  and inform and \nensure all parties involved  in the implementation  of cybersecurity  controls  at \nthe organization  of their responsibilities  in implementing  cybersecurity \nprograms and requirements \n• Support  the organizational structure, roles,  and responsibilities  of the \norganization  by the executive  managemen"
+  },
+  "1-4-1": {
+    "control_id": "1-4-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  organizational  structure  and related roles and responsibilities  must be \ndefined,  documented,  approved,  supported  and assigned  by the Authorizing  Official \nwhile ensuring that this does not result  in a conflict of  interest.  \nRelevant  cybersecurity  tools \n• Cybersecurity  Roles and Responsibilities  Template \nControl  implementation  guidelines:  \n• Define and document  cybersecurity  roles and responsibilities  and inform and \nensure all parties involved  in the implementation  of cybersecurity  controls  at \nthe organization  of their responsibilities  in implementing  cybersecurity \nprograms and requirements \n• Support  the organizational structure, roles,  and responsibilities  of the \norganization  by the executive  management  This must be done through  the \napproval  of the representative  \n• Include  the following  roles and responsibilities  (but not limited to) \no Roles and responsibilities  related  to the cybersecurity  supervisory \ncommittee  \n"
+  },
+  "1-4-2": {
+    "control_id": "1-4-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The cybersecurity  roles and responsibilities  must be reviewed  periodically  according  \nto planned  intervals  or upon changes  to related laws and regulations.  \nControl  implementation  guidelines \n• Review  the cybersecurity  roles and responsibilities  in the organization \nperiodically  according  to a documented  and approved  plan for review and \nbased on a planned interval (e.g., periodic review must be conducted \nannually) \n•  Review and update the cybersecurity roles and responsibilities in the \norganization  in the event of changes  in the relevant  laws and regulations  (for \nexample,  when a new cybersecurity law  is issued that applies to  the \norganization) \n• Document  the review and changes  to the cybersecurity  requirements  related \nto cybersecurity roles  and responsibilities  and approve them by the \nrepresentative \n"
+  },
+  "1-5": {
+    "control_id": "1-5",
+    "objective": "To ensure  managing  cybersecurity  risks in a methodological  approach  in order to \nprotect the  \npolicies  and procedures,  and related laws and regulations.",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  Risk Management  \nObjective  To ensure  managing  cybersecurity  risks in a methodological  approach  in order to \nprotect the  \npolicies  and procedures,  and related laws and regulations.  \nControls  \n1-5-1 Cybersecurity  risk management  methodology  and procedures  must be defined, \ndocumented  and approved  as per confidentiality,  integrity  and availability \nconsiderations  of information  and technology  assets. \nRelevant  cybersecurity  tools \n• Cybersecurity  Risk Management  Policy Template.  \n• Cybersecurity  R sk Management  Procedures  Template.  \nControl  implementation  guidelines:  \n• Define and document  cybersecurity  risk management  requirements  which are  \nbased on relevant  regulations,  best practices,  and standard  controls  of \ncybersecurity  risk management,  taking into account  the confidentiality, \navailability,  and integrity  of information  and technology  assets to cover the \nfollowing \no The methodology  and procedures  of cybersecuri"
+  },
+  "1-5-1": {
+    "control_id": "1-5-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  risk management  methodology  and procedures  must be defined, \ndocumented  and approved  as per confidentiality,  integrity  and availability \nconsiderations  of information  and technology  assets. \nRelevant  cybersecurity  tools \n• Cybersecurity  Risk Management  Policy Template.  \n• Cybersecurity  R sk Management  Procedures  Template.  \nControl  implementation  guidelines:  \n• Define and document  cybersecurity  risk management  requirements  which are  \nbased on relevant  regulations,  best practices,  and standard  controls  of \ncybersecurity  risk management,  taking into account  the confidentiality, \navailability,  and integrity  of information  and technology  assets to cover the \nfollowing \no The methodology  and procedures  of cybersecurity  risk management  in \nthe organization  must include \n- Identification  of assets and their value \n- Identification  of risks to the business,  assets, or personnel  of \nthe organization \n"
+  },
+  "1-5-2": {
+    "control_id": "1-5-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The cybersecurity  risk management  methodology  and procedures  must be \nimplemented by the cybersecurity function.  \nRelevant  cybersecurity  tools \n• Cybersecurity  Risk Management  Register  Template \nControl  implementation  guidelines:  \n• Implement  all requirements  of the cybersecurity  risk management \nmethodology  and procedures  adopted  by the organization \n• Establish  a cybersecurity  risk register  to document  and monitor  risks \n• Develop  plans to address  cybersecurity  risks of the organization \nExpected  deliverables \n• Cybersecurity  Risk Register  of the organization \n• Cybersecurity  Risk Treatment  Plan of the organization \n• A report that outlines  the cybersecurity  risk assessment  and monitoring \n1-5-3 The cybersecurity  risk assessment  procedures  must be implemented  at least in the \nfollowing cases:  \n1-5-3-1 Early stages of technology  projects . \nControl  implementation  guidelines:  \n"
+  },
+  "1-5-3": {
+    "control_id": "1-5-3",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The cybersecurity  risk assessment  procedures  must be implemented  at least in the \nfollowing cases:  \n1-5-3-1 Early stages of technology  projects . \nControl  implementation  guidelines:  \n"
+  },
+  "5-3-1": {
+    "control_id": "5-3-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Early stages of technology  projects . \nControl  implementation  guidelines:  \n"
+  },
+  "5-3-2": {
+    "control_id": "5-3-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Before making  major changes  to technology  infrastructure.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Include  cybersecurity  requirements  within the IT Change  Management \nlifecycle in  the organization \n• Implement  cybersecurity  risk assessment  procedures  before making  a material \nchange  in the technology  architecture  to avoid events or circumstances  that \ncould compromise the confidentiality, integrity, and availability of \ninformation  and technology  assets, including,  in particular,  the identification of \ninformation and technology assets in technology projects, potential \nexposure  to threats,  and relevant  vulnerabilities.  These changes  include,  but \nare not limited to: a basic and sensitive  update to one or several systems  in the \nnetwork,  such as database  systems,  or a radical change  in network  mapping  \n• Remedia"
+  },
+  "5-3-3": {
+    "control_id": "5-3-3",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "During the planning  phase of obtaining  third party services.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Include  cybersecurity  requirements  within the third-party, contracts,  and \nprocurement  management  procedures  in the organization \n• Implement  cybersecurity  risk assessment  procedures  when planning  to \nacquire  services  from a third party. to avoid events or circumstances  that could \ncompromise  the confidentiality,  integrity,  and availability  of information  and \ntechnology  assets,  including,  in particular,  the identification  of information \nand technology  assets in technology  projects,  potential  exposure  to threats, \nand relevant vulnerabilities \n• Remediate all cybersecurity risks in accordance with the  approved \ncybersecurity  risk management  methodology.  \nExpected  deliverables \n• A report that outlines  the id"
+  },
+  "5-3-4": {
+    "control_id": "5-3-4",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "During the planning  phase and before going live for new technology \nservices and products.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Include cybersecurity  requirements within  the Release Management \nprocedures in  the organization \n• Implement  cybersecurity  risk assessment  procedures  at the planning  stage and \nbefore the release  of new technology  products  and services  to avoid events or \ncircumstances  that could compromise  the confidentiality,  integrity,  and \navailability  of information  and technology  assets, including,  in particular,  the \n"
+  },
+  "1-5-4": {
+    "control_id": "1-5-4",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The cybersecurity  risk management  methodology  and procedures  must be reviewed \nperiodically  according  to planned  intervals  or upon changes  to related  laws and \nregulations.  Changes  and reviews  must be approved  and documented.  \nControl  implementation  guidelines \n• Review  and update  the cybersecurity  risk management  methodology  and \nprocedures and cybersecurity  risk management requirements  in the \norganization  periodically  according  to a documented  and approved  plan for \nreview and based on a planned  interval  (e.g., periodic  review must be \nconducted  annually) \n•  Review  and update  the cybersecurity  risk management  methodology  and \nprocedures and cybersecurity  risk management  requirements  in the \norganization  in the event of changes  in the relevant  laws and regulations  (for \nexample,  when a new cybersecurity law  is issued that applies to  the \norganization) \n• Document  the review and changes  to the cybersecurity  requirements  related \nto "
+  },
+  "1-6": {
+    "control_id": "1-6",
+    "objective": "To ensure  that cybersecurity  requirements  are included  in project  management \nmethodology  and procedures  in order to protect  the confidentiality,  integrity  and \navailability  of information  and technology  assets as per organization  policies  and \nprocedures,  and related laws and regulations.",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  in Information  and Technology  Project Management  \n \nObjective  To ensure  that cybersecurity  requirements  are included  in project  management \nmethodology  and procedures  in order to protect  the confidentiality,  integrity  and \navailability  of information  and technology  assets as per organization  policies  and \nprocedures,  and related laws and regulations.  \nControls  \n1-6-1 Cybersecurity  requirements  must be included  in project  and asset (information/ \ntechnology)  change  management  methodology  and procedures  to identify  and \nmanage  cybersecurity  risks as part of project management  lifecycle.  The cybersecurity \nrequirements  must be a key part of the overall requirements  of technology  projects.  \nRelevant  cybersecurity  tools \n• Secure Software  Development  Cycle Policy Template.  \n• Secure Software  Development  Cycle Procedure  Template.  \nControl  implementation  guidelines:  \n• Include  cybersecurity  requirements  in the project manag"
+  },
+  "1-6-1": {
+    "control_id": "1-6-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  requirements  must be included  in project  and asset (information/ \ntechnology)  change  management  methodology  and procedures  to identify  and \nmanage  cybersecurity  risks as part of project management  lifecycle.  The cybersecurity \nrequirements  must be a key part of the overall requirements  of technology  projects.  \nRelevant  cybersecurity  tools \n• Secure Software  Development  Cycle Policy Template.  \n• Secure Software  Development  Cycle Procedure  Template.  \nControl  implementation  guidelines:  \n• Include  cybersecurity  requirements  in the project management  methodology \nand procedures  and in the change  management  of the information  and \ntechnology  assets in the organization  to ensure that cybersecurity  risks are \nidentified  and addressed.  Such requirements  include \no Assess  and detect vulnerabilities  before the deployment  of services  or \nsystems  online, or upon any change  to systems  within Information \nand Technology Project  Managem"
+  },
+  "1-6-2": {
+    "control_id": "1-6-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The cybersecurity  requirements  in project  and assets (information/technology) \nchange  management  must include at least the following:  \n1-6-2-1 Vulnerability  assessment  and remediation  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this control  in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Define systems, services, and  technology  components subject  to \nVulnerabilities  Assessment  within the scope of technical  projects  and change \nrequests \n• Develop  and adopt procedures  for the implementation  of Vulnerabilities \nAssessment  and remediation  in accordance  with related laws and regulations \n• Conduct  Vulnerabilities  Assessment  before launching  technical  projects  in the \nproduction  environment  and assess  it in a timely manner  and address  it \neffectively.  \n• Conduct  Vulnerabilities  Assessment  before the implementation  of changes  to \nthe production  environment  and assess it "
+  },
+  "6-2-1": {
+    "control_id": "6-2-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Vulnerability  assessment  and remediation  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this control  in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Define systems, services, and  technology  components subject  to \nVulnerabilities  Assessment  within the scope of technical  projects  and change \nrequests \n• Develop  and adopt procedures  for the implementation  of Vulnerabilities \nAssessment  and remediation  in accordance  with related laws and regulations \n• Conduct  Vulnerabilities  Assessment  before launching  technical  projects  in the \nproduction  environment  and assess  it in a timely manner  and address  it \neffectively.  \n• Conduct  Vulnerabilities  Assessment  before the implementation  of changes  to \nthe production  environment  and assess it in a timely manner  and address  it \neffectively.  \nExpected  deliverables \n• A document  (such as  approved  policy or procedure) indicating  the \ni"
+  },
+  "6-2-2": {
+    "control_id": "6-2-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Conducting a  configurations ’ review,  secure  configuration  and \nhardening  and patching  before changes  or going live for technology \nprojects.  \nRelevant  cybersecurity  tools \n• Cybersecurity Requirements Checklist Template for Project Management and \nChanges  to Information  and Technology  Assets.  \n• Cybersecurity  Requirements  Checklist  Template  for Application \nDevelopment.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative  \n"
+  },
+  "1-6-3": {
+    "control_id": "1-6-3",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The cybersecurity  requirements  related  to software  and application  development \nprojects must include at least the following:  \n1-6-3-1 Using secure coding standards.  \nRelevant  cybersecurity  tools \n• Secure Coding Standard  Template.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Define and document  technical  cybersecurity  requirements  for Secure Coding \nStandard  controls  (covering  all phases  of the secure coding process)  based on \nrelevant  laws and regulations,  best practices  and standard  controls  related to \nthe development  and protection  of software  and applications  against  internal  \n"
+  },
+  "6-3-1": {
+    "control_id": "6-3-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Using secure coding standards.  \nRelevant  cybersecurity  tools \n• Secure Coding Standard  Template.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Define and document  technical  cybersecurity  requirements  for Secure Coding \nStandard  controls  (covering  all phases  of the secure coding process)  based on \nrelevant  laws and regulations,  best practices  and standard  controls  related to \nthe development  and protection  of software  and applications  against  internal  \n"
+  },
+  "6-3-2": {
+    "control_id": "6-3-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Using trusted and licensed  sources  for software  development  tools and \nlibraries.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Use only modern, reliable and licensed sources for software development tools \nand libraries \nExpected  deliverables \n• A document  (such as approved  policy or procedure)  indicating  the \nidentification  and documentation  of the requirements  related to this control \n• An updated  list of licensed  and documented  software  used for application \ndevelopment tools and libraries \n1-6-3-3 Conducting  compliance  test for software  against  the defined \norganizational  cybersecurity  requirements.  \nRelevant  cybersecurity  tools \n• Cybersecurity  Requirements  Checklist  Template  for Application \nDevelopment.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurit"
+  },
+  "6-3-3": {
+    "control_id": "6-3-3",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Conducting  compliance  test for software  against  the defined \norganizational  cybersecurity  requirements.  \nRelevant  cybersecurity  tools \n• Cybersecurity  Requirements  Checklist  Template  for Application \nDevelopment.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Conduct  testing to verify that applications  meet the cybersecurity \nrequirements  of the organizations,  such as penetration  testing,  to ensure that \n"
+  },
+  "6-3-4": {
+    "control_id": "6-3-4",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Secure integration  between  software  components.  \nControl  implementation  guidelines  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Ensure  security  of integration  between  applications  by, but not limited to, \nsecurity testing of various  integration technologies,  including \no Perform  System  Integration  Testing  (SIT) \no Perform  API testing \nExpected  deliverables \n• A document  (such as  approved  policy or procedure) indicating  the \nidentification  and documentation  of the requirements  related to this control \n• A report that outlines  the testing and assessment  of secure  Integration \nbetween  applications  based on the organization's  cybersecurity  requirements \nand implementation reports \n1-6-3-5 Conducting  a configurations  ’ review,  secure  configuration  and \nhardening  and patching  before going live for software  products.  \nControl  implementation  guidelines:"
+  },
+  "6-3-5": {
+    "control_id": "6-3-5",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Conducting  a configurations  ’ review,  secure  configuration  and \nhardening  and patching  before going live for software  products.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Review  secure Configuration  and Hardening  and Patching  before launching \napplications  and ensure  their implementation  in the following  cases \n"
+  },
+  "1-6-4": {
+    "control_id": "1-6-4",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The cybersecurity  requirements  in project  management  must be reviewed \nperiodically.  \nControl  implementation  guidelines \n• Review  the cybersecurity  project  management  requirements  periodically \naccording  to a documented  and approved  plan for review and based on a \nplanned  interval  (e.g., periodic  review must be conducted  annually) \n• Document  the review and changes  to the cybersecurity  requirements  for \nproject management  in the organization  and approve  them by the head of the \norganization  or his/her deputy \nExpected  deliverables \n"
+  },
+  "1-7": {
+    "control_id": "1-7",
+    "objective": "To ensure  \nlaws and regulations.",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Compliance  with Cybersecurity  Standard  controls,  Laws and Regulations  \nObjective  To ensure  \nlaws and regulations.  \nControls  \n1-7-1 The organization  must comply  with related  national  cybersecurity  laws and \nregulations.  \nRelevant  cybersecurity  tools \n• Compliance  with Cybersecurity  Standard  controls,  Laws and Regulations \nPolicy  Template.  \nControl  implementation  guidelines:  \n• Work with stakeholders  in the organization  (i.e., legal  function  and \ngovernance  and compliance  function)  to identify,  document,  and periodically \nupdate  a list of national  cybersecurity  laws and regulations  and related  \n \nthe National  Cybersecurity  Authority  (NCA) (which might include,  but not \nlimited to, royal orders and decrees,  orders issued by the Council  of Ministers, \nand official  circulars  and regulatory  orders  issued  by the National \nCybersecurity  Authority  (NCA)).  \n• Ensure  compliance  with all national  cybersecurity  laws and regulations \nrequirem"
+  },
+  "1-7-1": {
+    "control_id": "1-7-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The organization  must comply  with related  national  cybersecurity  laws and \nregulations.  \nRelevant  cybersecurity  tools \n• Compliance  with Cybersecurity  Standard  controls,  Laws and Regulations \nPolicy  Template.  \nControl  implementation  guidelines:  \n• Work with stakeholders  in the organization  (i.e., legal  function  and \ngovernance  and compliance  function)  to identify,  document,  and periodically \nupdate  a list of national  cybersecurity  laws and regulations  and related  \n \nthe National  Cybersecurity  Authority  (NCA) (which might include,  but not \nlimited to, royal orders and decrees,  orders issued by the Council  of Ministers, \nand official  circulars  and regulatory  orders  issued  by the National \nCybersecurity  Authority  (NCA)).  \n• Ensure  compliance  with all national  cybersecurity  laws and regulations \nrequirements referred to  in the previous  point. \n• Provide  necessary  technologies;  to verify compliance  with national \ncybersecurity  laws and"
+  },
+  "1-7-2": {
+    "control_id": "1-7-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The organization  must comply with any nationally -approved  international  \nagreements  and commitments  related to cybersecurity.  \nControl  implementation  guidelines:  \n• Work with the organization's  stakeholders  to identify,  document,  approveand \nperiodically  update  the list of international  cybersecurity  agreements  or \nobligations,  and periodically  document  and update  them, subject  to prior \napproval by the National  Cybersecurity Authority \n• Ensure  compliance  with all cybersecurity  national  laws and regulations \nrequirements  approved  by the National  Cybersecurity  Authority  within the \norganization \n• Provide  necessary  technologies  to verify compliance  with the laws and \nregulations  related to  cybersecurity \nExpected  deliverables \n• A document  (such as approved  policy or procedure)  indicating  the \nidentification  and documentation  of the requirements  related to this control \n• An updated  list of locally approved  international  agreements  an"
+  },
+  "1-8": {
+    "control_id": "1-8",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Periodical  Cybersecurity  Review and Audit \n"
+  },
+  "1-8-1": {
+    "control_id": "1-8-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  reviews  must be conducted  periodically  by the cybersecurity  function in  \nthe organization  to assess the compliance  with the cybersecurity  controls  in the \norganization.  \nRelevant  cybersecurity  tools \n• Cybersecurity  Review  and Audit Template.  \n• Cybersecurity  Review  and Audit Log Template.  \nControl  implementation  guidelines:  \n• Review  the implementation  of cybersecurity  requirements  at the organization \nby the cybersecurity  function  periodically  according  to a documented  and \napproved  plan for review and based on a period specified  in the policy (e.g., \nquarterly  review),  to ensure that the cybersecurity  controls  of the organization \nare effectively  implemented  and operate  in accordance  with the regulatory \npolicies  and procedures  of the organization,  the national  laws and regulations, \nand the international  requirements  approved  by the organization \nExpected  deliverables \n• A document  (such as approved  policy or procedur"
+  },
+  "1-8-2": {
+    "control_id": "1-8-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  audits and reviews  must be conducted  by independent  parties outside \nthe cybersecurity  function  (e.g., Internal  Audit function)  to assess  the compliance \nwith the cybersecurity  controls  in the organization.  Audits and reviews  must be \nconducted  independently,  while ensuring  that this does not result in a conflict  of \n"
+  },
+  "1-8-3": {
+    "control_id": "1-8-3",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Results  from the cybersecurity  audits and reviews  must be documented  and presented \nto the cybersecurity  steering  committee  and Authorizing  Official.  Results  must \ninclude  the audit/review  scope, observations,  recommendations  and remediation \nplans.  \nRelevant  cybersecurity  tools \n• Cybersecurity  Review  Report Template.  \n"
+  },
+  "1-9": {
+    "control_id": "1-9",
+    "objective": "To ensure that cybersecurity  risks and requirements  related to personnel  (employees \nand contractors)  are managed  efficiently  prior to employment,  during employment and  \nafter termination/separation  as per organizational  policies  and procedures,  and related  \nlaws and regulations.",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  in Human  Resources  \n \nObjective  To ensure that cybersecurity  risks and requirements  related to personnel  (employees \nand contractors)  are managed  efficiently  prior to employment,  during employment and  \nafter termination/separation  as per organizational  policies  and procedures,  and related  \nlaws and regulations.  \nControls  \n1-9-1 Personnel cybersecurity requirements (prior to employment, during employment and  \nafter termination/separation)  must be defined,  documented  and approved.  \nRelevant  cybersecurity  tools \n• Human  Resources  Cybersecurity  Policy Template \nControl  implementation  guidelines:  \n"
+  },
+  "1-9-1": {
+    "control_id": "1-9-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Personnel cybersecurity requirements (prior to employment, during employment and  \nafter termination/separation)  must be defined,  documented  and approved.  \nRelevant  cybersecurity  tools \n• Human  Resources  Cybersecurity  Policy Template \nControl  implementation  guidelines:  \n"
+  },
+  "1-9-2": {
+    "control_id": "1-9-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The personnel  cybersecurity  requirements  must be implemented.  \nControl  implementation  guidelines:  \n• Implement  all personnel -related cybersecurity  requirements  that have been \nidentified,  documented  and approved  in the Human  Resources  Cybersecurity \nPolicy \n• Develop  an action plan to implement  cybersecurity  requirements  related to \nthe personnel of  the organization \n• Include  personnel  cybersecurity  requirements  in the organization's  HR \nprocedures  to ensure  compliance  with cybersecurity  requirements  for all \ninternal and external stakeholders \nExpected  deliverables \n• Documents  that confirm  the implementation  of cybersecurity  requirements \nrelated to personnel  as documented  in the HR Cybersecurity  Policy \n• Cybersecurity  Function  Personnel  Contract  Forms (signed  copy) \n"
+  },
+  "1-9-3": {
+    "control_id": "1-9-3",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The personnel  cybersecurity  requirements  prior to employment  must include at least \nthe following:  \n \n1-9-3-1 Inclusion  of personnel  cybersecurity  responsibilities  and non-disclosure \nclauses  (covering  the cybersecurity  requirements  during employment  and \nafter termination/ separation)  in employment contracts.  \nRelevant  cybersecurity  tools \n• Acknowledgment  and confidentiality  templates \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Work with relevant  departments  to include cybersecurity  responsibilities  and \nnon-disclosure  clauses  in the contracts  of employees  in the organization  (to \ncover the periods  during and after the end/termination  of the job relationship \nwith the organization) \n• Include  such requirements  in the organization's  HR procedures  to ensure \ncompliance  with cybersecurity  requirements  for all inte"
+  },
+  "9-3-1": {
+    "control_id": "9-3-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Inclusion  of personnel  cybersecurity  responsibilities  and non-disclosure \nclauses  (covering  the cybersecurity  requirements  during employment  and \nafter termination/ separation)  in employment contracts.  \nRelevant  cybersecurity  tools \n• Acknowledgment  and confidentiality  templates \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Work with relevant  departments  to include cybersecurity  responsibilities  and \nnon-disclosure  clauses  in the contracts  of employees  in the organization  (to \ncover the periods  during and after the end/termination  of the job relationship \nwith the organization) \n• Include  such requirements  in the organization's  HR procedures  to ensure \ncompliance  with cybersecurity  requirements  for all internal  and external \nstakeholders \nExpected  deliverables \n• A document  (such as approved  policy or procedure)  in"
+  },
+  "9-3-2": {
+    "control_id": "9-3-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Screening  or vetting candidates  of cybersecurity  and critical/privileged \npositions.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Work with relevant  departments  to ensure  Screening  or Vetting  of all \nemployees in  cybersecurity functions \n"
+  },
+  "1-9-4": {
+    "control_id": "1-9-4",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The personnel  cybersecurity  requirements  during employment  must include at least \nthe following:  \n1-9-4-1 Cybersecurity  awareness  (during on-boarding  and during employment).  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Work with relevant  departments  to provide  cybersecurity  awareness  at the \nbeginning and during work through the organization's approved \ncommunication  channels \n• Include  such requirements  in the organization's  HR procedures  to ensure \ncompliance  with cybersecurity  requirements  for all internal  and external \nstakeholders \n• Support  the organization's  policy by the Executive  Management  This must be \ndone through  the approval  of the representative  \nExpected  deliverables \n• A document  (such as approved  policy or procedure)  indicating  the \nidentification  and documentation  of the requirements  related to "
+  },
+  "9-4-1": {
+    "control_id": "9-4-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  awareness  (during on-boarding  and during employment).  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Work with relevant  departments  to provide  cybersecurity  awareness  at the \nbeginning and during work through the organization's approved \ncommunication  channels \n• Include  such requirements  in the organization's  HR procedures  to ensure \ncompliance  with cybersecurity  requirements  for all internal  and external \nstakeholders \n• Support  the organization's  policy by the Executive  Management  This must be \ndone through  the approval  of the representative  \nExpected  deliverables \n• A document  (such as approved  policy or procedure)  indicating  the \nidentification  and documentation  of the requirements  related to this control \n"
+  },
+  "9-4-2": {
+    "control_id": "9-4-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Implementation  of and compliance  with the cybersecurity  requirements  \nas per the organizational  cybersecurity  policies  and procedures.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Inform all employees  of the organization  and obtain their approval  on the \ncybersecurity  policies  and procedures,  in order to educate  the organization's \nemployees  of the importance  of their role in implementing  the cybersecurity \nrequirements \n• Include  personnel  cybersecurity  requirements  in the organization's  HR \nprocedures  to ensure  compliance  with cybersecurity  requirements  for all \ninternal and external stakeholders \nExpected  deliverables \n• A document  (such as approved  policy or procedure)  indicating  the \nidentification  and documentation  of the requirements  related to this control.  \n• An acknowledgment  form for approving  cybersec"
+  },
+  "1-9-5": {
+    "control_id": "1-9-5",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Personnel  access  to information  and technology  assets  must be reviewed  and removed \nimmediately upon  termination/separation.  \nControl  implementation  guidelines  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Review access of employees and revoke it immediately after the \nend/termination  of their professional  service at the organization,  which may \ninclude the following \n"
+  },
+  "1-9-6": {
+    "control_id": "1-9-6",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Personnel  cybersecurity  requirements  must be reviewed  periodically.  \nControl  implementation  guidelines \n• Review  and update the cybersecurity  policy and requirements  for personnel \nin the organization  periodically  according  to a documented  and approved \nplan for review and based on a planned interval (e.g., review must  be \nconducted annually)  or in the event of changes in  related laws  and \nregulations  Document the review and changes to the cybersecurity \nrequirements  for personnel  in the organization  and approve  them by the head \nof the organization or his/her deputy  \nExpected  deliverables \n• An approved  document  that sets the policy's  review schedule \n• Policy indicating  that it is up to date and the changes  to the cybersecurity \nrequirements  for personnel  have been documented  and approved  by the head \nof the organization or his/her deputy \n• Formal  approval  by the head of the organization  or his/her  deputy  on the \nupdated  policy (e.g., via the "
+  },
+  "1-10": {
+    "control_id": "1-10",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Cybersecurity  Awareness  and Training  Program  \nObjective  To ensure that personnel  are aware of their cybersecurity  responsibilities  and have \nthe essential  cybersecurity  awareness.  It is also to ensure that personnel  are provided \nwith the required  cybersecurity  training,  skills and credentials  needed  to accomplish  \n"
+  },
+  "1-10-1": {
+    "control_id": "1-10-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "A cybersecurity  awareness  program  must be developed  and approved.  The program \nmust be conducted  periodically  through multiple channels  to strengthen  the \nawareness  about cybersecurity,  cyber threats  and risks, and to build a positive \ncybersecurity  awareness  culture.  \nRelevant  cybersecurity  tools \n• Awareness  program  template.  \n• Awareness  content  template  for all employees.  \n• Awareness  content  form for supervisory  and executive  positions.  \n• Information  and Technology  Assets Operators  Awareness  Content  Form. \nControl  implementation  guidelines:  \n• Develop  and approve  cybersecurity  awareness  program  and plan in the \norganization through  multiple channels periodically,  including but  not \nlimited to \no Awareness  emails.  \no Cybersecurity  awareness  workshops \no Distribution  of awareness  publications \no Awareness  presentation  through  billboards \no Launch  of a cybersecurity  training  and awareness  platform \n• The program  may include "
+  },
+  "1-10-2": {
+    "control_id": "1-10-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The cybersecurity  awareness  program  must be implemented.  \nControl  implementation  guidelines:  \n"
+  },
+  "1-10-3": {
+    "control_id": "1-10-3",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The cybersecurity  awareness  program  must cover the latest cyber threats and how to \nprotect against  them, and must include at least the following  subjects:  \n1-10-3-1 Secure handling  of email services,  especially  phishing  emails. \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Provide  cybersecurity  awareness  programs  that cover the safe handling  of e- \nmail services,  especially  with emails and social engineering \nExpected  deliverables \n• A document  (such as approved  policy or procedure)  indicating  the \nidentification  and documentation  of the requirements  related to this control \n• Action plan to implement  the cybersecurity  awareness  program  adopted  by \nthe organization \n• Evidence  of providing  awareness  content  for the safe handling  of e-mail \nservices,  especially  with phishing  emails \n1-10-3-2 Secure handling  of mob"
+  },
+  "10-3-1": {
+    "control_id": "10-3-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Secure handling  of email services,  especially  phishing  emails. \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Provide  cybersecurity  awareness  programs  that cover the safe handling  of e- \nmail services,  especially  with emails and social engineering \nExpected  deliverables \n• A document  (such as approved  policy or procedure)  indicating  the \nidentification  and documentation  of the requirements  related to this control \n• Action plan to implement  the cybersecurity  awareness  program  adopted  by \nthe organization \n• Evidence  of providing  awareness  content  for the safe handling  of e-mail \nservices,  especially  with phishing  emails \n1-10-3-2 Secure handling  of mobile devices  and storage  media. \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  "
+  },
+  "10-3-2": {
+    "control_id": "10-3-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Secure handling  of mobile devices  and storage  media. \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n"
+  },
+  "10-3-3": {
+    "control_id": "10-3-3",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Secure Internet  browsing.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Provide  cybersecurity  awareness  programs  that cover the safe handling  of \ninternet  browsing  services,  especially  dealing  with suspicious  websites  such as \nphantom  phishing  sites and suspicious  websites  and links \nExpected  deliverables \n• A document  (such as approved  policy or procedure)  indicating  the \nidentification  and documentation  of the requirements  related to this control \n• Action plan to implement  the cybersecurity  awareness  program  adopted  by \nthe organization \n• Evidence  that awareness  content  is provided  for the secure  handling  of \ninternet browsing services \n1-10-3-4 Secure use of social media. \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  an"
+  },
+  "10-3-4": {
+    "control_id": "10-3-4",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Secure use of social media. \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Provide  cybersecurity  awareness  programs  that cover the safe handling  of \nsocial media \nExpected  deliverables \n"
+  },
+  "1-10-4": {
+    "control_id": "1-10-4",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Essential  and customized  (i.e., tailored  to job functions  as it relates to cybersecurity) \ntraining  and access  to professional  skillsets  must be made available  to personnel \nworking directly on  tasks related to  cybersecurity including:  \n1-10-4-1  \n \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Develop and  implement an  approved  cybersecurity training plan  for \nemployees  of the cybersecurity  function  in coordination  with the training \ndepartment in  the organization, which may include the  following \no Implement  the cybersecurity  training  plan for the organization  in \ncoordination  with the Training  and Employee  Development \nDepartment \no Assist in the establishment  of cybersecurity  career paths to allow career \nprogression,  deliberate  development,  and growth within and between \ncybersecurity career fields \no Support  in ad"
+  },
+  "10-4-1": {
+    "control_id": "10-4-1",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Control  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Develop and  implement an  approved  cybersecurity training plan  for \nemployees  of the cybersecurity  function  in coordination  with the training \ndepartment in  the organization, which may include the  following \no Implement  the cybersecurity  training  plan for the organization  in \ncoordination  with the Training  and Employee  Development \nDepartment \no Assist in the establishment  of cybersecurity  career paths to allow career \nprogression,  deliberate  development,  and growth within and between \ncybersecurity career fields \no Support  in advocating  for adequate  funding  for cybersecurity  training \nresources,  to include  both internal  and industry -provided  courses, \ninstructors, and  related  materials \nExpected  deliverables \n• A document  (such as approved  policy or procedure)  indicating"
+  },
+  "10-4-2": {
+    "control_id": "10-4-2",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Personnel  working  on software/application  development.  and \ninformation  and technology  assets operations.  \nControl  implementation  guidelines:  \n"
+  },
+  "10-4-3": {
+    "control_id": "10-4-3",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "Executive  and supervisory  positions.  \nControl  implementation  guidelines:  \n• Define and document  the requirements  of this ECC in the cybersecurity \nrequirements  document  and approve  them by the representative \n• Develop and  implement an  approved  cybersecurity training plan  for \nemployees  of the cybersecurity  Supervisory  and executive  functions  in \ncoordination  with the training  department  in the organization,  which may \ninclude the following \n"
+  },
+  "1-10-5": {
+    "control_id": "1-10-5",
+    "objective": "",
+    "implementation_guidelines": "",
+    "expected_deliverables": "",
+    "full_text": "The implementation  of the cybersecurity  awareness  program  must be reviewed \nperiodically.  \n Control  implementation  guidelines:  \n • Review  the cybersecurity  requirements  of cybersecurity  awareness  and \ntraining  programs  by conducting  a periodic  assessment  (according  to a \ndocumented  and approved  plan for review and based on a planned  interval \n(e.g., quarterly))  to implement  awareness  and training  plans by the \nCybersecurity  function  and in cooperation  with relevant  departments  (such as \nthe Awareness  and Training  Department) \n • Conduct  application  review through  traditional  channels  (e.g., email) or \nautomated channels using a compliance management system  The \norganization  may develop a  review  plan explaining the cybersecurity \nrequirements  implementation  review schedule  for cybersecurity  awareness \nand training  programs \n Expected  deliverables \n"
+  }
+}
