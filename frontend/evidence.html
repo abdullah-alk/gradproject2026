@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evidence Repository - CyberGuard GRC</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .filters-bar{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:20px;margin-bottom:24px;display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:16px;align-items:end;}
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div class="logo-text"><h1>CyberGuard</h1><p>GRC Platform v3.2</p></div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item "><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="dashboard.html" class="nav-item "><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+                <a href="evidence.html" class="nav-item active"><i class="fas fa-folder-open"></i><span>Evidence</span></a>
+                <a href="chatbot.html" class="nav-item "><i class="fas fa-robot"></i><span>ECC Chatbot</span></a>
+                <a href="scheduler.html" class="nav-item "><i class="fas fa-calendar-alt"></i><span>Audit Scheduler</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="user-initials">?</div>
+                    <div class="user-info">
+                        <h4 id="user-name">Loading...</h4>
+                        <p id="user-role">User</p>
+                    </div>
+                    <button onclick="logout()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:auto" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+        </aside>
+        <main class="main-content">
+            <div class="content-wrapper">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px">
+                    <div>
+                        <h1 style="font-size:32px;font-weight:700">Evidence Repository</h1>
+                        <p style="color:var(--text-muted)">Audit findings and compliance artifacts linked to ECC-2023 controls</p>
+                    </div>
+                    <a href="chatbot.html" class="btn btn-primary" style="text-decoration:none"><i class="fas fa-robot"></i> New Audit</a>
+                </div>
+                <div class="filters-bar">
+                    <div class="form-group" style="margin:0"><label class="form-label">Search</label><input type="text" id="search-input" class="form-input" placeholder="Control ID or file name..."></div>
+                    <div class="form-group" style="margin:0"><label class="form-label">ECC Domain</label>
+                        <select id="domain-filter" class="form-select">
+                            <option value="all">All Domains</option>
+                            <option value="Governance">1. Governance</option>
+                            <option value="Risk">2. Risk Management</option>
+                            <option value="Assets">3. Asset Management</option>
+                            <option value="Operations">4. Operations</option>
+                            <option value="Network">5. Network Hardening</option>
+                            <option value="Identity">6. Identity & Access</option>
+                            <option value="Data">7. Data Protection</option>
+                            <option value="Vulnerability">8. Vulnerability Mgmt</option>
+                            <option value="Incident">9. Incident Defense</option>
+                            <option value="Physical">10. Physical Security</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0"><label class="form-label">Status</label>
+                        <select id="status-filter" class="form-select">
+                            <option value="all">All Status</option>
+                            <option value="compliant">Compliant</option>
+                            <option value="partial">Partial</option>
+                            <option value="non-compliant">Non-Compliant</option>
+                        </select>
+                    </div>
+                    <button onclick="loadEvidenceList()" class="btn btn-secondary"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <div class="card" style="padding:0;overflow:hidden">
+                    <table style="width:100%;border-collapse:collapse">
+                        <thead style="background:var(--bg-secondary)">
+                            <tr>
+                                <th style="padding:16px;text-align:left;font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Control ID</th>
+                                <th style="padding:16px;text-align:left;font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Evidence Name</th>
+                                <th style="padding:16px;text-align:left;font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Status</th>
+                                <th style="padding:16px;text-align:left;font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Date</th>
+                                <th style="padding:16px;text-align:left;font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Source</th>
+                                <th style="padding:16px;text-align:right;font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="evidence-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="loader" class="loader"><div class="spinner"></div></div>
+    <script src="js/api.js"></script>
+    <script src="js/evidence.js"></script>
+</body>
+</html>

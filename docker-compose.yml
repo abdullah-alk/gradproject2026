@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ecc_postgres
+    environment:
+      POSTGRES_DB: ecc_compliance
+      POSTGRES_USER: ecc_user
+      POSTGRES_PASSWORD: your_secure_password_here
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - ecc_network
+
+  backend:
+    build: ./backend
+    container_name: ecc_backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./backend:/app
+      - ./backend/data:/app/data
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://ecc_user:post123@postgres:5432/ecc_compliance
+      SECRET_KEY: 8844c68d5e56560bfa4c71294b49ceb6fc88e339c9741a12ed79e080c5eaac18
+      MISTRAL_API_KEY: SRIbGRYmdljDaVehUi7o4FbU3QSDC051
+    depends_on:
+      - postgres
+    networks:
+      - ecc_network
+
+  frontend:
+    image: nginx:alpine
+    container_name: ecc_frontend
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    networks:
+      - ecc_network
+
+volumes:
+  postgres_data:
+
+networks:
+  ecc_network:
+    driver: bridge
