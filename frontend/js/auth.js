@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://gradproject-backend-sdwr.onrender.com';
+const API_BASE_URL = 'https://gradproject-backend-xnn0.onrender.com';
 
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('login-form');
