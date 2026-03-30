@@ -25,6 +25,7 @@ async function handleLogin(e) {
             body: formData
         });
         const result = await res.json();
+
         if (res.ok) {
             localStorage.setItem('authToken', result.access_token);
             localStorage.setItem('userInfo', JSON.stringify(result.user));
