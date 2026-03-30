@@ -1,7 +1,7 @@
 // ===================================================
 // CyberGuard GRC - Unified API Layer v5
 // ===================================================
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL = 'https://gradproject-backend-sdwr.onrender.com';
 let authToken = localStorage.getItem('authToken');
 
 async function apiRequest(endpoint, options = {}) {
