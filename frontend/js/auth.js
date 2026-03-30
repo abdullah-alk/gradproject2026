@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function handleLogin(e) {
     e.preventDefault();
-
     const formData = new FormData();
     formData.append('username', document.getElementById('username').value.trim());
     formData.append('password', document.getElementById('password').value);
@@ -25,9 +24,7 @@ async function handleLogin(e) {
             method: 'POST',
             body: formData
         });
-
         const result = await res.json();
-
         if (res.ok) {
             localStorage.setItem('authToken', result.access_token);
             localStorage.setItem('userInfo', JSON.stringify(result.user));
@@ -44,7 +41,6 @@ async function handleLogin(e) {
 
 async function handleRegister(e) {
     e.preventDefault();
-
     const payload = {
         full_name: document.getElementById('full_name').value.trim(),
         username: document.getElementById('username').value.trim(),
