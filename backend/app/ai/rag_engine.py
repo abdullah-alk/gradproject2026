@@ -18,16 +18,11 @@ from app.ai.prompts import (
     RECOMMENDATIONS_PROMPT
 )
 
-class RAGEngine:
-    def __init__(self):
-        load_dotenv(override=True)
+from langchain_huggingface import HuggingFaceEmbeddings
 
-        # 1. Initialize Embeddings
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name=settings.EMBEDDING_MODEL,
-            model_kwargs={'device': 'cpu'},
-            encode_kwargs={'normalize_embeddings': True}
-        )
+self.embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 
         # 2. Setup AI Model
         api_key = os.getenv("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")
