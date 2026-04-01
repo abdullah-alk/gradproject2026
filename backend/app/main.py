@@ -243,25 +243,21 @@ async def update_control_status(control_id: str, data: dict = Body(...)):
 # --- 8. مسارات الـ AI - توليد الأسئلة والتوصيات (UPDATED) ---
 
 @app.post("/api/ai/generate-questions")
-def generate_questions(control_id: int):
+async def generate_questions(data: dict = Body(...)):
     try:
-        engine = get_rag_engine()  # 🔥 THIS IS THE FIX
+        engine = get_rag_engine()
 
-        questions = engine.generate_questions(control_id)
+        control_id = data.get("control_id")
+        mode = data.get("mode", "audit")
 
-        return {"questions": questions}
+        if not control_id:
+            raise HTTPException(status_code=400, detail="control_id is required")
 
-    except Exception as e:
-        print(f"[❌] AI ERROR: {e}")
-        raise HTTPException(status_code=500, detail="AI failed")
-
-    print(f"[🤖] Generating 10 {mode} questions for control: {control_id}")
-
-    raw_response = rag_engine.process_request(
-        control_id=control_id,
-        query="",
-        mode=mode
-    )
+        raw_response = engine.process_request(
+            control_id=control_id,
+            query="",
+            mode=mode
+        )
 
     # تفكيك JSON من الرد
     try:
