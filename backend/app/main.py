@@ -244,6 +244,9 @@ async def update_control_status(control_id: str, data: dict = Body(...)):
 
 from fastapi import Body, HTTPException
 
+from fastapi import Body, HTTPException
+import json
+
 @app.post("/api/ai/generate-questions")
 async def generate_questions(data: dict = Body(...)):
     try:
@@ -272,17 +275,12 @@ async def generate_questions(data: dict = Body(...)):
 
         return {
             "questions": [],
-            "raw_response": raw_response[:500],
-            "error": "AI response was not in expected JSON format"
+            "error": "AI response not valid JSON"
         }
 
     except HTTPException:
         raise
-    except json.JSONDecodeError as e:
-        return {
-            "questions": [],
-            "error": f"Could not parse AI response: {str(e)}"
-        }
+
     except Exception as e:
         print(f"[❌] AI ERROR: {e}")
         raise HTTPException(status_code=500, detail=str(e))
