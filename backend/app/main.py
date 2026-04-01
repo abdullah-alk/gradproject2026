@@ -243,19 +243,17 @@ async def update_control_status(control_id: str, data: dict = Body(...)):
 # --- 8. مسارات الـ AI - توليد الأسئلة والتوصيات (UPDATED) ---
 
 @app.post("/api/ai/generate-questions")
-async def generate_questions(data: dict = Body(...)):
-    """
-    يولد 10 أسئلة تدقيق أو guide من RAG بناءً على الضابط المختار
-    mode: 'audit' | 'guide'
-    """
-    if not rag_engine:
-        raise HTTPException(status_code=500, detail="AI Engine is offline. Please contact administrator.")
+def generate_questions(control_id: int):
+    try:
+        engine = get_rag_engine()  # 🔥 THIS IS THE FIX
 
-    control_id = data.get("control_id")
-    mode = data.get("mode", "audit")
+        questions = engine.generate_questions(control_id)
 
-    if not control_id:
-        raise HTTPException(status_code=400, detail="control_id is required")
+        return {"questions": questions}
+
+    except Exception as e:
+        print(f"[❌] AI ERROR: {e}")
+        raise HTTPException(status_code=500, detail="AI failed")
 
     print(f"[🤖] Generating 10 {mode} questions for control: {control_id}")
 
