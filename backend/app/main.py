@@ -242,6 +242,8 @@ async def update_control_status(control_id: str, data: dict = Body(...)):
 
 # --- 8. مسارات الـ AI - توليد الأسئلة والتوصيات (UPDATED) ---
 
+from fastapi import Body, HTTPException
+
 @app.post("/api/ai/generate-questions")
 async def generate_questions(data: dict = Body(...)):
     try:
@@ -258,6 +260,32 @@ async def generate_questions(data: dict = Body(...)):
             query="",
             mode=mode
         )
+
+        clean = raw_response.strip()
+        start = clean.find('[')
+        end = clean.rfind(']') + 1
+
+        if start != -1 and end > start:
+            json_str = clean[start:end]
+            questions = json.loads(json_str)
+            return {"questions": questions}
+
+        return {
+            "questions": [],
+            "raw_response": raw_response[:500],
+            "error": "AI response was not in expected JSON format"
+        }
+
+    except HTTPException:
+        raise
+    except json.JSONDecodeError as e:
+        return {
+            "questions": [],
+            "error": f"Could not parse AI response: {str(e)}"
+        }
+    except Exception as e:
+        print(f"[❌] AI ERROR: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
     # تفكيك JSON من الرد
     try:
