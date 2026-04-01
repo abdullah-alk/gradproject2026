@@ -22,8 +22,14 @@ try:
     print("\n" + "="*50)
     print("[🚀] INITIALIZING CYBERGUARD AI ENGINE...")
     print("[⚙️] Connecting to Groq Cloud...")
-    from app.ai.rag_engine import RAGEngine
-    rag_engine = RAGEngine()
+    rag_engine = None
+
+    def get_rag_engine():
+        global rag_engine
+        if rag_engine is None:
+            from app.ai.rag_engine import RAGEngine
+            rag_engine = RAGEngine()
+        return rag_engine
     print("[✅] AI ENGINE IS ONLINE AND READY!")
     print("="*50 + "\n")
 except Exception as e:
