@@ -64,7 +64,7 @@ class RAGEngine:
             print("⏳ Building Vectorstore automatically now...")
             # 🚨 IMPORTANT: Ensure this file path matches your actual JSON file location!
             # If your JSON is in a folder, it might need to be "app/data/ecc_controls.json"
-            self.load_ecc_data("ecc_controls.json")
+            self.load_ecc_data("data/ecc_controls.json")
 
     def process_request(self, control_id: str, query: str = "", mode: str = "guidance") -> str:
         if not self.llm:
