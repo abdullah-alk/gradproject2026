@@ -30,7 +30,7 @@ class RAGEngine:
         )
 
         # 2. Setup AI Model
-        api_key = os.getenv("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")
+        api_key = os.getenv("GROQ_API_KEY")
         if api_key and api_key.startswith("gsk_"):
             self.llm = ChatGroq(
                 model_name="llama-3.3-70b-versatile",
