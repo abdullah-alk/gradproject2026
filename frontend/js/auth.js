@@ -1,5 +1,5 @@
 // CyberGuard - Auth Logic v4
-const API_BASE_URL = 'https://gradproject2026-production-821d.up.railway.app';
+const API_BASE_URL = 'https://gradproject2026-production-821d.up.railway.app/api';
 
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
