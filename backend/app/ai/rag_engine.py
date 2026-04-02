@@ -103,12 +103,18 @@ class RAGEngine:
         if not self.vectorstore:
             return ""
         try:
+            # --- ADD THESE TWO DEBUG LINES ---
+            print(f"[🔍] Frontend is asking for Control ID: '{control_id}'")
+            print(f"[📊] Total documents currently inside ChromaDB: {self.vectorstore._collection.count()}")
+            # ---------------------------------
+
             results = self.vectorstore.similarity_search(
                 f"Technical requirements, implementation guidelines, and deliverables for ECC control {control_id}",
                 k=k,
                 filter={"control_id": control_id}
             )
             if not results:
+                print(f"[⚠️] No context found for control {control_id}") # It's probably failing here!
                 return ""
             return "\n\n---\n\n".join([doc.page_content for doc in results])
         except Exception as e:
