@@ -1,7 +1,7 @@
 // ===================================================
 // CyberGuard GRC - Unified API Layer v5
 // ===================================================
-const API_BASE_URL = 'gradproject2026-production-821d.up.railway.app';
+const API_BASE_URL = 'https://gradproject2026-production-821d.up.railway.app';
 let authToken = localStorage.getItem('authToken');
 
 async function apiRequest(endpoint, options = {}) {
