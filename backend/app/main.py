@@ -6,6 +6,28 @@ from psycopg2.extras import RealDictCursor
 import os, shutil, uuid, json, re
 from datetime import datetime, timedelta
 
+from contextlib import asynccontextmanager
+
+# This tells FastAPI to run this specific code the moment the server turns on
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("🚀 CyberGuard Server Starting Up...")
+    try:
+        # This initializes the RAG Engine. 
+        # If ChromaDB is missing, the new logic in rag_engine.py will build it now!
+        engine = get_rag_engine()
+        print("✅ AI Engine initialized successfully on startup.")
+    except Exception as e:
+        print(f"❌ Failed to initialize AI Engine on startup: {e}")
+    
+    yield # Server is now running and accepting traffic
+    
+    print("🛑 CyberGuard Server Shutting Down...")
+
+# Tell your app to use the lifespan logic
+app = FastAPI(title="CyberGuard GRC Platform", lifespan=lifespan)
+
+
 app = FastAPI(title="CyberGuard GRC - Production Ready")
 
 # --- 1. إعدادات CORS ---
