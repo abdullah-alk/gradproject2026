@@ -18,3 +18,4 @@ mistralai
 python-dotenv
 bcrypt
 langchain_groq
+pyjwt
