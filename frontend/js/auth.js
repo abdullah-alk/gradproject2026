@@ -20,7 +20,7 @@ async function handleLogin(e) {
     formData.append('password', document.getElementById('password').value);
 
     try {
-        const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        const res = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             body: formData
         });
@@ -50,7 +50,7 @@ async function handleRegister(e) {
     };
 
     try {
-        const res = await fetch(`${API_BASE_URL}/api/register`, {
+        const res = await fetch(`${API_BASE_URL}/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
