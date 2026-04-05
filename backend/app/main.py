@@ -413,11 +413,14 @@ async def save_compliance_score(data: dict = Body(...), current_user: dict = Dep
 async def get_stats(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cur = conn.cursor()
-    user_id = current_user['id']
+    user_id = current_user['id'] # 🚨 GRAB THE LOGGED-IN USER'S ID
+    
     try:
+        # 1. Get total level 1 controls FOR THIS USER ONLY
         cur.execute("SELECT COUNT(*) as total FROM ecc_controls WHERE level = 1 AND user_id = %s", (user_id,))
-        total = cur.fetchone()['total'] or 10 
+        total = cur.fetchone()['total'] or 0 
         
+        # 2. Get counts by status FOR THIS USER ONLY
         cur.execute("SELECT COUNT(*) as count FROM ecc_controls WHERE status = 'Non-Compliant' AND level = 1 AND user_id = %s", (user_id,))
         non_compliant = cur.fetchone()['count'] or 0
         
@@ -427,44 +430,73 @@ async def get_stats(current_user: dict = Depends(get_current_user)):
         cur.execute("SELECT COUNT(*) as count FROM ecc_controls WHERE status = 'Compliant' AND level = 1 AND user_id = %s", (user_id,))
         compliant = cur.fetchone()['count'] or 0
 
-        score = round(((compliant + partial * 0.5) / total * 100), 1) if total > 0 else 0.0
-        audited = compliant + non_compliant + partial
-        audit_progress = round((audited / total * 100)) if total > 0 else 0
+        # Calculate compliance score mathematically
+        if total > 0:
+            score = round(((compliant + partial * 0.5) / total * 100), 1)
+            # Calculate audit progress
+            audited = compliant + non_compliant + partial
+            audit_progress = round((audited / total * 100))
+        else:
+            # If total is 0, the user has no controls assigned to them!
+            score = 0.0
+            audited = 0
+            audit_progress = 0
 
+        # Get control statuses for the heatmap/list
         cur.execute("SELECT control_id, status FROM ecc_controls WHERE level = 1 AND user_id = %s ORDER BY control_id", (user_id,))
         control_statuses = cur.fetchall()
 
+        # Get next scheduled audit for THIS user
         cur.execute("""
             SELECT scheduled_next_audit FROM audit_sessions
             WHERE user_id = %s AND scheduled_next_audit IS NOT NULL AND scheduled_next_audit > NOW()
             ORDER BY scheduled_next_audit ASC LIMIT 1
         """, (user_id,))
         next_audit = cur.fetchone()
-        next_audit_date = next_audit['scheduled_next_audit'].isoformat() if next_audit and next_audit['scheduled_next_audit'] else (datetime.now() + timedelta(days=30)).isoformat()
+        
+        if next_audit and next_audit['scheduled_next_audit']:
+            next_audit_date = next_audit['scheduled_next_audit'].isoformat()
+        else:
+            next_audit_date = (datetime.now() + timedelta(days=30)).isoformat()
 
-        return {
-            "compliance_score": score, "total_controls": total, "critical_gaps": non_compliant,
-            "partial_controls": partial, "compliant_controls": compliant, "audit_progress": audit_progress,
-            "audited_controls": audited, "next_audit_date": next_audit_date,
+        result = {
+            "compliance_score": score,
+            "total_controls": total,
+            "critical_gaps": non_compliant,
+            "partial_controls": partial,
+            "compliant_controls": compliant,
+            "audit_progress": audit_progress,
+            "audited_controls": audited,
+            "next_audit_date": next_audit_date,
             "control_statuses": [dict(cs) for cs in control_statuses]
         }
+        
+        print(f"[📊] Dashboard loaded for User {user_id}: Score={score}%, Progress={audit_progress}%")
+        return result
+        
     finally:
         cur.close()
         conn.close()
+
 
 @app.get("/api/dashboard/domain-scores")
 async def get_domain_scores(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cur = conn.cursor()
+    user_id = current_user['id']
+    
     try:
+        # Group by domain, but ONLY for this specific user
         cur.execute("""
             SELECT domain, COUNT(*) as total,
                    SUM(CASE WHEN status = 'Compliant' THEN 1 ELSE 0 END) as compliant,
                    SUM(CASE WHEN status = 'Partial' THEN 0.5 ELSE 0 END) as partial_score,
                    SUM(CASE WHEN status = 'Non-Compliant' THEN 1 ELSE 0 END) as non_compliant
-            FROM ecc_controls WHERE level = 1 AND user_id = %s
+            FROM ecc_controls 
+            WHERE level = 1 AND user_id = %s
             GROUP BY domain ORDER BY domain
-        """, (current_user['id'],))
+        """, (user_id,))
+        
         domains = cur.fetchall()
         result = []
         for d in domains:
@@ -479,19 +511,23 @@ async def get_domain_scores(current_user: dict = Depends(get_current_user)):
         cur.close()
         conn.close()
 
+
 @app.get("/api/dashboard/category-scores")
 async def get_category_scores(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cur = conn.cursor()
+    user_id = current_user['id']
+    
     try:
         cur.execute("""
             SELECT domain as category,
                    ROUND(AVG(CASE WHEN status='Compliant' THEN 100 
                                   WHEN status='Partial' THEN 50 
                                   ELSE 0 END), 1) as score
-            FROM ecc_controls WHERE level = 1 AND user_id = %s
+            FROM ecc_controls 
+            WHERE level = 1 AND user_id = %s
             GROUP BY domain ORDER BY domain
-        """, (current_user['id'],))
+        """, (user_id,))
         return cur.fetchall()
     finally:
         cur.close()
