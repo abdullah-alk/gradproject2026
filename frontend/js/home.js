@@ -35,7 +35,10 @@ async function loadCyberAlerts() {
     try {
         // NVD API - latest CRITICAL/HIGH CVEs (no API key needed)
         const url = 'https://services.nvd.nist.gov/rest/json/cves/2.0?cvssV3Severity=CRITICAL&resultsPerPage=6&startIndex=0';
-        const res = await fetch(url);
+        const controller = new AbortController();
+        const _t = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(_t);
 
         if (!res.ok) throw new Error('NVD API error');
         const data = await res.json();
