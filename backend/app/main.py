@@ -563,7 +563,8 @@ async def get_evidence(domain: str = None, status: str = None, current_user: dic
     cur = conn.cursor()
     try:
         query = """
-            SELECT e.id, e.control_id, e.title, e.file_path, e.status, e.created_at,
+            SELECT e.id, e.control_id, e.session_id, e.title, e.file_path, 
+                   e.status, e.created_at, e.description, e.evidence_type,
                    ec.control_id as control_code, ec.domain, ec.title as control_name
             FROM evidence e 
             LEFT JOIN ecc_controls ec ON e.control_id = ec.id 
@@ -577,7 +578,6 @@ async def get_evidence(domain: str = None, status: str = None, current_user: dic
             query += " AND e.status = %s"
             params.append(status)
         query += " ORDER BY e.created_at DESC"
-        
         cur.execute(query, params)
         return cur.fetchall()
     finally:
@@ -615,7 +615,7 @@ async def save_audit_evidence(data: dict = Body(...), current_user: dict = Depen
     finally:
         cur.close()
         conn.close()
-        
+
 # --- 13. مسارات الثغرات والتوصيات ---
 @app.post("/api/gaps/save")
 async def save_gap(data: dict = Body(...), current_user: dict = Depends(get_current_user)):
