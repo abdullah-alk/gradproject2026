@@ -1,5 +1,5 @@
-// CyberGuard ECC Chatbot v6 - PRODUCTION READY
-// ✅ 10 Questions | ✅ English Only | ✅ No Announcements | ✅ Full DB Sync
+// CyberGuard ECC Chatbot v7 - WITH EVIDENCE SAVING
+// Saves completed audit sessions to evidence DB for review in evidence.html
 
 let currentMode='audit',currentControlId=null,currentControlDbId=null,currentQuestions=[],currentQuestionIndex=0,selectedControlInfo=null,currentSessionId=null,auditAnswers=[];
 
@@ -100,8 +100,60 @@ async function finishAudit(){
   const score=total>0?Math.round(((yes+partial*0.5)/total)*100):0;
   const status=score>=80?'Compliant':score>=40?'Partial':'Non-Compliant';
   const color=score>=80?'#10b981':score>=40?'#f59e0b':'#ef4444';
-  appendMsg('ai',`<div style="border:1px solid ${color}30;border-radius:12px;padding:24px;background:${color}08"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><strong style="font-size:16px">Audit Complete — ${currentControlId}</strong><span style="font-size:36px;font-weight:800;color:${color}">${score}%</span></div><div style="width:100%;height:10px;background:rgba(255,255,255,0.08);border-radius:5px;overflow:hidden;margin-bottom:20px"><div style="height:100%;width:${score}%;background:${color};border-radius:5px;transition:width 1.2s ease"></div></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"><div style="text-align:center;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:14px"><div style="font-size:28px;font-weight:800;color:#10b981">${yes}</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">YES</div></div><div style="text-align:center;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:14px"><div style="font-size:28px;font-weight:800;color:#f59e0b">${partial}</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">PARTIAL</div></div><div style="text-align:center;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:14px"><div style="font-size:28px;font-weight:800;color:#ef4444">${no}</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">NO</div></div></div><div style="text-align:center;margin-bottom:${no>0||partial>0?'16px':'0'}"><span style="background:${color}18;border:1.5px solid ${color};color:${color};padding:8px 24px;border-radius:24px;font-size:14px;font-weight:700;text-transform:uppercase">${status}</span></div>${no>0||partial>0?`<a href="evidence.html?control=${currentControlId}&status=${status}&score=${score}" style="display:block;text-align:center;background:rgba(6,182,212,0.1);border:1px solid var(--accent-primary);color:var(--accent-primary);padding:12px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600"><i class="fas fa-folder-open" style="margin-right:6px"></i>View Evidence</a>`:''}</div>`);
+  appendMsg('ai',`<div style="border:1px solid ${color}30;border-radius:12px;padding:24px;background:${color}08"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><strong style="font-size:16px">Audit Complete — ${currentControlId}</strong><span style="font-size:36px;font-weight:800;color:${color}">${score}%</span></div><div style="width:100%;height:10px;background:rgba(255,255,255,0.08);border-radius:5px;overflow:hidden;margin-bottom:20px"><div style="height:100%;width:${score}%;background:${color};border-radius:5px;transition:width 1.2s ease"></div></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"><div style="text-align:center;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:14px"><div style="font-size:28px;font-weight:800;color:#10b981">${yes}</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">YES</div></div><div style="text-align:center;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:14px"><div style="font-size:28px;font-weight:800;color:#f59e0b">${partial}</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">PARTIAL</div></div><div style="text-align:center;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:14px"><div style="font-size:28px;font-weight:800;color:#ef4444">${no}</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">NO</div></div></div><div style="text-align:center;margin-bottom:16px"><span style="background:${color}18;border:1.5px solid ${color};color:${color};padding:8px 24px;border-radius:24px;font-size:14px;font-weight:700;text-transform:uppercase">${status}</span></div><a href="evidence.html?control=${currentControlId}&status=${status}&score=${score}" style="display:block;text-align:center;background:rgba(6,182,212,0.1);border:1px solid var(--accent-primary);color:var(--accent-primary);padding:12px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600"><i class="fas fa-folder-open" style="margin-right:6px"></i>View in Evidence Repository</a></div>`);
   await saveProgress(currentControlId,status,score,yes,partial,no,total);
+
+  // ✅ SAVE AUDIT SESSION TO EVIDENCE DB
+  await saveAuditToEvidence(currentControlId, selectedControlInfo?.title||currentControlId, status, score, auditAnswers, currentSessionId, currentControlDbId);
+}
+
+// ===================================
+// SAVE AUDIT TO EVIDENCE DATABASE
+// ===================================
+async function saveAuditToEvidence(controlId, controlTitle, status, score, answers, sessionId, controlDbId){
+  try{
+    // Build a readable audit transcript
+    const transcript = answers.map((a,i)=>{
+      const icon = a.answer==='yes'?'✅':a.answer==='partial'?'⚠️':'❌';
+      return `Q${i+1}: ${a.question}\nAnswer: ${icon} ${a.answer.toUpperCase()}${a.evidence?'\nEvidence required: '+a.evidence:''}`;
+    }).join('\n\n');
+
+    const summary = `AUDIT REPORT — Control ${controlId}: ${controlTitle}\nDate: ${new Date().toLocaleString()}\nFinal Status: ${status}\nCompliance Score: ${score}%\n\nSession ID: ${sessionId||'N/A'}\n\n${'='.repeat(50)}\nQUESTIONS & ANSWERS\n${'='.repeat(50)}\n\n${transcript}`;
+
+    // Save as evidence record via API
+    await apiRequest('/evidence/save-audit', {
+      method: 'POST',
+      body: JSON.stringify({
+        control_id: controlDbId,
+        session_id: sessionId,
+        title: `Audit Report — ${controlId}: ${controlTitle}`,
+        description: summary,
+        status: status,
+        score: score,
+        answers: answers,
+        evidence_type: 'audit_session'
+      })
+    });
+
+    console.log(`[✅] Audit saved to evidence DB for ${controlId}`);
+  } catch(e){
+    // Fallback: save to localStorage so evidence.html can still show it
+    console.warn('[⚠️] Could not save to evidence API, saving locally:', e);
+    const key = `audit_session_${controlId}_${Date.now()}`;
+    const sessions = JSON.parse(localStorage.getItem('audit_sessions_log')||'[]');
+    sessions.unshift({
+      id: key,
+      control_id: controlId,
+      control_title: controlTitle,
+      status,
+      score,
+      answers,
+      session_id: sessionId,
+      created_at: new Date().toISOString()
+    });
+    // Keep last 50 sessions
+    localStorage.setItem('audit_sessions_log', JSON.stringify(sessions.slice(0,50)));
+  }
 }
 
 async function startGuideMode(ctrl){

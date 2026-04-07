@@ -584,6 +584,38 @@ async def get_evidence(domain: str = None, status: str = None, current_user: dic
         cur.close()
         conn.close()
 
+@app.post("/api/evidence/save-audit")
+async def save_audit_evidence(data: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        control_db_id = data.get('control_id')
+        session_id = data.get('session_id')
+        title = data.get('title', 'Audit Report')
+        description = json.dumps(data.get('answers', []))  # Store answers as JSON string
+        status = data.get('status', 'Pending')
+        score = data.get('score')
+        evidence_type = data.get('evidence_type', 'audit_session')
+ 
+        cur.execute("""
+            INSERT INTO evidence 
+            (control_id, session_id, user_id, evidence_type, title, description, status, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+            RETURNING id
+        """, (control_db_id, session_id, current_user['id'], evidence_type, title, description, status))
+ 
+        evidence = cur.fetchone()
+        conn.commit()
+        print(f"[📁] Audit saved to evidence: {title} (user={current_user['id']})")
+        return {"message": "Audit saved to evidence", "evidence_id": evidence['id']}
+    except Exception as e:
+        conn.rollback()
+        print(f"[❌] Save Audit Evidence Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+        
 # --- 13. مسارات الثغرات والتوصيات ---
 @app.post("/api/gaps/save")
 async def save_gap(data: dict = Body(...), current_user: dict = Depends(get_current_user)):
