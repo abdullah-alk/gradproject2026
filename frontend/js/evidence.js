@@ -254,12 +254,20 @@ function parseAnswersFromDescription(desc) {
   let currentQ = null;
   lines.forEach(line => {
     const qMatch = line.match(/^Q\d+:\s+(.+)/);
-    const aMatch = line.match(/^Answer:\s+[✅⚠️❌]?\s*(\w+)/i);
+    const aMatch = line.match(/^Answer:\s+(?:[✅⚠️❌]\uFE0F?\s*)?([a-z-]+)/i);
     const evMatch = line.match(/^Evidence required:\s+(.+)/i);
-    if (qMatch) currentQ = { question: qMatch[1], answer: '', evidence: '' };
-    else if (aMatch && currentQ) { currentQ.answer = aMatch[1].toLowerCase(); answers.push(currentQ); currentQ = null; }
-    else if (evMatch && currentQ) currentQ.evidence = evMatch[1];
+
+    if (qMatch) {
+      if (currentQ && currentQ.answer) answers.push(currentQ);
+      currentQ = { question: qMatch[1], answer: '', evidence: '' };
+    } else if (aMatch && currentQ) {
+      currentQ.answer = aMatch[1].toLowerCase();
+    } else if (evMatch && currentQ) {
+      currentQ.evidence = evMatch[1];
+    }
   });
+
+  if (currentQ && currentQ.answer) answers.push(currentQ);
   return answers;
 }
 
