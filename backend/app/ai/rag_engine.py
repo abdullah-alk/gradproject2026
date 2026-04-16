@@ -6,7 +6,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
-#from langchain_groq import ChatGroq
+from langchain_groq import ChatGroq
 from app.config import settings
 
 # استيراد البرومبتات المحسنة
@@ -29,7 +29,7 @@ class RAGEngine:
             encode_kwargs={'normalize_embeddings': True}
         )
         # 2. Setup AI Model
-       """
+   
         api_key = os.getenv("GROQ_API_KEY")
         if api_key and api_key.startswith("gsk_"):
             self.llm = ChatGroq(
@@ -41,7 +41,7 @@ class RAGEngine:
         else:
             print("❌ AI Engine Error: Valid Groq API Key missing")
             self.llm = None
-        """
+    
         # 3. Setup Text Splitter
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1200,
