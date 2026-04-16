@@ -6,7 +6,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
-from langchain_groq import ChatGroq
+#📍from langchain_groq import ChatGroq
 from app.config import settings
 
 # استيراد البرومبتات المحسنة
@@ -28,7 +28,7 @@ class RAGEngine:
             model_kwargs={'device': 'cpu'},
             encode_kwargs={'normalize_embeddings': True}
         )
-
+"""{📍No need for AI model here, only in the RAG service file} 
         # 2. Setup AI Model
         api_key = os.getenv("GROQ_API_KEY")
         if api_key and api_key.startswith("gsk_"):
@@ -41,7 +41,7 @@ class RAGEngine:
         else:
             print("❌ AI Engine Error: Valid Groq API Key missing")
             self.llm = None
-
+"""
         # 3. Setup Text Splitter
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1200,
@@ -67,9 +67,10 @@ class RAGEngine:
             self.load_ecc_data("data/ecc_controls.json")
 
     def process_request(self, control_id: str, query: str = "", mode: str = "guidance") -> str:
+       """📍
         if not self.llm:
             return "AI Service is not configured properly. Please check GROQ_API_KEY."
-
+        """
         # Retrieve relevant context from vectorstore
         context = self.retrieve_context(control_id)
         if not context:
