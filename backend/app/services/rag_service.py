@@ -3,7 +3,7 @@
 #📍 from mistralai.models.chat_completion import ChatMessage
 #📍UPDATE:
 from langchain_groq import ChatGroq
-
+import os 
 from typing import List, Dict
 import json
 from ..config import settings
@@ -20,11 +20,25 @@ class RAGService:
         self.rag_engine = RAGEngine()
         #📍 self.model = "mistral-large-latest"
         #📍UPDATE:
+        '''
         self.llm = ChatGroq(
             model_name="llama-3.3-70b-versatile",
             temperature=0.2,
             groq_api_key=settings.GROQ_API_KEY # NEED CHECKING    
         )
+        '''
+         api_key = os.getenv("GROQ_API_KEY")
+        if api_key and api_key.startswith("gsk_"):
+            self.llm = ChatGroq(
+                model_name="llama-3.3-70b-versatile",
+                temperature=0,
+                groq_api_key=api_key
+            )
+            print(f"✅ AI Engine: High-Precision Groq Connected")
+        else:
+            print("❌ AI Engine Error: Valid Groq API Key missing")
+            self.llm = None
+            
     async def generate_audit_questions(self, control_id: str) -> List[Dict]:
         """
         توليد أسئلة Audit لـ Control محدد
