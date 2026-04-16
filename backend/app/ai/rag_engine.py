@@ -67,10 +67,10 @@ class RAGEngine:
             self.load_ecc_data("data/ecc_controls.json")
 
     def process_request(self, control_id: str, query: str = "", mode: str = "guidance") -> str:
-       """📍
+       
         if not self.llm:
             return "AI Service is not configured properly. Please check GROQ_API_KEY."
-        """
+        
         # Retrieve relevant context from vectorstore
         context = self.retrieve_context(control_id)
         if not context:
