@@ -1,6 +1,9 @@
 # app/services/rag_service.py
-from mistralai.client import MistralClient
-from mistralai.models.chat_completion import ChatMessage
+#📍 from mistralai.client import MistralClient
+#📍 from mistralai.models.chat_completion import ChatMessage
+#📍UPDATE:
+from langchain_groq import ChatGroq
+
 from typing import List, Dict
 import json
 from ..config import settings
@@ -13,10 +16,15 @@ from ..ai.prompts import (
 
 class RAGService:
     def __init__(self):
-        self.client = MistralClient(api_key=settings.MISTRAL_API_KEY)
+        #📍 self.client = MistralClient(api_key=settings.MISTRAL_API_KEY)
         self.rag_engine = RAGEngine()
-        self.model = "mistral-large-latest"
-    
+        #📍 self.model = "mistral-large-latest"
+        #📍UPDATE:
+        self.llm = ChatGroq(
+            model_name="llama-3.3-70b-versatile",
+            temperature=0.2,
+            groq_api_key=settings.GROQ_API_KEY # NEED CHECKING    
+        )
     async def generate_audit_questions(self, control_id: str) -> List[Dict]:
         """
         توليد أسئلة Audit لـ Control محدد
@@ -28,19 +36,27 @@ class RAGService:
         prompt = AUDIT_QUESTION_GENERATION_PROMPT.format(context=context)
         
         # استدعاء LLM
+       """ 📍
         messages = [
             ChatMessage(role="user", content=prompt)
         ]
-        
+        """
+
+        """📍
         response = self.client.chat(
             model=self.model,
             messages=messages,
             temperature=0.3,
             max_tokens=2000
         )
+        """
+        #📍UPDATE:
+        response = self.llm.invoke(prompt)
         
         # استخراج النتيجة
-        content = response.choices[0].message.content
+        #📍content = response.choices[0].message.content
+        #📍UPDATE:
+        content = response.content
         
         # Parse JSON
         try:
@@ -64,16 +80,20 @@ class RAGService:
         
         prompt = IMPLEMENTATION_GUIDANCE_PROMPT.format(context=context)
         
-        messages = [ChatMessage(role="user", content=prompt)]
-        
-        response = self.client.chat(
+       #📍messages = [Message(role="user", content=prompt)]
+        """📍
+        response = self.client.(
             model=self.model,
             messages=messages,
             temperature=0.4,
             max_tokens=3000
         )
+        """
         
-        return response.choices[0].message.content
+        #📍UPDATE:
+        response = self.llm.invoke(prompt)
+        
+        return response.content #📍 response.choices[0].message.content
     
     async def analyze_gaps(self, control_id: str, audit_results: Dict) -> List[Dict]:
         """
@@ -89,17 +109,22 @@ class RAGService:
             audit_results=results_text
         )
         
-        messages = [ChatMessage(role="user", content=prompt)]
-        
-        response = self.client.chat(
+       #📍 messages = [Message(role="user", content=prompt)]
+       """ 📍 
+        response = self.client.(
             model=self.model,
             messages=messages,
             temperature=0.3,
             max_tokens=2000
         )
-        
-        content = response.choices[0].message.content
-        
+        """
+        #📍UPDATE:
+        response = self.llm.invoke(prompt)
+
+        #📍 content = response.choices[0].message.content
+        #📍 UPDATE:
+        content = response.content
+
         try:
             if "```json" in content:
                 content = content.split("```json")[1].split("```")[0]
