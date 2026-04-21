@@ -1271,11 +1271,19 @@ async def get_alerts(current_user: dict = Depends(get_current_user)):
 # --- Health ---
 @app.get("/")
 async def root():
+    ai_status = "offline"
+    ai_debug = {}
+    if rag_engine is not None:
+        ai_status = "online"
+        ai_debug = rag_engine.get_debug_info()
+    
     return {
         "app": "CyberGuard GRC Platform",
         "version": "3.2 Production",
         "status": "online",
-        "ai_engine": "online" if rag_engine is not None else "lazy",
+        "ai_engine": ai_status,
+        "ai_debug": ai_debug,
+        "database_connected": DATABASE_URL is not None
     }
 
 

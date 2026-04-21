@@ -3,17 +3,19 @@ import os
 from typing import List, Dict, Optional
 from dotenv import load_dotenv
 
-# More robust imports
+# Robust imports for LangChain
 try:
     from langchain_huggingface import HuggingFaceEmbeddings
 except ImportError:
-    from langchain_community.embeddings import HuggingFaceEmbeddings
+    try:
+        from langchain_community.embeddings import HuggingFaceEmbeddings
+    except ImportError:
+        HuggingFaceEmbeddings = None
 
 try:
     from langchain_community.vectorstores import Chroma
 except ImportError:
-    # Fallback if needed, though community is usually standard
-    from langchain.vectorstores import Chroma
+    Chroma = None
 
 try:
     from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -21,8 +23,7 @@ except ImportError:
     try:
         from langchain.text_splitter import RecursiveCharacterTextSplitter
     except ImportError:
-        # Final fallback - this might fail but we've tried our best
-        from langchain_community.text_splitter import RecursiveCharacterTextSplitter
+        RecursiveCharacterTextSplitter = None
 
 try:
     from langchain_groq import ChatGroq
@@ -32,7 +33,10 @@ except ImportError:
 try:
     from langchain_core.documents import Document
 except ImportError:
-    from langchain.schema import Document
+    try:
+        from langchain.schema import Document
+    except ImportError:
+        Document = None
 
 from ..config import settings
 from .prompts import (
@@ -47,23 +51,35 @@ class RAGEngine:
     def __init__(self):
         load_dotenv(override=True)
         
-        # Absolute paths
-        self.persist_dir = os.path.abspath(settings.CHROMA_PERSIST_DIRECTORY)
-        self.backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        self.data_json_path = os.path.join(self.backend_dir, "data", "ecc_controls.json")
+        # Absolute path setup - most reliable for Railway
+        self.ai_dir = os.path.dirname(os.path.abspath(__file__))
+        self.app_dir = os.path.dirname(self.ai_dir)
+        self.backend_dir = os.path.dirname(self.app_dir)
+        
+        self.data_dir = os.path.join(self.backend_dir, "data")
+        self.persist_dir = os.path.join(self.data_dir, "vector_store")
+        self.data_json_path = os.path.join(self.data_dir, "ecc_controls.json")
+
+        self.last_status = "Initializing"
+        self.error_details = ""
 
         # 1. Initialize Embeddings
-        try:
-            self.embeddings = HuggingFaceEmbeddings(
-                model_name=settings.EMBEDDING_MODEL,
-                model_kwargs={'device': 'cpu'},
-                encode_kwargs={'normalize_embeddings': True}
-            )
-        except Exception:
+        if HuggingFaceEmbeddings:
             try:
-                self.embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-            except Exception:
-                self.embeddings = None
+                self.embeddings = HuggingFaceEmbeddings(
+                    model_name=settings.EMBEDDING_MODEL,
+                    model_kwargs={'device': 'cpu'},
+                    encode_kwargs={'normalize_embeddings': True}
+                )
+            except Exception as e:
+                self.error_details += f"Embeddings error: {str(e)}. "
+                try:
+                    self.embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+                except:
+                    self.embeddings = None
+        else:
+            self.embeddings = None
+            self.error_details += "HuggingFaceEmbeddings library not found. "
         
         # 2. Setup AI Model
         api_key = os.getenv("GROQ_API_KEY")
@@ -74,47 +90,59 @@ class RAGEngine:
                     temperature=0,
                     groq_api_key=api_key
                 )
-            except Exception:
+            except Exception as e:
                 self.llm = None
+                self.error_details += f"LLM error: {str(e)}. "
         else:
             self.llm = None
+            self.error_details += "Groq library or API Key missing. "
     
         # 3. Setup Text Splitter
-        try:
+        if RecursiveCharacterTextSplitter:
             self.text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=1200,
                 chunk_overlap=250
             )
-        except Exception:
+        else:
             self.text_splitter = None
+            self.error_details += "TextSplitter library not found. "
 
         self.vectorstore = None
         self._load_vectorstore()
 
     def _load_vectorstore(self):
-        if not self.embeddings:
+        if not self.embeddings or not Chroma:
+            self.last_status = "Failed: Missing dependencies"
             return
 
         try:
-            if os.path.exists(self.persist_dir) and os.listdir(self.persist_dir):
+            # Check if vector store exists
+            if os.path.exists(self.persist_dir) and os.path.exists(os.path.join(self.persist_dir, "chroma.sqlite3")):
                 self.vectorstore = Chroma(
                     persist_directory=self.persist_dir,
                     embedding_function=self.embeddings
                 )
+                self.last_status = "Ready: Loaded from disk"
             else:
                 if os.path.exists(self.data_json_path):
                     self.load_ecc_data(self.data_json_path)
-        except Exception:
+                else:
+                    self.last_status = "Failed: No data found"
+                    self.error_details += f"Missing files at {self.persist_dir} and {self.data_json_path}. "
+        except Exception as e:
+            self.error_details += f"Vectorstore load error: {str(e)}. "
             if os.path.exists(self.data_json_path):
                 self.load_ecc_data(self.data_json_path)
+            else:
+                self.last_status = "Error: Rebuild failed"
 
     def process_request(self, control_id: str, query: str = "", mode: str = "guidance") -> str:
         if not self.llm:
-            return "AI Service is not configured properly. Please check GROQ_API_KEY."
+            return f"AI Service is not configured properly. Details: {self.error_details}"
         
         context = self.retrieve_context(control_id)
         if not context:
-            return f"No documentation found for Control ID: {control_id}. Ensure ECC documents are indexed."
+            return f"No documentation found for Control ID: {control_id}. Status: {self.last_status}. Errors: {self.error_details}"
 
         try:
             if mode == "audit":
@@ -146,9 +174,11 @@ class RAGEngine:
             relevant_docs = []
             for doc in results:
                 cid = str(doc.metadata.get("control_id", ""))
+                # Flexible matching: exact or starts with (for sub-controls)
                 if cid == control_id or cid.startswith(f"{control_id}-"):
                     relevant_docs.append(doc)
             
+            # If filtering was too aggressive, take top 4 results anyway
             if not relevant_docs and results:
                 relevant_docs = results[:4]
 
@@ -156,11 +186,12 @@ class RAGEngine:
                 return ""
                 
             return "\n\n---\n\n".join([doc.page_content for doc in relevant_docs])
-        except Exception:
+        except Exception as e:
+            self.error_details += f"Retrieval error: {str(e)}. "
             return ""
 
     def load_ecc_data(self, json_path: str):
-        if not os.path.exists(json_path) or not self.embeddings or not self.text_splitter:
+        if not os.path.exists(json_path) or not self.embeddings or not self.text_splitter or not Chroma or not Document:
             return
             
         try:
@@ -175,7 +206,7 @@ class RAGEngine:
                 for chunk in chunks:
                     doc = Document(
                         page_content=chunk,
-                        metadata={"control_id": ctrl_id, "source": "ecc_controls.json"}
+                        metadata={"control_id": str(ctrl_id), "source": "ecc_controls.json"}
                     )
                     documents.append(doc)
             
@@ -185,5 +216,21 @@ class RAGEngine:
                     embedding=self.embeddings,
                     persist_directory=self.persist_dir
                 )
-        except Exception:
-            pass
+                self.last_status = "Ready: Rebuilt from JSON"
+        except Exception as e:
+            self.last_status = "Error: JSON Load failed"
+            self.error_details += f"JSON load error: {str(e)}. "
+
+    def get_debug_info(self):
+        return {
+            "status": self.last_status,
+            "errors": self.error_details,
+            "paths": {
+                "backend": self.backend_dir,
+                "persist": self.persist_dir,
+                "json": self.data_json_path
+            },
+            "vectorstore_ready": self.vectorstore is not None,
+            "llm_ready": self.llm is not None,
+            "embeddings_ready": self.embeddings is not None
+        }
