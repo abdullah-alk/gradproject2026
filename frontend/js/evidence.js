@@ -88,11 +88,6 @@ function injectPopupHTML() {
           border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;
           transition:all 0.2s;
         "><i class="fas fa-redo" style="margin-right:6px;"></i>Re-Audit This Control</a>
-        <button onclick="window.print()" style="
-          background:rgba(139,92,246,0.1);border:1px solid #8b5cf6;
-          color:#8b5cf6;padding:10px 20px;border-radius:8px;cursor:pointer;
-          font-size:13px;font-weight:600;
-        "><i class="fas fa-print" style="margin-right:6px;"></i>Print</button>
       </div>
     </div>
   `;

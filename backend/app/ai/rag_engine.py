@@ -4,23 +4,25 @@ from typing import List, Dict, Optional
 from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.documents import Document
+from langchain_text_splitter import RecursiveCharacterTextSplitter
 from langchain_groq import ChatGroq
-from app.config import settings
-
-# استيراد البرومبتات المحسنة
-from app.ai.prompts import (
+from ..config import settings
+from .prompts import (
     AUDIT_QUESTION_GENERATION_PROMPT,
     GUIDE_QUESTION_GENERATION_PROMPT,
+    RECOMMENDATIONS_PROMPT,
     IMPLEMENTATION_GUIDANCE_PROMPT,
-    GAP_ANALYSIS_PROMPT,
-    RECOMMENDATIONS_PROMPT
+    GAP_ANALYSIS_PROMPT
 )
 
 class RAGEngine:
     def __init__(self):
         load_dotenv(override=True)
+        
+        # Determine base directory (backend folder)
+        self.base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.data_dir = os.path.join(self.base_dir, "data")
+        self.persist_dir = os.path.join(self.data_dir, "vector_store")
 
         # 1. Initialize Embeddings
         self.embeddings = HuggingFaceEmbeddings(
@@ -28,8 +30,8 @@ class RAGEngine:
             model_kwargs={'device': 'cpu'},
             encode_kwargs={'normalize_embeddings': True}
         )
+        
         # 2. Setup AI Model
-   
         api_key = os.getenv("GROQ_API_KEY")
         if api_key and api_key.startswith("gsk_"):
             self.llm = ChatGroq(
@@ -37,9 +39,7 @@ class RAGEngine:
                 temperature=0,
                 groq_api_key=api_key
             )
-            print(f"✅ AI Engine: High-Precision Groq Connected")
         else:
-            print("❌ AI Engine Error: Valid Groq API Key missing")
             self.llm = None
     
         # 3. Setup Text Splitter
@@ -53,28 +53,23 @@ class RAGEngine:
 
     def _load_vectorstore(self):
         """Load existing ChromaDB vectorstore OR build it if it's missing"""
-        if os.path.exists(settings.CHROMA_PERSIST_DIRECTORY):
+        if os.path.exists(self.persist_dir):
             self.vectorstore = Chroma(
-                persist_directory=settings.CHROMA_PERSIST_DIRECTORY,
+                persist_directory=self.persist_dir,
                 embedding_function=self.embeddings
             )
-            print(f"✅ ChromaDB loaded from: {settings.CHROMA_PERSIST_DIRECTORY}")
         else:
-            print(f"⚠️ ChromaDB not found at: {settings.CHROMA_PERSIST_DIRECTORY}")
-            print("⏳ Building Vectorstore automatically now...")
-            # 🚨 IMPORTANT: Ensure this file path matches your actual JSON file location!
-            # If your JSON is in a folder, it might need to be "app/data/ecc_controls.json"
-            self.load_ecc_data("data/ecc_controls.json")
+            json_path = os.path.join(self.data_dir, "ecc_controls.json")
+            if os.path.exists(json_path):
+                self.load_ecc_data(json_path)
 
     def process_request(self, control_id: str, query: str = "", mode: str = "guidance") -> str:
-       
         if not self.llm:
             return "AI Service is not configured properly. Please check GROQ_API_KEY."
         
-        # Retrieve relevant context from vectorstore
         context = self.retrieve_context(control_id)
         if not context:
-            return f"No documentation found for Control ID: {control_id}. Please ensure ECC documents are indexed in ChromaDB."
+            return f"No documentation found for Control ID: {control_id}. Ensure ECC documents are indexed."
 
         try:
             if mode == "audit":
@@ -91,70 +86,59 @@ class RAGEngine:
                 else:
                     final_prompt = IMPLEMENTATION_GUIDANCE_PROMPT.format(context=context)
 
-            # Invoke AI model
             response = self.llm.invoke(final_prompt)
-            result = response.content
-            return result
-
+            return response.content
         except Exception as e:
-            print(f"[❌] RAG Error (mode={mode}, control={control_id}): {e}")
-            return f"AI Service Error: Unable to process request. {str(e)}"
+            return f"AI Service Error: {str(e)}"
 
-    def retrieve_context(self, control_id: str, k: int = 5) -> str:
+    def retrieve_context(self, control_id: str, k: int = 8) -> str:
         if not self.vectorstore:
             return ""
         try:
-            # --- ADD THESE TWO DEBUG LINES ---
-            print(f"[🔍] Frontend is asking for Control ID: '{control_id}'")
-            print(f"[📊] Total documents currently inside ChromaDB: {self.vectorstore._collection.count()}")
-            # ---------------------------------
+            search_query = f"Technical requirements and implementation for ECC control {control_id}"
+            results = self.vectorstore.similarity_search(search_query, k=k)
+            
+            relevant_docs = []
+            for doc in results:
+                cid = doc.metadata.get("control_id", "")
+                if cid == control_id or cid.startswith(f"{control_id}-"):
+                    relevant_docs.append(doc)
+            
+            if not relevant_docs and results:
+                relevant_docs = results[:4]
 
-            results = self.vectorstore.similarity_search(
-                f"Technical requirements, implementation guidelines, and deliverables for ECC control {control_id}",
-                k=k,
-                filter={"control_id": control_id}
-            )
-            if not results:
-                print(f"[⚠️] No context found for control {control_id}") # It's probably failing here!
+            if not relevant_docs:
                 return ""
-            return "\n\n---\n\n".join([doc.page_content for doc in results])
-        except Exception as e:
-            print(f"[❌] Context retrieval error for {control_id}: {e}")
+                
+            return "\n\n---\n\n".join([doc.page_content for doc in relevant_docs])
+        except Exception:
             return ""
 
     def load_ecc_data(self, json_path: str):
         if not os.path.exists(json_path):
-            print(f"[❌] FATAL ERROR: ECC data file not found at: {json_path}")
             return
-        
+            
         try:
             with open(json_path, 'r', encoding='utf-8') as f:
                 controls_data = json.load(f)
-
+            
             documents = []
-            for cid, content in controls_data.items():
-                full_content = (
-                    f"CONTROL_ID: {cid}\nTITLE: {content.get('title', '')}\nDOMAIN: {content.get('domain', '')}\n"
-                    f"OBJECTIVE: {content.get('objective', '')}\nDESCRIPTION: {content.get('description', '')}\n\n"
-                    f"FULL REQUIREMENTS:\n{content.get('full_text', '')}\n\n"
-                    f"IMPLEMENTATION GUIDELINES:\n{content.get('implementation_guidelines', '')}\n\n"
-                    f"EXPECTED DELIVERABLES:\n{content.get('expected_deliverables', '')}"
-                )
-                chunks = self.text_splitter.split_text(full_content)
+            for ctrl_id, info in controls_data.items():
+                content = f"Control ID: {ctrl_id}\nObjective: {info.get('objective')}\nGuidelines: {info.get('implementation_guidelines')}\nDeliverables: {info.get('expected_deliverables')}\nFull Text: {info.get('full_text')}"
+                
+                chunks = self.text_splitter.split_text(content)
                 for chunk in chunks:
+                    from langchain.schema import Document
                     doc = Document(
                         page_content=chunk,
-                        metadata={"control_id": cid, "domain": content.get('domain', ''), "title": content.get('title', '')}
+                        metadata={"control_id": ctrl_id, "source": "ecc_controls.json"}
                     )
                     documents.append(doc)
-
-            print(f"[⚙️] Indexing {len(documents)} chunks into ChromaDB...")
+            
             self.vectorstore = Chroma.from_documents(
                 documents=documents,
                 embedding=self.embeddings,
-                persist_directory=settings.CHROMA_PERSIST_DIRECTORY
+                persist_directory=self.persist_dir
             )
-            print("✅ Vectorstore successfully built and persisted!")
-            
-        except Exception as e:
-            print(f"[❌] Indexing error: {e}")
+        except Exception:
+            pass

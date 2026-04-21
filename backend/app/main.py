@@ -29,13 +29,13 @@ rag_engine = None
 def get_rag_engine():
     global rag_engine
     if rag_engine is None:
-        print("\n" + "=" * 50)
-        print("[🚀] INITIALIZING CYBERGUARD AI ENGINE...")
-        print("[⚙️] Connecting to Groq Cloud...")
+
+
+
         from app.ai.rag_engine import RAGEngine
         rag_engine = RAGEngine()
-        print("[✅] AI ENGINE IS ONLINE AND READY!")
-        print("=" * 50 + "\n")
+
+
     return rag_engine
 
 
@@ -165,13 +165,13 @@ async def register(data: dict = Body(...)):
             ),
         )
         conn.commit()
-        print(f"[👤] New user registered: {data['username']}")
+
         return {"message": "Registration successful", "username": data["username"]}
     except HTTPException:
         raise
     except Exception as e:
         conn.rollback()
-        print(f"[❌] Registration Error: {e}")
+
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
@@ -186,7 +186,7 @@ async def login(username: str = Form(...), password: str = Form(...)):
         cur.execute("SELECT * FROM users WHERE username = %s AND is_active = true", (username,))
         user = cur.fetchone()
         if user and verify_password(password, user["password_hash"]):
-            print(f"[🔑] User logged in: {username}")
+
             return {
                 "access_token": f"token_{user['id']}_{datetime.now().timestamp()}",
                 "user": {
@@ -201,7 +201,7 @@ async def login(username: str = Form(...), password: str = Form(...)):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[❌] Login Error: {e}")
+
         raise HTTPException(status_code=500, detail="Server Error")
     finally:
         cur.close()
@@ -279,7 +279,7 @@ async def update_control_status(control_id: str, data: dict = Body(...)):
             (status, control_id),
         )
         conn.commit()
-        print(f"[✅] Control {control_id} updated to: {status}")
+
         return {"message": "Status updated", "control_id": control_id, "status": status}
     except HTTPException:
         raise
@@ -303,10 +303,10 @@ async def generate_questions(data: dict = Body(...)):
     try:
         engine = get_rag_engine()
     except Exception as e:
-        print(f"[❌] AI ENGINE ERROR: {e}")
+
         raise HTTPException(status_code=500, detail="AI Engine is offline. Please contact administrator.")
 
-    print(f"[🤖] Generating 10 {mode} questions for control: {control_id}")
+
 
     try:
         raw_response = engine.process_request(
@@ -324,16 +324,16 @@ async def generate_questions(data: dict = Body(...)):
             questions = json.loads(json_str)
 
             if len(questions) == 0:
-                print(f"[⚠️] AI returned 0 questions for {control_id}")
+
                 return {
                     "questions": [],
                     "error": "AI could not generate questions. Ensure ECC documents are indexed in ChromaDB.",
                 }
 
-            print(f"[✅] Generated {len(questions)} questions for {control_id}")
+
             return {"questions": questions}
 
-        print(f"[⚠️] No JSON array found in AI response for {control_id}")
+
         return {
             "questions": [],
             "raw_response": raw_response[:500],
@@ -341,14 +341,14 @@ async def generate_questions(data: dict = Body(...)):
         }
 
     except json.JSONDecodeError as e:
-        print(f"[❌] JSON Parse Error for {control_id}: {e}")
+
         return {
             "questions": [],
             "raw_response": raw_response[:500],
             "error": f"Could not parse AI response: {str(e)}",
         }
     except Exception as e:
-        print(f"[❌] Generate Questions Error: {e}")
+
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -363,10 +363,10 @@ async def get_recommendations(data: dict = Body(...)):
     try:
         engine = get_rag_engine()
     except Exception as e:
-        print(f"[❌] AI ENGINE ERROR: {e}")
+
         raise HTTPException(status_code=500, detail="AI Engine is offline")
 
-    print(f"[🤖] Generating recommendations for control: {control_id}")
+
 
     response = engine.process_request(
         control_id=control_id,
@@ -388,7 +388,7 @@ async def process_ai(data: dict = Body(...)):
     try:
         engine = get_rag_engine()
     except Exception as e:
-        print(f"[❌] AI ENGINE ERROR: {e}")
+
         raise HTTPException(status_code=500, detail="AI Engine is offline")
 
     response = engine.process_request(
@@ -422,11 +422,11 @@ async def start_audit_session(data: dict = Body(...)):
         )
         session = cur.fetchone()
         conn.commit()
-        print(f"[🎯] Audit session started: {session['id']} (control_id={control_id}, mode={mode})")
+
         return {"session_id": session["id"], "message": "Session started"}
     except Exception as e:
         conn.rollback()
-        print(f"[❌] Start Session Error: {e}")
+
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
@@ -452,11 +452,11 @@ async def save_audit_answer(data: dict = Body(...)):
             ),
         )
         conn.commit()
-        print(f"[📝] Answer saved for session {data.get('session_id')}: {data.get('answer')}")
+
         return {"message": "Answer saved"}
     except Exception as e:
         conn.rollback()
-        print(f"[❌] Save Answer Error: {e}")
+
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
@@ -481,11 +481,11 @@ async def complete_audit_session(data: dict = Body(...)):
             (status, score, session_id),
         )
         conn.commit()
-        print(f"[✅] Session {session_id} completed: {status} (Score: {score}%)")
+
         return {"message": "Session completed", "session_id": session_id, "status": status, "score": score}
     except Exception as e:
         conn.rollback()
-        print(f"[❌] Complete Session Error: {e}")
+
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
@@ -524,11 +524,11 @@ async def save_compliance_score(data: dict = Body(...)):
         )
 
         conn.commit()
-        print(f"[📊] Compliance score saved: control_id={control_id}, score={score}%, yes={yes}, partial={partial}, no={no}")
+
         return {"message": "Score saved successfully", "control_id": control_id, "score": score}
     except Exception as e:
         conn.rollback()
-        print(f"[❌] Save Score Error: {e}")
+
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
@@ -598,10 +598,10 @@ async def get_stats():
             "control_statuses": [dict(cs) for cs in control_statuses],
         }
 
-        print(f"[📊] Dashboard stats: score={score}%, gaps={non_compliant}, audited={audited}/{total}")
+
         return result
     except Exception as e:
-        print(f"[❌] Dashboard Stats Error: {e}")
+
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
@@ -688,7 +688,7 @@ async def upload_evidence(control_id: str = Form(...), file: UploadFile = File(.
             (control_db_id, file.filename, file_path),
         )
         conn.commit()
-        print(f"[📎] Evidence uploaded: {file.filename} for control {control_id}")
+
         return {"message": "Evidence uploaded successfully", "file": file.filename}
     except Exception as e:
         conn.rollback()
@@ -721,7 +721,7 @@ async def get_evidence(domain: str = None, status: str = None):
 
         cur.execute(query, params)
         results = cur.fetchall()
-        print(f"[📁] Retrieved {len(results)} evidence records")
+
         return results
     finally:
         cur.close()
@@ -760,15 +760,50 @@ async def save_evidence(data: dict = Body(...)):
         )
         ev = cur.fetchone()
         conn.commit()
-        print(f"[📋] Evidence saved: {title} — {status} ({score}%)")
         return {"message": "Evidence saved", "evidence_id": ev["id"]}
     except Exception as e:
         conn.rollback()
-        print(f"[❌] Save Evidence Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
         conn.close()
+
+
+@app.post("/api/evidence/save-audit")
+async def save_audit_as_evidence(data: dict = Body(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        control_id = data.get("control_id")
+        session_id = data.get("session_id")
+        title = data.get("title")
+        description = data.get("description")
+        status = data.get("status")
+        score = data.get("score")
+        evidence_type = data.get("evidence_type", "audit_session")
+
+        # Optional: We could save the raw 'answers' JSON if we add a column for it,
+        # but for now we'll rely on the description (transcript) or existing audit_qa table.
+
+        cur.execute(
+            """
+            INSERT INTO evidence
+            (control_id, session_id, title, description, status, evidence_type, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, NOW(), NOW())
+            RETURNING id
+            """,
+            (control_id, session_id, title, description, status, evidence_type),
+        )
+        ev = cur.fetchone()
+        conn.commit()
+        return {"message": "Audit evidence saved", "evidence_id": ev["id"]}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
 
 
 # --- 13. Gaps ---
@@ -795,11 +830,11 @@ async def save_gap(data: dict = Body(...)):
 
         gap = cur.fetchone()
         conn.commit()
-        print(f"[🔍] Gap saved: ID={gap['id']}, control={control_id}, priority={priority}")
+
         return {"message": "Gap recommendation saved", "gap_id": gap["id"]}
     except Exception as e:
         conn.rollback()
-        print(f"[❌] Save Gap Error: {e}")
+
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
@@ -910,7 +945,7 @@ async def schedule_audit_endpoint(data: dict = Body(...)):
 
         session = cur.fetchone()
         conn.commit()
-        print(f"[📅] Audit scheduled: session={session['id']}, date={audit_date}, scope={scope}")
+
         return {
             "message": "Audit scheduled successfully",
             "session_id": session["id"],
@@ -921,7 +956,7 @@ async def schedule_audit_endpoint(data: dict = Body(...)):
         raise
     except Exception as e:
         conn.rollback()
-        print(f"[❌] Schedule Audit Error: {e}")
+
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
@@ -961,7 +996,7 @@ async def toggle_auto_scheduling(data: dict = Body(...)):
             session = cur.fetchone()
             conn.commit()
 
-            print(f"[🤖] AI auto-scheduling enabled: next audit in {days} days (session {session['id']})")
+
             return {
                 "message": "Auto-scheduling enabled",
                 "enabled": True,
@@ -970,11 +1005,11 @@ async def toggle_auto_scheduling(data: dict = Body(...)):
                 "session_id": session["id"],
             }
 
-        print("[⚙️] Auto-scheduling disabled")
+
         return {"message": "Auto-scheduling disabled", "enabled": False}
     except Exception as e:
         conn.rollback()
-        print(f"[❌] Auto-scheduling Error: {e}")
+
         return {"message": f"Auto-scheduling {'enabled' if enabled else 'disabled'}", "enabled": enabled}
     finally:
         cur.close()
@@ -1039,10 +1074,10 @@ async def get_scheduled_audits():
                     "domain": r["domain"] or "",
                 }
             )
-        print(f"[📅] Upcoming scheduled audits: {len(result)}")
+
         return result
     except Exception as e:
-        print(f"[❌] Scheduled Audits Error: {e}")
+
         return []
     finally:
         cur.close()
@@ -1127,10 +1162,10 @@ async def get_audit_sessions():
                 }
             )
 
-        print(f"[📋] Audit sessions retrieved: {len(result)} records")
+
         return result
     except Exception as e:
-        print(f"[❌] Get Sessions Error: {e}")
+
         return []
     finally:
         cur.close()
@@ -1227,7 +1262,7 @@ async def get_alerts(current_user: dict = Depends(get_current_user)):
 
         return alerts[:6]
     except Exception as e:
-        print(f"[❌] Alerts Error: {e}")
+
         return []
     finally:
         cur.close()

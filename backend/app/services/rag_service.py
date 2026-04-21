@@ -56,7 +56,7 @@ class RAGService:
             questions = json.loads(content.strip())
             return questions
         except Exception as e:
-            print(f"Error parsing LLM response: {e}")
+
             return []
     
     async def generate_implementation_guidance(self, control_id: str) -> str:
@@ -112,5 +112,5 @@ class RAGService:
             gaps = json.loads(content.strip())
             return gaps
         except Exception as e:
-            print(f"Error parsing gap analysis: {e}")
+
             return []
