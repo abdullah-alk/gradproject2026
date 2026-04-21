@@ -72,7 +72,7 @@ async function startAuditMode(ctrl){
     const r=await generateAuditQuestions(ctrl.id,'audit');hideTyping();
     if(r.questions?.length>0){currentQuestions=r.questions.map(q=>({q:q.question,ev:q.expected_evidence||'',cat:q.category||''}));currentQuestionIndex=0;setTimeout(showAuditQ,400);}
     else{appendMsg('ai',`<span style="color:#ef4444">Could not generate questions. Ensure ECC documents are indexed.</span>`);}
-  }catch(e){hideTyping();appendMsg('ai',`<span style="color:#ef4444">AI error. Check backend.</span>`);}
+  }catch(e){hideTyping();appendMsg('ai',`<span style="color:#ef4444">AI Error: ${e.message || 'Check backend connection.'}</span>`);}
 }
 
 function showAuditQ(){

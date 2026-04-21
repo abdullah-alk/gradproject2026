@@ -2,10 +2,38 @@ import json
 import os
 from typing import List, Dict, Optional
 from dotenv import load_dotenv
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain_text_splitter import RecursiveCharacterTextSplitter
-from langchain_groq import ChatGroq
+
+# More robust imports
+try:
+    from langchain_huggingface import HuggingFaceEmbeddings
+except ImportError:
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+
+try:
+    from langchain_community.vectorstores import Chroma
+except ImportError:
+    # Fallback if needed, though community is usually standard
+    from langchain.vectorstores import Chroma
+
+try:
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+except ImportError:
+    try:
+        from langchain.text_splitter import RecursiveCharacterTextSplitter
+    except ImportError:
+        # Final fallback - this might fail but we've tried our best
+        from langchain_community.text_splitter import RecursiveCharacterTextSplitter
+
+try:
+    from langchain_groq import ChatGroq
+except ImportError:
+    ChatGroq = None
+
+try:
+    from langchain_core.documents import Document
+except ImportError:
+    from langchain.schema import Document
+
 from ..config import settings
 from .prompts import (
     AUDIT_QUESTION_GENERATION_PROMPT,
@@ -19,49 +47,66 @@ class RAGEngine:
     def __init__(self):
         load_dotenv(override=True)
         
-        # Determine base directory (backend folder)
-        self.base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        self.data_dir = os.path.join(self.base_dir, "data")
-        self.persist_dir = os.path.join(self.data_dir, "vector_store")
+        # Absolute paths
+        self.persist_dir = os.path.abspath(settings.CHROMA_PERSIST_DIRECTORY)
+        self.backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.data_json_path = os.path.join(self.backend_dir, "data", "ecc_controls.json")
 
         # 1. Initialize Embeddings
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name=settings.EMBEDDING_MODEL,
-            model_kwargs={'device': 'cpu'},
-            encode_kwargs={'normalize_embeddings': True}
-        )
+        try:
+            self.embeddings = HuggingFaceEmbeddings(
+                model_name=settings.EMBEDDING_MODEL,
+                model_kwargs={'device': 'cpu'},
+                encode_kwargs={'normalize_embeddings': True}
+            )
+        except Exception:
+            try:
+                self.embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+            except Exception:
+                self.embeddings = None
         
         # 2. Setup AI Model
         api_key = os.getenv("GROQ_API_KEY")
-        if api_key and api_key.startswith("gsk_"):
-            self.llm = ChatGroq(
-                model_name="llama-3.3-70b-versatile",
-                temperature=0,
-                groq_api_key=api_key
-            )
+        if ChatGroq and api_key and api_key.startswith("gsk_"):
+            try:
+                self.llm = ChatGroq(
+                    model_name="llama-3.3-70b-versatile",
+                    temperature=0,
+                    groq_api_key=api_key
+                )
+            except Exception:
+                self.llm = None
         else:
             self.llm = None
     
         # 3. Setup Text Splitter
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1200,
-            chunk_overlap=250
-        )
+        try:
+            self.text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=1200,
+                chunk_overlap=250
+            )
+        except Exception:
+            self.text_splitter = None
 
         self.vectorstore = None
         self._load_vectorstore()
 
     def _load_vectorstore(self):
-        """Load existing ChromaDB vectorstore OR build it if it's missing"""
-        if os.path.exists(self.persist_dir):
-            self.vectorstore = Chroma(
-                persist_directory=self.persist_dir,
-                embedding_function=self.embeddings
-            )
-        else:
-            json_path = os.path.join(self.data_dir, "ecc_controls.json")
-            if os.path.exists(json_path):
-                self.load_ecc_data(json_path)
+        if not self.embeddings:
+            return
+
+        try:
+            if os.path.exists(self.persist_dir) and os.listdir(self.persist_dir):
+                self.vectorstore = Chroma(
+                    persist_directory=self.persist_dir,
+                    embedding_function=self.embeddings
+                )
+            else:
+                if os.path.exists(self.data_json_path):
+                    self.load_ecc_data(self.data_json_path)
+        except Exception:
+            if os.path.exists(self.data_json_path):
+                self.load_ecc_data(self.data_json_path)
 
     def process_request(self, control_id: str, query: str = "", mode: str = "guidance") -> str:
         if not self.llm:
@@ -100,7 +145,7 @@ class RAGEngine:
             
             relevant_docs = []
             for doc in results:
-                cid = doc.metadata.get("control_id", "")
+                cid = str(doc.metadata.get("control_id", ""))
                 if cid == control_id or cid.startswith(f"{control_id}-"):
                     relevant_docs.append(doc)
             
@@ -115,7 +160,7 @@ class RAGEngine:
             return ""
 
     def load_ecc_data(self, json_path: str):
-        if not os.path.exists(json_path):
+        if not os.path.exists(json_path) or not self.embeddings or not self.text_splitter:
             return
             
         try:
@@ -128,17 +173,17 @@ class RAGEngine:
                 
                 chunks = self.text_splitter.split_text(content)
                 for chunk in chunks:
-                    from langchain.schema import Document
                     doc = Document(
                         page_content=chunk,
                         metadata={"control_id": ctrl_id, "source": "ecc_controls.json"}
                     )
                     documents.append(doc)
             
-            self.vectorstore = Chroma.from_documents(
-                documents=documents,
-                embedding=self.embeddings,
-                persist_directory=self.persist_dir
-            )
+            if documents:
+                self.vectorstore = Chroma.from_documents(
+                    documents=documents,
+                    embedding=self.embeddings,
+                    persist_directory=self.persist_dir
+                )
         except Exception:
             pass

@@ -303,8 +303,7 @@ async def generate_questions(data: dict = Body(...)):
     try:
         engine = get_rag_engine()
     except Exception as e:
-
-        raise HTTPException(status_code=500, detail="AI Engine is offline. Please contact administrator.")
+        raise HTTPException(status_code=500, detail=f"AI Engine Error: {str(e)}")
 
 
 
