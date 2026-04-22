@@ -202,7 +202,7 @@ async function saveProgress(ctrlId,status,score,yes,partial,no,total){
   updateDot(ctrlId,status);
   const ev=document.getElementById('linked-evidence');ev.textContent=`Last audit: ${status} — ${score}%`;ev.style.color=getDotColor(status);
   try{await updateControlStatus(ctrlId,status);}catch(e){}
-  try{const u=getCurrentUserLocal();await saveComplianceScore({user_id:u.id||null,control_id:currentControlDbId,session_id:currentSessionId,score,total_questions:total,answered_yes:yes,answered_partial:partial,answered_no:no});}catch(e){}
+  try{const u=getCurrentUserLocal();const uid=u.id||u.user_id||parseInt(localStorage.getItem('authToken')?.match(/token_(\d+)_/)?.[1])||null;await saveComplianceScore({user_id:uid,control_id:currentControlDbId,session_id:currentSessionId,score,total_questions:total,answered_yes:yes,answered_partial:partial,answered_no:no});}catch(e){}
   if(currentSessionId){try{await completeAuditSession(currentSessionId,status,score);}catch(e){}}
 }
 
