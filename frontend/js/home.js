@@ -26,19 +26,26 @@ async function loadHomeStats() {
     } catch (e) { console.error('Home stats error:', e); }
 }
 
-// ─── Smart Alerts from real audit data ──────────────────────────────────────
 async function loadCyberAlerts() {
     const grid = document.getElementById('alerts-grid');
     const updatedEl = document.getElementById('alerts-updated');
     if (!grid) return;
 
     try {
-        const alerts = await apiRequest('/alerts');
+        let alerts = await apiRequest('/alerts');
 
         if (!alerts || alerts.length === 0) {
             grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--text-muted);font-size:13px"><i class="fas fa-check-circle" style="color:var(--accent-success);font-size:24px;display:block;margin-bottom:8px"></i>No alerts — your compliance looks good!</div>';
             return;
         }
+
+        // Remove duplicate titles
+        const seen = new Set();
+        alerts = alerts.filter(function(a) {
+            if (seen.has(a.title)) return false;
+            seen.add(a.title);
+            return true;
+        });
 
         if (updatedEl) updatedEl.textContent = 'Based on your audit results · ' + new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
 
@@ -48,7 +55,6 @@ async function loadCyberAlerts() {
             var iconText  = level === 'critical' ? '#ef4444' : level === 'warning' ? '#f59e0b' : '#06b6d4';
             var icon      = level === 'critical' ? 'fa-shield-xmark' : level === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-info';
             var link      = a.control_id ? '<a href="chatbot.html?control=' + a.control_id + '" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:var(--accent-primary);text-decoration:none"><i class="fas fa-arrow-right"></i> Start Audit</a>' : '';
-
             return '<div class="alert-card">' +
                 '<div class="alert-icon" style="background:' + iconColor + '"><i class="fas ' + icon + '" style="color:' + iconText + '"></i></div>' +
                 '<div style="flex:1;min-width:0">' +
