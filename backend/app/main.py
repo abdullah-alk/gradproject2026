@@ -475,7 +475,7 @@ async def get_stats(current_user: dict = Depends(get_current_user)):
         cur.execute("SELECT COUNT(*) as total FROM ecc_controls WHERE level = 1")
         total = cur.fetchone()['total'] or 10  # Default to 10 if empty
         
-        # Get real audit data from compliance_scores - filtered by user
+        # Get real audit data from compliance_scores
         cur.execute("""
             SELECT 
                 COUNT(DISTINCT control_id) as audited_cnt,
@@ -1022,82 +1022,6 @@ async def save_evidence(data: dict = Body(...)):
         conn.close()
 
 # --- Health Check ---
-
-@app.get("/api/alerts")
-async def get_alerts(current_user: dict = Depends(get_current_user)):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    user_id = current_user["id"]
-    alerts = []
-    try:
-        # Non-compliant controls for THIS user only
-        cur.execute("""
-            SELECT DISTINCT ec.control_id, ec.title, ec.domain
-            FROM compliance_scores cs
-            JOIN ecc_controls ec ON cs.control_id = ec.id
-            WHERE cs.user_id = %s AND cs.score < 40 AND ec.level = 1
-            ORDER BY ec.control_id LIMIT 3
-        """, (user_id,))
-        for c in cur.fetchall():
-            alerts.append({
-                "level": "critical",
-                "title": f"Non-Compliant: {c['title']}",
-                "body": f"Control {c['control_id']} ({c['domain']}) failed your last audit. Immediate remediation required.",
-                "source": "ECC Auditor AI",
-                "control_id": c["control_id"],
-            })
-
-        # No scheduled audit for this user
-        cur.execute("""
-            SELECT COUNT(*) as total FROM audit_sessions
-            WHERE user_id = %s AND status = 'scheduled' AND scheduled_next_audit > NOW()
-        """, (user_id,))
-        if int(cur.fetchone()["total"] or 0) == 0:
-            alerts.append({
-                "level": "warning",
-                "title": "No Upcoming Audit Scheduled",
-                "body": "Schedule your next audit to maintain ECC-2023 compliance.",
-                "source": "ECC Auditor AI",
-                "control_id": None,
-            })
-
-        # Score alert for this user
-        cur.execute("SELECT COALESCE(AVG(score), 0) as avg FROM compliance_scores WHERE user_id = %s", (user_id,))
-        avg = float(cur.fetchone()["avg"] or 0)
-        if 0 < avg < 50:
-            alerts.append({
-                "level": "critical",
-                "title": f"Low Compliance Score: {round(avg)}%",
-                "body": f"Score is {round(avg)}%, below acceptable threshold. Prioritize remediation immediately.",
-                "source": "ECC Auditor AI",
-                "control_id": None,
-            })
-        elif 50 <= avg < 80:
-            alerts.append({
-                "level": "warning",
-                "title": f"Compliance Score Needs Improvement: {round(avg)}%",
-                "body": f"Score is {round(avg)}%. Target is 95%. Focus on partial and non-compliant controls.",
-                "source": "ECC Auditor AI",
-                "control_id": None,
-            })
-
-        if not alerts:
-            alerts.append({
-                "level": "info",
-                "title": "No Critical Issues Detected",
-                "body": "Your compliance posture looks good. Keep scheduling periodic audits.",
-                "source": "ECC Auditor AI",
-                "control_id": None,
-            })
-
-        return alerts[:6]
-    except Exception as e:
-        print(f"[❌] Alerts Error: {e}")
-        return []
-    finally:
-        cur.close()
-        conn.close()
-
 @app.get("/")
 async def root():
     return {
