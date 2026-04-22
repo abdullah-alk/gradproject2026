@@ -74,14 +74,12 @@
             };
 
             try {
-                const res = await fetch('https://gradproject2026-production-821d.up.railway.app/api/register', {
+                const res = await fetch('http://127.0.0.1:8000/api/register', {
                     method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)
                 });
                 const result = await res.json();
                 if (res.ok) {
-                    sucBox.textContent = 'Account created successfully! Redirecting to login...';
-                    sucBox.classList.add('show');
-                    setTimeout(() => window.location.href = 'login.html', 1500);
+                    window.location.href = 'login.html';
                 } else {
                     errBox.textContent = result.detail || 'Registration failed. Please try again.';
                     errBox.classList.add('show');
