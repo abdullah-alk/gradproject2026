@@ -466,10 +466,11 @@ async def save_compliance_score(data: dict = Body(...)):
 # --- 11. مسارات الداشبورد (ENHANCED) ---
 
 @app.get("/api/dashboard/stats")
-async def get_stats(current_user: dict = Depends(get_current_user)):
+async def get_stats(authorization: Optional[str] = Header(None)):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
+        user_id = extract_user_id_from_token(authorization)
         # Get total level 1 controls
         cur.execute("SELECT COUNT(*) as total FROM ecc_controls WHERE level = 1")
         total = cur.fetchone()['total'] or 10  # Default to 10 if empty
@@ -485,9 +486,10 @@ async def get_stats(current_user: dict = Depends(get_current_user)):
             FROM (
                 SELECT control_id, MAX(score) as score
                 FROM compliance_scores
+                WHERE user_id = %s
                 GROUP BY control_id
             ) latest
-        """)
+        """, (user_id,))
         sc = cur.fetchone()
         avg_score     = float(sc['avg_score'] or 0)
         compliant     = int(sc['compliant_cnt'] or 0)
