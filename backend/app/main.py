@@ -1163,30 +1163,10 @@ async def get_alerts(current_user: dict = Depends(get_current_user)):
             alerts.append(
                 {
                     "level": "critical",
-                    "title": f"Non-Compliant: {c['title']}",
+                    "title": f"{c['title']} — Non-Compliant",
                     "body": f"Control {c['control_id']} ({c['domain']}) failed your last audit. Immediate remediation required to meet ECC-2023 requirements.",
                     "source": "ECC Auditor AI",
                     "control_id": c["control_id"],
-                }
-            )
-
-        cur.execute(
-            """
-            SELECT COUNT(*) as total
-            FROM audit_sessions
-            WHERE user_id = %s AND status = 'scheduled' AND scheduled_next_audit > NOW()
-            """,
-            (user_id,),
-        )
-        scheduled_count = int(cur.fetchone()["total"] or 0)
-        if scheduled_count == 0:
-            alerts.append(
-                {
-                    "level": "warning",
-                    "title": "No Upcoming Audit Scheduled",
-                    "body": "Start an audit session to assess your compliance posture.",
-                    "source": "ECC Auditor AI",
-                    "control_id": None,
                 }
             )
 
