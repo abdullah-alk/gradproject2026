@@ -1154,7 +1154,7 @@ async def get_alerts(current_user: dict = Depends(get_current_user)):
             FROM compliance_scores cs
             JOIN ecc_controls ec ON cs.control_id = ec.id
             WHERE cs.user_id = %s AND cs.score < 40 AND ec.level = 1
-            ORDER BY ec.control_id LIMIT 3
+            ORDER BY cs.calculated_at DESC LIMIT 5
             """,
             (user_id,),
         )
