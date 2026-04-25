@@ -3,46 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evidence Repository - CyberGuard GRC</title>
+    <title>Compliance Dashboard - CyberGuard GRC</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* تأثير التوهج عند اللمس أو التمرير */
-        .card, .filters-bar, .btn, .nav-item, tr {
-            transition: all 0.3s ease;
+        /* تأثيرات التوهج الاحترافية */
+        .card, .nav-item, .stat-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .card:hover, .filters-bar:hover {
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); /* توهج أزرق سيبراني */
+        .card:hover {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.25);
             border-color: #06b6d4;
-            transform: translateY(-2px);
+            transform: translateY(-4px);
         }
 
-        tr:hover {
-            background: rgba(6, 182, 212, 0.05) !important;
-            box-shadow: inset 0 0 10px rgba(6, 182, 212, 0.1);
+        .nav-item:hover {
+            background: rgba(6, 182, 212, 0.1);
+            color: #06b6d4;
         }
 
-        .filters-bar {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
+        .dashboard-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr auto;
-            gap: 16px;
-            align-items: end;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            display: inline-flex;
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        /* تنسيق دائرة الالتزام */
+        .compliance-circle-container {
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 5px;
+            justify-content: center;
         }
     </style>
 </head>
@@ -57,21 +56,19 @@
             </div>
             <nav class="sidebar-nav">
                 <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
-                <a href="dashboard.html" class="nav-item"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
-                <a href="evidence.html" class="nav-item active"><i class="fas fa-folder-open"></i><span>Evidence</span></a>
+                <a href="dashboard.html" class="nav-item active"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+                <a href="evidence.html" class="nav-item"><i class="fas fa-folder-open"></i><span>Evidence</span></a>
                 <a href="chatbot.html" class="nav-item"><i class="fas fa-robot"></i><span>ECC Chatbot</span></a>
                 <a href="scheduler.html" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Audit Scheduler</span></a>
             </nav>
             <div class="sidebar-footer">
                 <div class="user-profile">
-                    <div class="user-avatar" id="user-initials">?</div>
+                    <div class="user-avatar" id="user-initials">F</div>
                     <div class="user-info">
-                        <h4 id="user-name">Loading...</h4>
-                        <p id="user-role">Cybersecurity Analyst</p>
+                        <h4 id="user-name">Fahad</h4>
+                        <p id="user-role">Cyber Analyst</p>
                     </div>
-                    <button onclick="logout()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:auto" title="Logout">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </button>
+                    <button onclick="logout()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:auto"><i class="fas fa-sign-out-alt"></i></button>
                 </div>
             </div>
         </aside>
@@ -80,70 +77,65 @@
             <div class="content-wrapper">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px">
                     <div>
-                        <h1 style="font-size:32px;font-weight:700"><i class="fas fa-database" style="color:#06b6d4; margin-right:10px;"></i>Evidence Repository</h1>
-                        <p style="color:var(--text-muted)">Audit findings and compliance artifacts linked to ECC-2023 controls</p>
+                        <h1 style="font-size:32px;font-weight:700"><i class="fas fa-chart-line" style="color:#06b6d4; margin-right:12px;"></i>Compliance Insights</h1>
+                        <p style="color:var(--text-muted)">Real-time monitoring of ECC-2023 cybersecurity controls</p>
                     </div>
-                    <a href="chatbot.html" class="btn btn-primary" style="text-decoration:none">
-                        <i class="fas fa-plus-circle"></i> New Audit
-                    </a>
+                    <button class="btn btn-primary" onclick="window.location.reload()"><i class="fas fa-sync"></i> Refresh Data</button>
                 </div>
 
-                <div class="filters-bar">
-                    <div class="form-group" style="margin:0">
-                        <label class="form-label"><i class="fas fa-search"></i> Search</label>
-                        <input type="text" id="search-input" class="form-input" placeholder="Control ID or file name...">
+                <div class="dashboard-grid">
+                    <div class="card compliance-circle-container" style="text-align: center; padding: 24px;">
+                        <h3 style="margin-bottom: 15px; font-size: 14px; color: var(--text-muted);">Overall Compliance</h3>
+                        <div style="position: relative; width: 160px; height: 160px;">
+                            <svg width="160" height="160" viewBox="0 0 180 180">
+                                <circle cx="90" cy="90" r="80" fill="none" stroke="#1e293b" stroke-width="12" />
+                                <circle id="compliance-circle" cx="90" cy="90" r="80" fill="none" stroke="#06b6d4" stroke-width="12" stroke-linecap="round" stroke-dasharray="502.6" stroke-dashoffset="502.6" />
+                            </svg>
+                            <div id="overall-compliance-score" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-weight: 800;">0%</div>
+                        </div>
                     </div>
-                    <div class="form-group" style="margin:0">
-                        <label class="form-label"><i class="fas fa-filter"></i> ECC Domain</label>
-                        <select id="domain-filter" class="form-select">
-                            <option value="all">All Domains</option>
-                            <option value="Governance">1. Governance</option>
-                            <option value="Risk">2. Risk Management</option>
-                            <option value="Assets">3. Asset Management</option>
-                            <option value="Operations">4. Operations</option>
-                            <option value="Network">5. Network Hardening</option>
-                            <option value="Identity">6. Identity & Access</option>
-                            <option value="Data">7. Data Protection</option>
-                            <option value="Vulnerability">8. Vulnerability Mgmt</option>
-                            <option value="Incident">9. Incident Defense</option>
-                            <option value="Physical">10. Physical Security</option>
-                        </select>
+
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">Control Gaps</h3>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span><i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Critical Gaps</span>
+                                <b id="critical-gaps-badge">0</b>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span><i class="fas fa-adjust" style="color:#f59e0b;"></i> Partial Compliance</span>
+                                <b id="medium-gaps-badge">0</b>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span><i class="fas fa-check-double" style="color:#10b981;"></i> Fully Compliant</span>
+                                <b id="low-gaps-badge">0</b>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group" style="margin:0">
-                        <label class="form-label"><i class="fas fa-check-circle"></i> Status</label>
-                        <select id="status-filter" class="form-select">
-                            <option value="all">All Status</option>
-                            <option value="compliant">Compliant</option>
-                            <option value="partial">Partial</option>
-                            <option value="non-compliant">Non-Compliant</option>
-                        </select>
-                    </div>
-                    <button onclick="loadEvidenceList()" class="btn btn-secondary">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
                 </div>
 
-                <div class="card" style="padding:0;overflow:hidden">
-                    <table style="width:100%;border-collapse:collapse">
-                        <thead style="background:var(--bg-secondary)">
-                            <tr>
-                                <th style="padding:16px;text-align:left;font-size:12px;color:var(--text-muted);text-transform:uppercase;">Control ID</th>
-                                <th style="padding:16px;text-align:left;font-size:12px;color:var(--text-muted);text-transform:uppercase;">Evidence Name</th>
-                                <th style="padding:16px;text-align:left;font-size:12px;color:var(--text-muted);text-transform:uppercase;">Status</th>
-                                <th style="padding:16px;text-align:left;font-size:12px;color:var(--text-muted);text-transform:uppercase;">Date</th>
-                                <th style="padding:16px;text-align:left;font-size:12px;color:var(--text-muted);text-transform:uppercase;">Source</th>
-                                <th style="padding:16px;text-align:right;font-size:12px;color:var(--text-muted);text-transform:uppercase;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="evidence-table-body">
-                            </tbody>
-                    </table>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="margin-bottom: 20px;"><i class="fas fa-shield-virus"></i> Domain Maturity Radar</h3>
+                        <div class="chart-container">
+                            <canvas id="domainsRadarChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="margin-bottom: 20px;"><i class="fas fa-tasks"></i> Compliance by Category</h3>
+                        <div class="chart-container">
+                            <canvas id="categoryBarChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
+
     <div id="loader" class="loader"><div class="spinner"></div></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/api.js"></script>
-    <script src="js/evidence.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>
