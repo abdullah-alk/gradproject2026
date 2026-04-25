@@ -1150,11 +1150,13 @@ async def get_alerts(current_user: dict = Depends(get_current_user)):
     try:
         cur.execute(
             """
-            SELECT control_id, title, domain, status
-            FROM ecc_controls
-            WHERE level = 1 AND status = 'Non-Compliant'
-            ORDER BY control_id
-            """
+            SELECT DISTINCT ec.control_id, ec.title, ec.domain
+            FROM compliance_scores cs
+            JOIN ecc_controls ec ON cs.control_id = ec.id
+            WHERE cs.user_id = %s AND cs.score < 40 AND ec.level = 1
+            ORDER BY ec.control_id LIMIT 3
+            """,
+            (user_id,),
         )
         non_compliant = cur.fetchall()
         for c in non_compliant:
