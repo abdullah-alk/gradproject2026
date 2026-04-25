@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   const res=JSON.parse(localStorage.getItem('audit_results')||'{}');
   Object.entries(res).forEach(([id,s])=>updateDot(id,s));
   const urlControl=new URLSearchParams(window.location.search).get('control');
-  if(urlControl){const c=eccDomains.find(d=>d.id===urlControl);const el=document.querySelector(`.control-item[data-id="${urlControl}"]`);if(c&&el)selectControl(c,el);}
+  if(urlControl){setTimeout(()=>{const c=eccDomains.find(d=>d.id===urlControl);const el=document.querySelector(`.control-item[data-id="${urlControl}"]`);if(c&&el)selectControl(c,el);},100);}
 });
 
 function getDotColor(s){return s==='Compliant'?'#10b981':s==='Non-Compliant'?'#ef4444':s==='Partial'?'#f59e0b':'#475569';}
