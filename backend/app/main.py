@@ -1150,11 +1150,12 @@ async def get_alerts(current_user: dict = Depends(get_current_user)):
     try:
         cur.execute(
             """
-            SELECT DISTINCT ec.control_id, ec.title, ec.domain
+            SELECT ec.control_id, ec.title, ec.domain, MAX(cs.calculated_at) as last_audit
             FROM compliance_scores cs
             JOIN ecc_controls ec ON cs.control_id = ec.id
             WHERE cs.user_id = %s AND cs.score < 40 AND ec.level = 1
-            ORDER BY cs.calculated_at DESC LIMIT 5
+            GROUP BY ec.control_id, ec.title, ec.domain
+            ORDER BY last_audit DESC LIMIT 5
             """,
             (user_id,),
         )
