@@ -22,7 +22,7 @@ async function loadHomeStats() {
         const hEl = document.getElementById('system-health-status');
         if (hEl) { hEl.textContent = score >= 70 ? 'Operational' : 'Needs Attention'; hEl.style.color = score >= 70 ? 'var(--accent-success)' : 'var(--accent-warning)'; }
         const aEl = document.getElementById('audited-controls-count');
-        if (aEl) aEl.textContent = `${stats.audited_controls || 0} / ${stats.total_controls || 10}`;
+        if (aEl) aEl.textContent = `${stats.audited_controls || 0} / 10`;
     } catch (e) { console.error('Home stats error:', e); }
 }
 
