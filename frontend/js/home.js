@@ -53,7 +53,7 @@ async function loadCyberAlerts() {
             var level = a.level || 'info';
             var iconColor = level === 'critical' ? 'rgba(239,68,68,.15)' : level === 'warning' ? 'rgba(245,158,11,.15)' : 'rgba(6,182,212,.15)';
             var iconText  = level === 'critical' ? '#ef4444' : level === 'warning' ? '#f59e0b' : '#06b6d4';
-            var icon      = level === 'critical' ? 'fa-shield-xmark' : level === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-info';
+            var icon      = level === 'critical' ? 'fa-shield-virus' : level === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-info';
             var link      = a.control_id ? '<a href="chatbot.html?control=' + a.control_id + '" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:var(--accent-primary);text-decoration:none"><i class="fas fa-arrow-right"></i> Start Audit</a>' : '';
             return '<div class="alert-card">' +
                 '<div class="alert-icon" style="background:' + iconColor + '"><i class="fas ' + icon + '" style="color:' + iconText + '"></i></div>' +
