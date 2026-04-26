@@ -1204,7 +1204,28 @@ async def get_alerts(current_user: dict = Depends(get_current_user)):
     finally:
         cur.close()
         conn.close()
-
+@app.get("/api/dashboard/gaps")
+async def get_dashboard_gaps(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT gr.gap_description, gr.recommendation, gr.priority,
+                   ec.control_id, ec.title as control_title
+            FROM gaps_recommendations gr
+            JOIN audit_sessions s ON gr.session_id = s.id
+            JOIN ecc_controls ec ON gr.control_id = ec.id
+            WHERE s.user_id = %s
+            ORDER BY gr.created_at DESC LIMIT 5
+        """, (user_id,))
+        return [dict(r) for r in cur.fetchall()]
+    except Exception as e:
+        print(f"[❌] Gaps Error: {e}")
+        return []
+    finally:
+        cur.close()
+        conn.close()
 
 # --- Health ---
 @app.get("/")
