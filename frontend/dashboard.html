@@ -12,6 +12,10 @@
         .progress-circle-value{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:32px;font-weight:700;}
         .chart-container{position:relative;height:300px;padding:20px;}
         .gap-badge{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;border-radius:50%;font-weight:600;font-size:14px;}
+        .card{transition:all 0.3s ease;}
+        .card:hover{border-color:rgba(6,182,212,.4);box-shadow:0 0 28px rgba(6,182,212,.12);transform:translateY(-2px);}
+        .stat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all 0.3s ease;}
+        .card:hover .stat-icon{transform:scale(1.1);}
     </style>
 </head>
 <body>
@@ -44,12 +48,18 @@
         <main class="main-content">
             <div class="content-wrapper">
                 <div style="margin-bottom:32px">
-                    <h1 style="font-size:32px;font-weight:700;margin-bottom:8px">Compliance Dashboard</h1>
+                    <h1 style="font-size:32px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+                        <i class="fas fa-chart-pie" style="color:var(--accent-primary)"></i>
+                        Compliance Dashboard
+                    </h1>
                     <p style="color:var(--text-muted);font-size:16px">Real-time overview of your organization's cybersecurity posture</p>
                 </div>
                 <div class="stats-grid">
                     <div class="card" style="text-align:center">
-                        <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;text-transform:uppercase;letter-spacing:.5px">Overall Compliance Score</div>
+                        <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;justify-content:center;gap:8px">
+                            <i class="fas fa-shield-halved" style="color:var(--accent-primary)"></i>
+                            Overall Compliance Score
+                        </div>
                         <div class="progress-circle">
                             <svg width="180" height="180">
                                 <circle cx="90" cy="90" r="80" fill="none" stroke="#334155" stroke-width="12"/>
@@ -95,8 +105,20 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-6" style="margin-bottom:32px">
-                    <div class="card"><h3 style="font-size:18px;font-weight:600;margin-bottom:20px">ECC Domains Maturity</h3><div class="chart-container"><canvas id="domainsRadarChart"></canvas></div></div>
-                    <div class="card"><h3 style="font-size:18px;font-weight:600;margin-bottom:20px">Compliance by Domain</h3><div class="chart-container"><canvas id="categoryBarChart"></canvas></div></div>
+                    <div class="card">
+                        <h3 style="font-size:18px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+                            <i class="fas fa-spider-web" style="color:var(--accent-primary)"></i>
+                            ECC Domains Maturity
+                        </h3>
+                        <div class="chart-container"><canvas id="domainsRadarChart"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <h3 style="font-size:18px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+                            <i class="fas fa-chart-bar" style="color:var(--accent-secondary)"></i>
+                            Compliance by Domain
+                        </h3>
+                        <div class="chart-container"><canvas id="categoryBarChart"></canvas></div>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-6" style="margin-bottom:32px">
                     <div class="card">
