@@ -159,6 +159,7 @@ async function saveAuditToEvidence(controlId, controlTitle, status, score, answe
 }
 
 async function startGuideMode(ctrl){
+  try{const u=getCurrentUserLocal();const uid=u.id||u.user_id||parseInt(localStorage.getItem('authToken')?.match(/token_(\d+)_/)?.[1])||null;const s=await startAuditSessionAPI(uid,currentControlDbId,'guide');if(s?.session_id)currentSessionId=s.session_id;}catch(e){}
   appendMsg('ai',`<strong>Guide Mode — ${ctrl.id}: ${ctrl.title}</strong><br>Assessing readiness...<br><span style="font-size:12px;color:var(--text-muted)">Preparing questions...</span>`);
   showTyping();
   try{const r=await generateAuditQuestions(ctrl.id,'guide');hideTyping();if(r.questions?.length>0){currentQuestions=r.questions.map(q=>({q:q.question,purpose:q.purpose||''}));currentQuestionIndex=0;auditAnswers=[];setTimeout(showGuideQ,400);}else{appendMsg('ai',`<span style="color:#ef4444">Could not generate questions.</span>`);}
