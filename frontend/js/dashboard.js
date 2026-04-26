@@ -9,15 +9,16 @@ async function loadDashboard() {
     try {
         showLoader();
         // جلب البيانات من الـ API
-        const [stats, domain, cat] = await Promise.all([
+        const [stats, domain, cat, gaps] = await Promise.all([
             getDashboardStats(), 
             getDomainScores(), 
-            getScoresByControl()
+            getScoresByControl(),
+            apiRequest('/dashboard/gaps').catch(()=>[])
         ]);
-        
         updateCards(stats);
         renderRadar(domain);
         renderBar(cat);
+        renderGapsAndRecs(gaps || []);
         hideLoader();
     } catch (e) { 
         console.error("Dashboard Error:", e); 
@@ -141,4 +142,32 @@ function renderBar(data) {
             plugins: { legend: { display: false } } 
         }
     });
+}
+function renderGapsAndRecs(gaps) {
+    const gEl = document.getElementById('gaps-list');
+    const rEl = document.getElementById('recommendations-list');
+    if (!gaps.length) {
+        if (gEl) gEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center"><i class="fas fa-check-circle" style="color:#10b981;margin-right:8px"></i>No critical gaps found</div>';
+        if (rEl) rEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center"><i class="fas fa-check-circle" style="color:#10b981;margin-right:8px"></i>Use Guide Mode to generate recommendations</div>';
+        return;
+    }
+    if (gEl) gEl.innerHTML = gaps.map(g => `
+        <div style="border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:14px;margin-bottom:10px;background:rgba(239,68,68,.05)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span style="font-size:13px;font-weight:600;color:#ef4444">${g.control_id} — ${g.control_title}</span>
+                <span style="font-size:11px;background:rgba(239,68,68,.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-weight:600">${g.priority}</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary)">${g.gap_description ? g.gap_description.substring(0,150)+'...' : 'Gap identified in last audit'}</div>
+        </div>
+    `).join('');
+    if (rEl) rEl.innerHTML = gaps.map(g => `
+        <div style="border:1px solid rgba(139,92,246,.2);border-radius:8px;padding:14px;margin-bottom:10px;background:rgba(139,92,246,.05)">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <i class="fas fa-lightbulb" style="color:#8b5cf6;font-size:14px"></i>
+                <span style="font-size:13px;font-weight:600;color:#8b5cf6">${g.control_title}</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">${g.recommendation ? g.recommendation.substring(0,200)+'...' : 'Review and remediate this control'}</div>
+            <a href="chatbot.html?control=${g.control_id}" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:var(--accent-primary);text-decoration:none"><i class="fas fa-arrow-right"></i> Start Audit</a>
+        </div>
+    `).join('');
 }
