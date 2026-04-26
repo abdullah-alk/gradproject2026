@@ -98,6 +98,20 @@
                     <div class="card"><h3 style="font-size:18px;font-weight:600;margin-bottom:20px">ECC Domains Maturity</h3><div class="chart-container"><canvas id="domainsRadarChart"></canvas></div></div>
                     <div class="card"><h3 style="font-size:18px;font-weight:600;margin-bottom:20px">Compliance by Domain</h3><div class="chart-container"><canvas id="categoryBarChart"></canvas></div></div>
                 </div>
+                <div class="grid grid-cols-2 gap-6" style="margin-bottom:32px">
+                    <div class="card">
+                        <h3 style="font-size:18px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:10px">
+                            <i class="fas fa-triangle-exclamation" style="color:#ef4444"></i> Critical Gaps
+                        </h3>
+                        <div id="gaps-list"><div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px"><i class="fas fa-spinner fa-spin"></i> Loading...</div></div>
+                    </div>
+                    <div class="card">
+                        <h3 style="font-size:18px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:10px">
+                            <i class="fas fa-lightbulb" style="color:#8b5cf6"></i> AI-Driven Recommendations
+                        </h3>
+                        <div id="recommendations-list"><div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px"><i class="fas fa-spinner fa-spin"></i> Loading...</div></div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
