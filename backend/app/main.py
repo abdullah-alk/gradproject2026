@@ -612,58 +612,44 @@ async def get_stats(current_user: dict = Depends(get_current_user)):
 
 
 @app.get("/api/dashboard/domain-scores")
-async def get_domain_scores():
+async def get_domain_scores(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        cur.execute(
-            """
-            SELECT domain,
-                   COUNT(*) as total,
-                   SUM(CASE WHEN status = 'Compliant' THEN 1 ELSE 0 END) as compliant,
-                   SUM(CASE WHEN status = 'Partial' THEN 0.5 ELSE 0 END) as partial_score,
-                   SUM(CASE WHEN status = 'Non-Compliant' THEN 1 ELSE 0 END) as non_compliant
-            FROM ecc_controls WHERE level = 1
-            GROUP BY domain ORDER BY domain
-            """
-        )
-        domains = cur.fetchall()
-        result = []
-        for d in domains:
-            t = d["total"]
-            score = round(((d["compliant"] + d["partial_score"]) / t * 100), 1) if t > 0 else 0
-            result.append(
-                {
-                    "domain": d["domain"],
-                    "score": score,
-                    "total": t,
-                    "compliant": int(d["compliant"]),
-                    "non_compliant": int(d["non_compliant"]),
-                }
-            )
-        return result
+        cur.execute("""
+            SELECT ec.domain,
+                   ROUND(AVG(cs.score), 1) as score
+            FROM compliance_scores cs
+            JOIN ecc_controls ec ON cs.control_id = ec.id
+            WHERE cs.user_id = %s AND ec.level = 1
+            GROUP BY ec.domain
+            ORDER BY ec.domain
+        """, (user_id,))
+        rows = cur.fetchall()
+        return [{"domain": r["domain"], "score": float(r["score"] or 0)} for r in rows]
     finally:
         cur.close()
         conn.close()
 
 
 @app.get("/api/dashboard/category-scores")
-async def get_category_scores():
+async def get_category_scores(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        cur.execute(
-            """
-            SELECT domain as category,
-                   ROUND(AVG(CASE WHEN status='Compliant' THEN 100
-                                  WHEN status='Partial' THEN 50
-                                  ELSE 0 END), 1) as score
-            FROM ecc_controls WHERE level = 1
-            GROUP BY domain
-            ORDER BY domain
-            """
-        )
-        return cur.fetchall()
+        cur.execute("""
+            SELECT ec.domain as category,
+                   ROUND(AVG(cs.score), 1) as score
+            FROM compliance_scores cs
+            JOIN ecc_controls ec ON cs.control_id = ec.id
+            WHERE cs.user_id = %s AND ec.level = 1
+            GROUP BY ec.domain
+            ORDER BY ec.domain
+        """, (user_id,))
+        rows = cur.fetchall()
+        return [{"category": r["category"], "score": float(r["score"] or 0)} for r in rows]
     finally:
         cur.close()
         conn.close()
