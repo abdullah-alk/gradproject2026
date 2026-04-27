@@ -37,7 +37,7 @@ async function login(username, password) {
 function logout() {
     authToken = null;
     ['authToken','userInfo','user','audit_results','audit_scores'].forEach(k => localStorage.removeItem(k));
-    window.location.href = 'login.html';
+    window.location.href = 'landing.html';
 }
 
 function getCurrentUserLocal() {
