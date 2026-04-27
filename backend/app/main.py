@@ -1226,6 +1226,57 @@ async def get_dashboard_gaps(current_user: dict = Depends(get_current_user)):
     finally:
         cur.close()
         conn.close()
+    # --- 15. Profile ---
+@app.get("/api/profile")
+async def get_profile(current_user: dict = Depends(get_current_user)):
+    return {
+        "id": current_user["id"],
+        "full_name": current_user["full_name"],
+        "username": current_user["username"],
+        "email": current_user["email"],
+        "role": current_user["role"],
+    }
+
+@app.post("/api/profile/update")
+async def update_profile(data: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        user_id = current_user["id"]
+        full_name = data.get("full_name", "").strip()
+        current_password = data.get("current_password", "")
+        new_password = data.get("new_password", "")
+
+        if full_name:
+            name_valid, name_msg = validate_full_name(full_name)
+            if not name_valid:
+                raise HTTPException(status_code=400, detail=name_msg)
+            cur.execute("UPDATE users SET full_name = %s WHERE id = %s", (full_name, user_id))
+
+        if new_password:
+            cur.execute("SELECT password_hash FROM users WHERE id = %s", (user_id,))
+            user = cur.fetchone()
+            if not verify_password(current_password, user["password_hash"]):
+                raise HTTPException(status_code=400, detail="Current password is incorrect")
+            pwd_valid, pwd_msg = validate_password(new_password)
+            if not pwd_valid:
+                raise HTTPException(status_code=400, detail=pwd_msg)
+            cur.execute("UPDATE users SET password_hash = %s WHERE id = %s", (hash_password(new_password), user_id))
+
+        conn.commit()
+        cur.execute("SELECT id, username, full_name, email, role FROM users WHERE id = %s", (user_id,))
+        updated = dict(cur.fetchone())
+        print(f"[✅] Profile updated for user {user_id}")
+        return {"message": "Profile updated successfully", "user": updated}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        print(f"[❌] Profile Update Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
 
 # --- Health ---
 @app.get("/")
