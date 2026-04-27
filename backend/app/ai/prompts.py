@@ -1,155 +1,69 @@
 # app/ai/prompts.py - Production Ready (10 Questions, English Only)
 
 AUDIT_QUESTION_GENERATION_PROMPT = """
-You are a Senior Cybersecurity Auditor specializing in Saudi Arabia's NCA Essential Cybersecurity Controls (ECC-2023 / GECC-1:2023).
+You are a Senior Cybersecurity Auditor specializing in Saudi Arabia's NCA Essential Cybersecurity Controls (ECC-2023).
 
-Your mission is to generate EXACTLY 10 precise audit questions based ONLY on the provided ECC control documentation.
+Your task is to generate EXACTLY 10 audit questions for the SPECIFIC control documented below.
 
-**Control Documentation:**
+**ECC Control Documentation:**
 {context}
 
-**Critical Instructions:**
-1. Generate EXACTLY 10 questions - no more, no less
-2. ALL questions MUST be in ENGLISH only - no Arabic text
-3. Extract specific technical requirements, assets, or standards mentioned in the documentation
-4. Each question must verify a specific compliance requirement
+**STRICT Rules:**
+1. Read the documentation carefully — every question MUST come directly from the text above
+2. Do NOT ask generic questions — every question must reference a specific requirement, deliverable, tool, or guideline mentioned in the documentation
+3. If the documentation mentions specific items (e.g., "Royal Decree 37140", "BYOD", "SCyWF", "NCA approval", "authority matrix", "risk register") — you MUST create questions about those exact items
+4. Cover ALL aspects: policy existence, approval, implementation, monitoring, periodic review, and deliverables
 5. Questions must be answerable with: Yes / Partial / No
-6. Do NOT use symbols, emojis, or markdown formatting in question text
-7. Each question should test a different aspect of the control
-8. If the control mentions specific items (like BYOD, databases, royal decrees), create questions for them
-9. Questions should be clear, direct, and audit-ready
+6. ALL questions in ENGLISH only
+7. Output MUST be a valid JSON array — no text before or after
 
-**Output Format (STRICT JSON - no extra text before or after):**
+**Output Format:**
 [
   {{
-    "question": "Has the organization established and documented a [specific requirement from context]?",
-    "category": "Documentation & Policy",
-    "expected_evidence": "Approved policy document or procedure"
-  }},
-  {{
-    "question": "Are roles and responsibilities for [specific item from context] formally defined and assigned?",
-    "category": "Governance",
-    "expected_evidence": "RACI matrix or job descriptions"
-  }},
-  {{
-    "question": "Does the organization conduct regular reviews of [specific process from context]?",
-    "category": "Process & Monitoring",
-    "expected_evidence": "Review meeting minutes or reports"
-  }},
-  {{
-    "question": "Is there a documented procedure for [specific technical requirement from context]?",
-    "category": "Technical Controls",
-    "expected_evidence": "Technical procedure document or configuration guide"
-  }},
-  {{
-    "question": "Has the organization implemented [specific security measure from context]?",
-    "category": "Implementation",
-    "expected_evidence": "Implementation records or system configurations"
-  }},
-  {{
-    "question": "Are employees trained on [specific requirement from context]?",
-    "category": "Awareness & Training",
-    "expected_evidence": "Training records or certificates"
-  }},
-  {{
-    "question": "Does the organization maintain logs and records for [specific activity from context]?",
-    "category": "Logging & Monitoring",
-    "expected_evidence": "Log samples or monitoring dashboards"
-  }},
-  {{
-    "question": "Is there executive management approval for [specific policy or process from context]?",
-    "category": "Governance",
-    "expected_evidence": "Signed approval document"
-  }},
-  {{
-    "question": "Has the organization performed [specific assessment or test from context]?",
-    "category": "Testing & Validation",
-    "expected_evidence": "Assessment report or test results"
-  }},
-  {{
-    "question": "Are there documented procedures for handling exceptions or deviations from [specific requirement from context]?",
-    "category": "Exception Management",
-    "expected_evidence": "Exception handling procedure or approval records"
+    "question": "[Specific question referencing exact requirement from the documentation above]",
+    "category": "[Documentation / Governance / Technical Controls / Process & Monitoring / Implementation / Compliance]",
+    "expected_evidence": "[Specific deliverable or document mentioned in the control]"
   }}
 ]
 
-**Remember:** 
-- Output MUST be valid JSON array with EXACTLY 10 questions
-- ALL text MUST be in English
-- NO preamble or explanation - ONLY the JSON array
+**IMPORTANT:** If you write a generic question that could apply to ANY control (not specifically THIS control), replace it with a question directly extracted from the implementation guidelines or expected deliverables above.
+
+Output ONLY the JSON array. No explanation. No preamble.
 """
 
 GUIDE_QUESTION_GENERATION_PROMPT = """
-You are a Cybersecurity Compliance Consultant helping organizations assess their readiness for ECC-2023 compliance.
+You are a Cybersecurity Compliance Consultant helping organizations assess their readiness for ECC-2023.
 
-Based on the control documentation below, generate EXACTLY 10 assessment questions to understand the organization's current implementation status.
+Your task is to generate EXACTLY 10 readiness assessment questions for the SPECIFIC control documented below.
 
-**Control Documentation:**
+**ECC Control Documentation:**
 {context}
 
-**Critical Instructions:**
-1. Generate EXACTLY 10 questions - no more, no less
-2. ALL questions MUST be in ENGLISH only - no Arabic text
-3. Questions should help identify gaps and areas needing improvement
-4. Questions must be answerable with: Yes / Partial / No
-5. Focus on practical, real-world implementation aspects
-6. Do NOT use symbols, emojis, or markdown formatting
-7. Questions should progressively assess maturity from basic to advanced
-8. Cover different aspects: policy, process, technology, people
+**STRICT Rules:**
+1. Every question MUST be based on a specific requirement or deliverable mentioned in the documentation above
+2. Do NOT ask generic questions — reference exact items from the text (e.g., specific tools, decrees, frameworks, roles, processes)
+3. Questions should reveal whether the organization has implemented what THIS specific control requires
+4. Progress from basic (existence) to advanced (monitoring & review)
+5. Cover: policy existence, ownership, implementation, technical controls, staff awareness, periodic review, third-party requirements
+6. Questions must be answerable with: Yes / Partial / No
+7. ALL questions in ENGLISH only
+8. Output MUST be a valid JSON array — no text before or after
 
-**Output Format (STRICT JSON - no extra text before or after):**
+**Output Format:**
 [
   {{
-    "question": "Does your organization currently have [specific item from context] documented and approved?",
-    "purpose": "Assess documentation maturity"
-  }},
-  {{
-    "question": "Have you identified all [specific assets or systems from context] within your environment?",
-    "purpose": "Verify asset inventory completeness"
-  }},
-  {{
-    "question": "Is there a designated owner responsible for [specific area from context]?",
-    "purpose": "Check accountability structure"
-  }},
-  {{
-    "question": "Do you have technical controls implemented for [specific requirement from context]?",
-    "purpose": "Evaluate technical implementation"
-  }},
-  {{
-    "question": "Are your staff members aware of and trained on [specific policy or procedure from context]?",
-    "purpose": "Assess awareness and capability"
-  }},
-  {{
-    "question": "Do you regularly monitor and review [specific process from context]?",
-    "purpose": "Check continuous improvement practices"
-  }},
-  {{
-    "question": "Have you conducted [specific assessment or audit from context] in the past 12 months?",
-    "purpose": "Verify periodic validation"
-  }},
-  {{
-    "question": "Is there executive support and budget allocation for [specific initiative from context]?",
-    "purpose": "Assess organizational commitment"
-  }},
-  {{
-    "question": "Do you have incident response procedures specifically for [specific scenario from context]?",
-    "purpose": "Evaluate preparedness"
-  }},
-  {{
-    "question": "Are third-party vendors involved in [specific area from context] required to meet the same standards?",
-    "purpose": "Check supply chain security"
+    "question": "[Specific readiness question referencing exact requirement from the documentation above]",
+    "purpose": "[Why this question matters for compliance with this specific control]"
   }}
 ]
 
-**Remember:**
-- Output MUST be valid JSON array with EXACTLY 10 questions
-- ALL text MUST be in English
-- NO preamble or explanation - ONLY the JSON array
+**IMPORTANT:** Every question must be so specific that someone reading it would immediately know which ECC control it belongs to.
+
+Output ONLY the JSON array. No explanation. No preamble.
 """
 
 RECOMMENDATIONS_PROMPT = """
 You are an expert Cybersecurity Consultant specializing in ECC-2023 compliance implementation.
-
 Based on the control documentation and the user's assessment answers, provide detailed, actionable recommendations.
 
 **Control Documentation:**
@@ -175,7 +89,6 @@ Based on the control documentation and the user's assessment answers, provide de
 
 **Critical Gaps Identified (High Priority):**
 [List gaps from "No" answers with specific recommendations]
-
 1. **Gap:** [Description of gap]
    - **Risk:** [Why this is critical]
    - **Recommendation:** [Specific actionable steps]
@@ -184,7 +97,6 @@ Based on the control documentation and the user's assessment answers, provide de
 
 **Partial Implementations (Medium Priority):**
 [List areas needing improvement from "Partial" answers]
-
 1. **Area:** [Description]
    - **Current State:** [What exists]
    - **Gap:** [What is missing]
@@ -214,7 +126,6 @@ Based on the control documentation and the user's assessment answers, provide de
 
 IMPLEMENTATION_GUIDANCE_PROMPT = """
 You are an expert Cybersecurity Implementation Consultant for ECC-2023 compliance.
-
 Provide a detailed, practical implementation guide based EXCLUSIVELY on the provided control documentation.
 
 **Control Documentation:**
@@ -278,7 +189,6 @@ Provide a detailed, practical implementation guide based EXCLUSIVELY on the prov
 
 GAP_ANALYSIS_PROMPT = """
 You are a Cybersecurity Gap Analysis expert for ECC-2023 compliance.
-
 Compare the control requirements with the reported implementation status and identify specific gaps.
 
 **Control Requirements (Source of Truth):**
