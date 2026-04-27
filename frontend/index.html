@@ -125,6 +125,9 @@
         </main>
     </div>
     <div id="loader" class="loader"><div class="spinner"></div></div>
+        <script>
+        if (!localStorage.getItem('authToken')) { window.location.href = 'landing.html'; }
+    </script>
     <script src="js/api.js"></script>
     <script src="js/home.js"></script>
 </body>
