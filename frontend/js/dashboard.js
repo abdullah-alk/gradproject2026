@@ -56,7 +56,7 @@ function updateCards(s) {
     const bar = document.getElementById('audit-progress-bar');
     if (bar) { bar.style.width = pct + '%'; }
     
-    set('audit-progress-text', `${s.audited_controls || 0} of ${s.total_controls || 10} controls reviewed`);
+    set('audit-progress-text', `${s.audited_controls || 0} of 10 controls reviewed`);
 
     if (s.next_audit_date) {
         const d = new Date(s.next_audit_date);
