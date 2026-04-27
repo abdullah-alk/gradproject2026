@@ -80,6 +80,8 @@
                     const err = await res.json();
                     errBox.textContent = err.detail || 'Invalid credentials. Please try again.';
                     errBox.classList.add('show');
+                    document.getElementById('password').value = '';
+                    document.getElementById('password').focus();
                 }
             } catch (e) {
                 errBox.textContent = 'Connection failed. Ensure the server is running.';
