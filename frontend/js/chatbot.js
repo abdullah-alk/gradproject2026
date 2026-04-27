@@ -3,33 +3,44 @@
 
 let currentMode='audit',currentControlId=null,currentControlDbId=null,currentQuestions=[],currentQuestionIndex=0,selectedControlInfo=null,currentSessionId=null,auditAnswers=[];
 
-const eccDomains=[
-  {id:'1-1',title:'Cybersecurity Strategy',domain:'Strategy',subs:[
-    {id:'1-1-1',title:'Strategy Definition and Approval'},
-    {id:'1-1-2',title:'Strategy Implementation Roadmap'},
-    {id:'1-1-3',title:'Periodic Review of Strategy'}
-  ]},
-  {id:'1-2',title:'Cybersecurity Management',domain:'Management',subs:[
-    {id:'1-2-1',title:'Establishment of Cybersecurity Function'},
-    {id:'1-2-2',title:'Cybersecurity Human Resources'},
-    {id:'1-2-3',title:'Cybersecurity Steering Committee'}
-  ]},
-  {id:'1-3',title:'Cybersecurity Policies and Procedures',domain:'Policies',subs:[
-    {id:'1-3-1',title:'Definition and Dissemination of Policies'},
-    {id:'1-3-2',title:'Implementation of Policies'},
-    {id:'1-3-3',title:'Technical Security Standards'},
-    {id:'1-3-4',title:'Review of Policies'}
-  ]},
-  {id:'1-4',title:'Cybersecurity Roles and Responsibilities',domain:'Roles',subs:[
-    {id:'1-4-1',title:'Definition and Assignment of Roles'},
-    {id:'1-4-2',title:'Review of Roles and Responsibilities'}
-  ]},
-  {id:'1-5',title:'Cybersecurity Risk Management',domain:'Risk',subs:[
-    {id:'1-5-1',title:'Risk Management Methodology'},
-    {id:'1-5-2',title:'Implementation of Risk Management'},
-    {id:'1-5-3',title:'Specific Cases for Risk Assessment'},
-    {id:'1-5-4',title:'Periodic Review of Risk Management'}
-  ]},
+const eccDomains = [
+  {
+    id: '1-1', title: 'Cybersecurity Strategy', domain: 'Strategy', subs: [
+      { id: '1-1-1', title: 'Strategy Definition and Approval' },
+      { id: '1-1-2', title: 'Strategy Implementation Roadmap' },
+      { id: '1-1-3', title: 'Periodic Review of Strategy' }
+    ]
+  },
+  {
+    id: '1-2', title: 'Cybersecurity Management', domain: 'Management', subs: [
+      { id: '1-2-1', title: 'Establishment of Cybersecurity Function' },
+      { id: '1-2-2', title: 'Cybersecurity Human Resources' },
+      { id: '1-2-3', title: 'Cybersecurity Steering Committee' }
+    ]
+  },
+  {
+    id: '1-3', title: 'Cybersecurity Policies and Procedures', domain: 'Policies', subs: [
+      { id: '1-3-1', title: 'Definition and Dissemination of Policies' },
+      { id: '1-3-2', title: 'Implementation of Policies' },
+      { id: '1-3-3', title: 'Technical Security Standards' },
+      { id: '1-3-4', title: 'Review of Policies' }
+    ]
+  },
+  {
+    id: '1-4', title: 'Cybersecurity Roles and Responsibilities', domain: 'Roles', subs: [
+      { id: '1-4-1', title: 'Definition and Assignment of Roles' },
+      { id: '1-4-2', title: 'Review of Roles and Responsibilities' }
+    ]
+  },
+  {
+    id: '1-5', title: 'Cybersecurity Risk Management', domain: 'Risk', subs: [
+      { id: '1-5-1', title: 'Risk Management Methodology' },
+      { id: '1-5-2', title: 'Implementation of Risk Management' },
+      { id: '1-5-3', title: 'Specific Cases for Risk Assessment' },
+      { id: '1-5-4', title: 'Periodic Review of Risk Management' }
+    ]
+  }
+];
 
 document.addEventListener('DOMContentLoaded',async()=>{
   if(!checkAuth())return;
