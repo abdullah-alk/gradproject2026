@@ -20,8 +20,6 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: var(--bg-dark); color: var(--text-primary); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
-
-        /* Nav */
         nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 48px; display: flex; align-items: center; justify-content: space-between; background: rgba(15,23,42,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(51,65,85,0.5); }
         .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
         .nav-logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
@@ -32,8 +30,6 @@
         .btn-outline:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
         .btn-primary { padding: 8px 20px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); border-radius: 8px; color: white; text-decoration: none; font-size: 14px; font-weight: 600; transition: all 0.2s; }
         .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(6,182,212,0.3); }
-
-        /* Hero */
         .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 120px 24px 80px; position: relative; overflow: hidden; }
         .hero::before { content: ''; position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(6,182,212,0.08), transparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
         .hero::after { content: ''; position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(139,92,246,0.06), transparent 70%); top: 20%; right: 10%; pointer-events: none; }
@@ -50,8 +46,6 @@
         .hero-stat { text-align: center; }
         .hero-stat-value { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hero-stat-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
-
-        /* Features */
         .section { padding: 80px 48px; max-width: 1200px; margin: 0 auto; }
         .section-title { text-align: center; margin-bottom: 56px; }
         .section-title h2 { font-size: 36px; font-weight: 700; margin-bottom: 12px; }
@@ -62,25 +56,16 @@
         .feature-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 16px; }
         .feature-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
         .feature-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
-
-        /* How it works */
         .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
         .step { text-align: center; padding: 24px; }
         .step-num { width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: white; margin: 0 auto 16px; }
         .step h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
         .step p { color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
-
-        /* CTA */
         .cta { background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(139,92,246,0.08)); border: 1px solid var(--border-color); border-radius: 20px; padding: 64px; text-align: center; margin: 0 48px 80px; }
         .cta h2 { font-size: 36px; font-weight: 700; margin-bottom: 16px; }
         .cta p { color: var(--text-secondary); font-size: 16px; margin-bottom: 32px; }
-
-        /* Footer */
         footer { border-top: 1px solid var(--border-color); padding: 24px 48px; text-align: center; color: var(--text-muted); font-size: 13px; }
-
-        /* Divider */
         .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border-color), transparent); margin: 0 48px; }
-
         @media (max-width: 768px) {
             nav { padding: 16px 20px; }
             .section { padding: 60px 20px; }
@@ -90,8 +75,6 @@
     </style>
 </head>
 <body>
-
-<!-- Nav -->
 <nav>
     <a href="landing.html" class="nav-logo">
         <div class="nav-logo-icon"><i class="fas fa-shield-halved"></i></div>
@@ -106,15 +89,14 @@
     </div>
 </nav>
 
-<!-- Hero -->
 <section class="hero">
     <div style="position:relative;z-index:1">
         <div class="hero-badge">
             <i class="fas fa-shield-halved"></i>
-            ECC-2023 Compliance Platform
+            ECC-2023 Compliance
         </div>
         <h1>Automate Your<br><span>Cybersecurity Audits</span><br>with AI</h1>
-        <p>The smartest way to assess, track, and improve your organization's compliance with ECC-2023 standards — powered by AI.</p>
+        <p>The smartest way to assess, track, and improve your compliance with ECC-2023 standards — powered by AI.</p>
         <div class="hero-btns">
             <a href="register.html" class="btn-hero-primary">
                 <i class="fas fa-rocket"></i> Start Free Audit
@@ -142,7 +124,6 @@
 
 <div class="divider"></div>
 
-<!-- Features -->
 <div class="section">
     <div class="section-title">
         <h2>Everything You Need for ECC Compliance</h2>
@@ -167,15 +148,15 @@
         <div class="feature-card">
             <div class="feature-icon" style="background:rgba(245,158,11,.15);color:#f59e0b"><i class="fas fa-calendar-alt"></i></div>
             <h3>Audit Scheduler</h3>
-            <p>Schedule and manage upcoming audits with automated reminders to keep your compliance program on track.</p>
+            <p>Schedule and manage upcoming audits to keep your compliance program on track.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon" style="background:rgba(239,68,68,.15);color:#ef4444"><i class="fas fa-folder-open"></i></div>
             <h3>Evidence Repository</h3>
-            <p>Store and manage all your compliance evidence and audit reports in one organized, secure location.</p>
+            <p>Store and manage all your audit reports and compliance records in one organized, secure location.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon" style="background:rgba(6,182,212,.15);color:#06b6d4"><i class="fas fa-users"></i></div>
+            <div class="feature-icon" style="background:rgba(6,182,212,.15);color:#06b6d4"><i class="fas fa-user-shield"></i></div>
             <h3>Multi-User Support</h3>
             <p>Each user has their own compliance data, scores, and audit history — fully isolated and secure.</p>
         </div>
@@ -184,7 +165,6 @@
 
 <div class="divider"></div>
 
-<!-- How it works -->
 <div class="section">
     <div class="section-title">
         <h2>How It Works</h2>
@@ -194,17 +174,17 @@
         <div class="step">
             <div class="step-num">1</div>
             <h3>Create Account</h3>
-            <p>Register with your organization details and get instant access to the platform.</p>
+            <p>Register your details and get instant access to the platform.</p>
         </div>
         <div class="step">
             <div class="step-num">2</div>
             <h3>Select Control</h3>
-            <p>Choose from 10 ECC-2023 controls and start an AI-powered audit session.</p>
+            <p>Choose from 10 ECC-2023 controls and pick between Audit Mode or Guide Mode.</p>
         </div>
         <div class="step">
             <div class="step-num">3</div>
             <h3>Answer Questions</h3>
-            <p>Answer 10 AI-generated compliance questions with Yes, Partial, or No responses.</p>
+            <p>Answer 10 AI-generated compliance questions with Yes, Partial, or No.</p>
         </div>
         <div class="step">
             <div class="step-num">4</div>
@@ -216,21 +196,18 @@
 
 <div class="divider"></div>
 
-<!-- CTA -->
 <div style="max-width:1200px;margin:80px auto 0">
     <div class="cta">
         <h2>Ready to Improve Your Compliance?</h2>
-        <p>Join organizations using ECC Auditor to streamline their cybersecurity compliance process.</p>
+        <p>Start assessing your ECC-2023 compliance today — free, fast, and AI-powered.</p>
         <a href="register.html" class="btn-hero-primary" style="display:inline-flex">
             <i class="fas fa-rocket"></i> Get Started Free
         </a>
     </div>
 </div>
 
-<!-- Footer -->
 <footer>
     <p>© 2026 ECC Auditor — AI-Powered Cybersecurity Compliance Platform for ECC-2023</p>
 </footer>
-
 </body>
 </html>
