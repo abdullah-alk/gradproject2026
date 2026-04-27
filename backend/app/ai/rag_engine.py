@@ -28,8 +28,8 @@ class RAGEngine:
             model_kwargs={'device': 'cpu'},
             encode_kwargs={'normalize_embeddings': True}
         )
+        
         # 2. Setup AI Model
-   
         api_key = os.getenv("GROQ_API_KEY")
         if api_key and api_key.startswith("gsk_"):
             self.llm = ChatGroq(
@@ -41,7 +41,7 @@ class RAGEngine:
         else:
             print("❌ AI Engine Error: Valid Groq API Key missing")
             self.llm = None
-    
+        
         # 3. Setup Text Splitter
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1200,
@@ -62,16 +62,12 @@ class RAGEngine:
         else:
             print(f"⚠️ ChromaDB not found at: {settings.CHROMA_PERSIST_DIRECTORY}")
             print("⏳ Building Vectorstore automatically now...")
-            # 🚨 IMPORTANT: Ensure this file path matches your actual JSON file location!
-            # If your JSON is in a folder, it might need to be "app/data/ecc_controls.json"
             self.load_ecc_data("data/ecc_controls.json")
 
     def process_request(self, control_id: str, query: str = "", mode: str = "guidance") -> str:
-       
         if not self.llm:
             return "AI Service is not configured properly. Please check GROQ_API_KEY."
         
-        # Retrieve relevant context from vectorstore
         context = self.retrieve_context(control_id)
         if not context:
             return f"No documentation found for Control ID: {control_id}. Please ensure ECC documents are indexed in ChromaDB."
@@ -91,7 +87,6 @@ class RAGEngine:
                 else:
                     final_prompt = IMPLEMENTATION_GUIDANCE_PROMPT.format(context=context)
 
-            # Invoke AI model
             response = self.llm.invoke(final_prompt)
             result = response.content
             return result
@@ -104,10 +99,8 @@ class RAGEngine:
         if not self.vectorstore:
             return ""
         try:
-            # --- ADD THESE TWO DEBUG LINES ---
             print(f"[🔍] Frontend is asking for Control ID: '{control_id}'")
             print(f"[📊] Total documents currently inside ChromaDB: {self.vectorstore._collection.count()}")
-            # ---------------------------------
 
             results = self.vectorstore.similarity_search(
                 f"Technical requirements, implementation guidelines, and deliverables for ECC control {control_id}",
@@ -115,7 +108,7 @@ class RAGEngine:
                 filter={"control_id": control_id}
             )
             if not results:
-                print(f"[⚠️] No context found for control {control_id}") # It's probably failing here!
+                print(f"[⚠️] No context found for control {control_id}")
                 return ""
             return "\n\n---\n\n".join([doc.page_content for doc in results])
         except Exception as e:
@@ -133,18 +126,43 @@ class RAGEngine:
 
             documents = []
             for cid, content in controls_data.items():
+                # --- 1. معالجة الأدوات (Cybersecurity Tools) ---
+                tools = content.get('cybersecurity_tools', [])
+                if isinstance(tools, list) and tools:
+                    tools_text = "\n".join([f"• {t}" for t in tools])
+                else:
+                    tools_text = "No specific tools mentioned."
+
+                # --- 2. معالجة المخرجات والإرشادات ---
+                def list_to_text(data):
+                    if isinstance(data, list):
+                        return "\n".join([f"• {item}" for item in data])
+                    return data
+
+                guidelines = list_to_text(content.get('implementation_guidelines', ''))
+                deliverables = list_to_text(content.get('expected_deliverables', ''))
+
+                # --- 3. بناء النص الكامل ---
                 full_content = (
-                    f"CONTROL_ID: {cid}\nTITLE: {content.get('title', '')}\nDOMAIN: {content.get('domain', '')}\n"
-                    f"OBJECTIVE: {content.get('objective', '')}\nDESCRIPTION: {content.get('description', '')}\n\n"
+                    f"CONTROL_ID: {cid}\n"
+                    f"TITLE: {content.get('title', '')}\n"
+                    f"DOMAIN: {content.get('domain', '')}\n"
+                    f"OBJECTIVE: {content.get('objective', '')}\n\n"
+                    f"CYBERSECURITY TOOLS:\n{tools_text}\n\n"
                     f"FULL REQUIREMENTS:\n{content.get('full_text', '')}\n\n"
-                    f"IMPLEMENTATION GUIDELINES:\n{content.get('implementation_guidelines', '')}\n\n"
-                    f"EXPECTED DELIVERABLES:\n{content.get('expected_deliverables', '')}"
+                    f"IMPLEMENTATION GUIDELINES:\n{guidelines}\n\n"
+                    f"EXPECTED DELIVERABLES:\n{deliverables}"
                 )
+
                 chunks = self.text_splitter.split_text(full_content)
                 for chunk in chunks:
                     doc = Document(
                         page_content=chunk,
-                        metadata={"control_id": cid, "domain": content.get('domain', ''), "title": content.get('title', '')}
+                        metadata={
+                            "control_id": cid, 
+                            "domain": content.get('domain', ''), 
+                            "title": content.get('title', '')
+                        }
                     )
                     documents.append(doc)
 
