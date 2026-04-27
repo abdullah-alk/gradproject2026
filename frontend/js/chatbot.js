@@ -4,17 +4,32 @@
 let currentMode='audit',currentControlId=null,currentControlDbId=null,currentQuestions=[],currentQuestionIndex=0,selectedControlInfo=null,currentSessionId=null,auditAnswers=[];
 
 const eccDomains=[
-  {id:'1-1',title:'Cybersecurity Governance',domain:'Governance'},
-  {id:'1-2',title:'Cybersecurity Risk Management',domain:'Risk'},
-  {id:'1-3',title:'Cybersecurity Asset Management',domain:'Assets'},
-  {id:'1-4',title:'Cybersecurity Operations',domain:'Operations'},
-  {id:'1-5',title:'System & Network Hardening',domain:'Network'},
-  {id:'1-6',title:'Identity & Access Management',domain:'Identity'},
-  {id:'1-7',title:'Data Protection',domain:'Data'},
-  {id:'1-8',title:'Vulnerability Management',domain:'Vulnerability'},
-  {id:'1-9',title:'Incident Defense',domain:'Incident'},
-  {id:'1-10',title:'Physical Security',domain:'Physical'}
-];
+  {id:'1-1',title:'Cybersecurity Strategy',domain:'Strategy',subs:[
+    {id:'1-1-1',title:'Strategy Definition and Approval'},
+    {id:'1-1-2',title:'Strategy Implementation Roadmap'},
+    {id:'1-1-3',title:'Periodic Review of Strategy'}
+  ]},
+  {id:'1-2',title:'Cybersecurity Management',domain:'Management',subs:[
+    {id:'1-2-1',title:'Establishment of Cybersecurity Function'},
+    {id:'1-2-2',title:'Cybersecurity Human Resources'},
+    {id:'1-2-3',title:'Cybersecurity Steering Committee'}
+  ]},
+  {id:'1-3',title:'Cybersecurity Policies and Procedures',domain:'Policies',subs:[
+    {id:'1-3-1',title:'Definition and Dissemination of Policies'},
+    {id:'1-3-2',title:'Implementation of Policies'},
+    {id:'1-3-3',title:'Technical Security Standards'},
+    {id:'1-3-4',title:'Review of Policies'}
+  ]},
+  {id:'1-4',title:'Cybersecurity Roles and Responsibilities',domain:'Roles',subs:[
+    {id:'1-4-1',title:'Definition and Assignment of Roles'},
+    {id:'1-4-2',title:'Review of Roles and Responsibilities'}
+  ]},
+  {id:'1-5',title:'Cybersecurity Risk Management',domain:'Risk',subs:[
+    {id:'1-5-1',title:'Risk Management Methodology'},
+    {id:'1-5-2',title:'Implementation of Risk Management'},
+    {id:'1-5-3',title:'Specific Cases for Risk Assessment'},
+    {id:'1-5-4',title:'Periodic Review of Risk Management'}
+  ]},
 
 document.addEventListener('DOMContentLoaded',async()=>{
   if(!checkAuth())return;
@@ -30,16 +45,40 @@ document.addEventListener('DOMContentLoaded',async()=>{
   if(urlControl){setTimeout(()=>{const c=eccDomains.find(d=>d.id===urlControl);const el=document.querySelector(`.control-item[data-id="${urlControl}"]`);if(c&&el)selectControl(c,el);},100);}
 });
 
-function getDotColor(s){return s==='Compliant'?'#10b981':s==='Non-Compliant'?'#ef4444':s==='Partial'?'#f59e0b':'#475569';}
-
 function renderControlBrowser(){
   const b=document.getElementById('control-browser');if(!b)return;b.innerHTML='';
   const res=JSON.parse(localStorage.getItem('audit_results')||'{}');
   eccDomains.forEach(c=>{
-    const item=document.createElement('div');item.className='control-item';item.dataset.id=c.id;
-    item.innerHTML=`<div style="display:flex;align-items:center;gap:8px"><span class="status-dot" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${getDotColor(res[c.id]||'')}"></span><small style="color:var(--accent-primary);font-weight:600">${c.id}</small></div><div style="font-weight:500;font-size:13px;margin-top:3px;padding-left:16px">${c.title}</div>`;
-    item.onclick=()=>selectControl(c,item);
-    b.appendChild(item);
+    // الضابط الرئيسي
+    const parent=document.createElement('div');
+    parent.style.cssText='border-bottom:1px solid rgba(255,255,255,0.04);';
+    const header=document.createElement('div');
+    header.style.cssText='padding:10px 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-radius:8px;transition:0.2s;';
+    header.innerHTML=`<div style="display:flex;align-items:center;gap:8px"><span class="status-dot" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${getDotColor(res[c.id]||'')}"></span><small style="color:var(--accent-primary);font-weight:700">${c.id}</small></div><div style="font-weight:600;font-size:13px;flex:1;margin:0 8px">${c.title}</div><i class="fas fa-chevron-down" style="font-size:10px;color:var(--text-muted);transition:0.2s;"></i>`;
+    header.onmouseenter=()=>header.style.background='rgba(6,182,212,0.06)';
+    header.onmouseleave=()=>header.style.background='';
+    // الفروع
+    const subsDiv=document.createElement('div');
+    subsDiv.style.cssText='display:none;padding-left:12px;padding-bottom:6px;';
+    let expanded=false;
+    header.onclick=()=>{
+      expanded=!expanded;
+      subsDiv.style.display=expanded?'block':'none';
+      header.querySelector('.fa-chevron-down').style.transform=expanded?'rotate(180deg)':'';
+    };
+    // إضافة الفروع
+    (c.subs||[]).forEach(sub=>{
+      const subItem=document.createElement('div');
+      subItem.className='control-item';
+      subItem.dataset.id=sub.id;
+      subItem.style.cssText='padding:8px 10px;margin:2px 0;border-radius:6px;';
+      subItem.innerHTML=`<div style="display:flex;align-items:center;gap:8px"><span class="status-dot" style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${getDotColor(res[sub.id]||'')}"></span><small style="color:var(--accent-secondary);font-weight:600;font-size:11px">${sub.id}</small></div><div style="font-size:12px;color:var(--text-secondary);margin-top:2px;padding-left:14px">${sub.title}</div>`;
+      subItem.onclick=()=>selectControl({...sub,domain:c.domain},subItem);
+      subsDiv.appendChild(subItem);
+    });
+    parent.appendChild(header);
+    parent.appendChild(subsDiv);
+    b.appendChild(parent);
   });
 }
 
@@ -217,8 +256,19 @@ async function saveProgress(ctrlId,status,score,yes,partial,no,total){
   if(currentSessionId){try{await completeAuditSession(currentSessionId,status,score);}catch(e){}}
 }
 
-function updateDot(id,status){const item=document.querySelector(`.control-item[data-id="${id}"]`);if(!item)return;const dot=item.querySelector('.status-dot');if(dot)dot.style.background=getDotColor(status);}
-
+function updateDot(id,status){
+  // تحديث dot الضابط الفرعي أو الرئيسي
+  document.querySelectorAll(`.control-item[data-id="${id}"]`).forEach(item=>{
+    const dot=item.querySelector('.status-dot');
+    if(dot)dot.style.background=getDotColor(status);
+  });
+  // تحديث dot الضابط الرئيسي لو كان فرعياً
+  const parent=id.split('-').slice(0,2).join('-');
+  if(parent!==id){
+    const parentHeader=document.querySelector(`[data-parent-id="${parent}"] .status-dot`);
+    if(parentHeader)parentHeader.style.background=getDotColor(status);
+  }
+}
 async function handleUserMessage(){
   const input=document.getElementById('user-query'),text=input.value.trim();
   if(!text)return;if(!currentControlId){appendMsg('ai','Select a control first.');return;}
