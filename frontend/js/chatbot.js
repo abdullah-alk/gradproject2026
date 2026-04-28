@@ -1,7 +1,16 @@
-// CyberGuard ECC Chatbot v7 - UPDATED FOR SUB-CONTROLS
-let currentMode='audit', currentControlId=null, currentControlDbId=null, currentQuestions=[], currentQuestionIndex=0, selectedControlInfo=null, currentSessionId=null, auditAnswers=[];
+// CyberGuard ECC Chatbot v8 - FULL UPDATED EDITION
+// Integration: Hierarchical Flow + Evidence Saving + API Sync
 
-// تعريف الضوابط والهيكل الجديد
+let currentMode = 'audit', 
+    currentControlId = null, 
+    currentControlDbId = null, 
+    currentQuestions = [], 
+    currentQuestionIndex = 0, 
+    selectedControlInfo = null, 
+    currentSessionId = null, 
+    auditAnswers = [];
+
+// 1. هيكلية الضوابط (الأساسي والفرعي)
 const eccDomains = [
     { id: '1-1', title: 'Cybersecurity Governance', subControls: ['1-1-1', '1-1-2', '1-1-3'] },
     { id: '1-2', title: 'Cybersecurity Risk Management', subControls: ['1-2-1', '1-2-2', '1-2-3'] },
@@ -10,7 +19,42 @@ const eccDomains = [
     { id: '1-5', title: 'System & Network Hardening', subControls: ['1-5-1', '1-5-2', '1-5-3-1', '1-5-3-2', '1-5-3-3', '1-5-3-4', '1-5-4'] }
 ];
 
-// ... (تعديل دالة اختيار الضابط الأساسي) ...
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!checkAuth()) return;
+    loadUserToSidebar();
+    renderControlBrowser();
+    
+    document.getElementById('audit-mode-btn').addEventListener('click', () => setMode('audit'));
+    document.getElementById('guide-mode-btn').addEventListener('click', () => setMode('guide'));
+    document.getElementById('send-btn')?.addEventListener('click', handleUserMessage);
+    document.getElementById('user-query')?.addEventListener('keypress', e => { if (e.key === 'Enter') handleUserMessage(); });
+
+    // استعادة النتائج السابقة لتلوين النقاط
+    const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
+    Object.entries(res).forEach(([id, s]) => updateDot(id, s));
+});
+
+function getDotColor(s) {
+    return s === 'Compliant' ? '#10b981' : s === 'Non-Compliant' ? '#ef4444' : s === 'Partial' ? '#f59e0b' : '#475569';
+}
+
+function renderControlBrowser() {
+    const b = document.getElementById('control-browser'); if (!b) return; b.innerHTML = '';
+    const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
+    eccDomains.forEach(c => {
+        const item = document.createElement('div'); 
+        item.className = 'control-item'; 
+        item.dataset.id = c.id;
+        item.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px">
+                <span class="status-dot" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${getDotColor(res[c.id] || '')}"></span>
+                <small style="color:var(--accent-primary);font-weight:600">${c.id}</small>
+            </div>
+            <div style="font-weight:500;font-size:13px;margin-top:3px;padding-left:16px">${c.title}</div>`;
+        item.onclick = () => selectControl(c, item);
+        b.appendChild(item);
+    });
+}
 
 async function selectControl(ctrl, el) {
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
@@ -22,99 +66,264 @@ async function selectControl(ctrl, el) {
     currentQuestions = [];
     currentQuestionIndex = 0;
 
-    // تحديث اللوحة اليمنى
+    // جلب الـ ID من قاعدة البيانات للربط
+    try { 
+        const cs = await getAllControls(); 
+        const m = cs.find(c => c.control_id === ctrl.id); 
+        if (m) currentControlDbId = m.id; 
+    } catch (e) { console.error("Control DB sync error"); }
+
     document.getElementById('current-control-id').textContent = ctrl.id;
     document.getElementById('current-control-name').textContent = ctrl.title;
+    document.getElementById('current-control-requirement').textContent = `ECC-2023 compliance assessment for ${ctrl.title}`;
     
-    // تنظيف الشات وعرض اختيار الضوابط الفرعية
-    const chatContainer = document.getElementById('chat-messages');
-    chatContainer.innerHTML = '';
+    updateRightPanel(ctrl.id);
+    document.getElementById('chat-messages').innerHTML = '';
     
-    showSubControlSelection(ctrl);
+    // عرض الضوابط الفرعية داخل الشات بدلاً من بدء الأسئلة
+    showSubControlOptions(ctrl);
 }
 
-// دالة جديدة لعرض الضوابط الفرعية داخل الشات
-function showSubControlSelection(ctrl) {
+function showSubControlOptions(ctrl) {
     const cm = document.getElementById('chat-messages');
     const m = document.createElement('div');
     m.className = 'message ai-message';
     
-    let subButtons = ctrl.subControls.map(subId => 
-        `<button onclick="startSubControlAudit('${subId}')" style="padding:8px 15px; border-radius:6px; border:1px solid var(--accent-primary); background:rgba(6,182,212,0.05); color:var(--accent-primary); cursor:pointer; font-size:12px; font-weight:600; transition:all 0.2s;">
+    let buttonsHtml = ctrl.subControls.map(subId => `
+        <button onclick="initiateSubAudit('${subId}')" style="padding:10px 14px; border:1px solid var(--accent-primary); background:rgba(6,182,212,0.05); color:var(--accent-primary); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; transition:0.2s; hover:background:var(--accent-primary);">
             Control ${subId}
-         </button>`
-    ).join('');
+        </button>
+    `).join('');
 
     m.innerHTML = `
         <div class="message-content">
-            <div class="message-header">AI Auditor</div>
+            <div class="message-header">AI Compliance Assistant</div>
             <div class="message-text">
-                <p style="margin-bottom:12px">لقد اخترت الضابط الأساسي <strong>${ctrl.id}</strong>. يرجى اختيار الضابط الفرعي الذي ترغب في تقييمه الآن:</p>
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    ${subButtons}
-                </div>
+                <p style="margin-bottom:15px">لقد اخترت الضابط الرئيسي <strong>${ctrl.id}</strong>. يرجى اختيار الضابط الفرعي المطلوب تقييمه الآن للبدء:</p>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">${buttonsHtml}</div>
             </div>
         </div>`;
     cm.appendChild(m);
     cm.scrollTop = cm.scrollHeight;
 }
 
-// دالة لبدء التدقيق للضابط الفرعي المختار
-async function startSubControlAudit(subId) {
-    // تحديث الواجهة لتعكس الضابط الفرعي المختار
+async function initiateSubAudit(subId) {
     appendMsg('user', `بدء تقييم الضابط الفرعي: ${subId}`);
-    
     showTyping();
+    
     try {
-        // نرسل الـ subId للـ API لجلب الأسئلة الخاصة به تحديداً
         const r = await generateAuditQuestions(subId, currentMode);
         hideTyping();
         
         if (r.questions?.length > 0) {
             currentQuestions = r.questions.map(q => ({
-                q: q.question,
-                ev: q.expected_evidence || '',
-                cat: q.category || subId // نضع التصنيف هو رقم الضابط الفرعي
+                q: q.question, 
+                ev: q.expected_evidence || '', 
+                cat: subId 
             }));
             currentQuestionIndex = 0;
+            
+            // بدء جلسة تقنية في الخلفية عبر الـ API
+            const u = getCurrentUserLocal();
+            const s = await startAuditSessionAPI(u.id, currentControlDbId, currentMode);
+            if(s?.session_id) currentSessionId = s.session_id;
+
             setTimeout(showAuditQ, 400);
         } else {
             appendMsg('ai', `<span style="color:#ef4444">Could not generate questions for ${subId}.</span>`);
         }
     } catch (e) {
         hideTyping();
-        appendMsg('ai', `<span style="color:#ef4444">AI error. Check backend.</span>`);
+        appendMsg('ai', `<span style="color:#ef4444">AI engine is currently unavailable.</span>`);
     }
 }
 
-// تعديل دالة الإنهاء لتعود لعرض الخيارات الفرعية بدلاً من إغلاق الجلسة نهائياً
-async function finishAudit() {
-    // ... (نفس كود حساب النتائج الحالي) ...
-    const total=auditAnswers.length, yes=auditAnswers.filter(a=>a.answer==='yes').length, partial=auditAnswers.filter(a=>a.answer==='partial').length, no=auditAnswers.filter(a=>a.answer==='no').length;
-    const score=total>0?Math.round(((yes+partial*0.5)/total)*100):0;
-    const status=score>=80?'Compliant':score>=40?'Partial':'Non-Compliant';
-    const color=score>=80?'#10b981':score>=40?'#f59e0b':'#ef4444';
+function showAuditQ() {
+    if (currentQuestionIndex >= currentQuestions.length) {
+        if (currentMode === 'audit') finishAudit(); else finishGuide();
+        return;
+    }
+    const q = currentQuestions[currentQuestionIndex], 
+          num = currentQuestionIndex + 1, 
+          total = currentQuestions.length, 
+          pct = Math.round((currentQuestionIndex / total) * 100);
+          
+    const cm = document.getElementById('chat-messages'), m = document.createElement('div'); 
+    m.className = 'message ai-message';
+    m.innerHTML = `
+        <div class="message-content">
+            <div class="message-header">AI Auditor</div>
+            <div class="message-text">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <span style="font-size:11px;color:var(--text-muted)">Question ${num} of ${total}</span>
+                    <span style="font-size:11px;background:rgba(6,182,212,0.1);color:var(--accent-primary);padding:2px 10px;border-radius:20px">${q.cat}</span>
+                </div>
+                <div style="width:100%;height:3px;background:rgba(255,255,255,0.07);border-radius:2px;margin-bottom:14px">
+                    <div style="height:100%;width:${pct}%;background:var(--accent-primary);border-radius:2px;transition:width 0.4s"></div>
+                </div>
+                <p style="font-size:14px;line-height:1.7;margin-bottom:${q.ev ? '8px' : '16px'}">${q.q}</p>
+                ${q.ev ? `<p style="font-size:11px;color:#f59e0b;margin-bottom:16px"><i class="fas fa-paperclip" style="margin-right:4px"></i>Required evidence: ${q.ev}</p>` : ''}
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button onclick="answerAudit('yes',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #10b981;background:rgba(16,185,129,0.08);color:#10b981;cursor:pointer;font-size:13px;font-weight:600;">Yes</button>
+                    <button onclick="answerAudit('partial',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #f59e0b;background:rgba(245,158,11,0.08);color:#f59e0b;cursor:pointer;font-size:13px;font-weight:600;">Partial</button>
+                    <button onclick="answerAudit('no',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #ef4444;background:rgba(239,68,68,0.08);color:#ef4444;cursor:pointer;font-size:13px;font-weight:600;">No</button>
+                </div>
+            </div>
+        </div>`;
+    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+}
 
-    // عرض نتيجة الضابط الفرعي
+async function answerAudit(ans, btn) {
+    btn.closest('div').querySelectorAll('button').forEach(b => { b.disabled = true; b.style.opacity = '0.35'; }); 
+    btn.style.opacity = '1';
+    
+    const labels = { yes: 'Yes — Verified', partial: 'Partial — Needs improvement', no: 'No — Gap' };
+    appendMsg('user', labels[ans]);
+    
+    auditAnswers.push({ question: currentQuestions[currentQuestionIndex].q, answer: ans, evidence: currentQuestions[currentQuestionIndex].ev });
+    
+    if (currentSessionId) {
+        try { await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex].q, ans); } catch (e) { }
+    }
+    
+    currentQuestionIndex++; 
+    setTimeout(showAuditQ, 500);
+}
+
+async function finishAudit() {
+    const total = auditAnswers.length, 
+          yes = auditAnswers.filter(a => a.answer === 'yes').length, 
+          partial = auditAnswers.filter(a => a.answer === 'partial').length, 
+          no = auditAnswers.filter(a => a.answer === 'no').length;
+    
+    const score = total > 0 ? Math.round(((yes + partial * 0.5) / total) * 100) : 0;
+    const status = score >= 80 ? 'Compliant' : score >= 40 ? 'Partial' : 'Non-Compliant';
+    const color = getDotColor(status);
+
     appendMsg('ai', `
-        <div style="border:1px solid ${color}30; border-radius:12px; padding:15px; background:${color}08; margin-top:10px">
-            <strong style="color:${color}">نتيجة تقييم ${auditAnswers[0]?.cat || ''}: ${score}%</strong>
-            <p style="font-size:12px; margin-top:5px">تم حفظ التقييم. يمكنك الآن اختيار ضابط فرعي آخر أو إنهاء الجلسة.</p>
+        <div style="border:1px solid ${color}30; border-radius:12px; padding:20px; background:${color}08; margin-top:10px">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong>${auditAnswers[0]?.cat} Assessment Complete</strong>
+                <span style="font-size:20px; font-weight:800; color:${color}">${score}%</span>
+            </div>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:5px">Section results saved. You can now assess another sub-control.</p>
         </div>
     `);
 
-    // حفظ التقدم
     await saveProgress(currentControlId, status, score, yes, partial, no, total);
+    await saveAuditToEvidence(currentControlId, selectedControlInfo?.title || currentControlId, status, score, auditAnswers, currentSessionId, currentControlDbId);
     
-    // إعادة عرض خيارات الضوابط الفرعية المتبقية
-    setTimeout(() => {
-        showSubControlSelection(selectedControlInfo);
-    }, 1500);
+    // العودة التلقائية لعرض الخيارات الفرعية
+    setTimeout(() => showSubControlOptions(selectedControlInfo), 2500);
 }
 
+async function saveAuditToEvidence(controlId, controlTitle, status, score, answers, sessionId, controlDbId) {
+    try {
+        const transcript = answers.map((a, i) => {
+            const icon = a.answer === 'yes' ? '✅' : a.answer === 'partial' ? '⚠️' : '❌';
+            return `Q${i + 1}: ${a.question}\nAnswer: ${icon} ${a.answer.toUpperCase()}${a.evidence ? '\nEvidence required: ' + a.evidence : ''}`;
+        }).join('\n\n');
+        
+        const summary = `AUDIT REPORT — Control ${controlId}\nStatus: ${status}\nScore: ${score}%\n\n${transcript}`;
+        
+        await apiRequest('/evidence/save-audit', {
+            method: 'POST',
+            body: JSON.stringify({
+                control_id: controlDbId,
+                session_id: sessionId,
+                title: `Audit Report — ${controlId}: ${controlTitle}`,
+                description: summary,
+                status: status,
+                score: score,
+                answers: answers,
+                evidence_type: 'audit_session'
+            })
+        });
+    } catch (e) {
+        console.warn('[Offline Mode] Saving session locally.');
+        const sessions = JSON.parse(localStorage.getItem('audit_sessions_log') || '[]');
+        sessions.unshift({ control_id: controlId, status, score, created_at: new Date().toISOString() });
+        localStorage.setItem('audit_sessions_log', JSON.stringify(sessions.slice(0, 50)));
+    }
+}
 
+async function saveProgress(ctrlId, status, score, yes, partial, no, total) {
+    const res = JSON.parse(localStorage.getItem('audit_results') || '{}'); res[ctrlId] = status;
+    localStorage.setItem('audit_results', JSON.stringify(res));
+    const sco = JSON.parse(localStorage.getItem('audit_scores') || '{}'); sco[ctrlId] = score;
+    localStorage.setItem('audit_scores', JSON.stringify(sco));
+    
+    updateDot(ctrlId, status);
+    updateRightPanel(ctrlId);
+    
+    try { await updateControlStatus(ctrlId, status); } catch (e) { }
+    if (currentSessionId) { try { await completeAuditSession(currentSessionId, status, score); } catch (e) { } }
+}
 
+function updateRightPanel(id) {
+    const res = JSON.parse(localStorage.getItem('audit_results') || '{}'), 
+          sco = JSON.parse(localStorage.getItem('audit_scores') || '{}');
+    const status = res[id] || 'Not Started', score = sco[id];
+    const sl = document.getElementById('current-control-status');
+    if (sl) {
+        sl.textContent = status;
+        sl.className = `badge ${status === 'Compliant' ? 'badge-success' : status === 'Non-Compliant' ? 'badge-danger' : 'badge-warning'}`;
+    }
+    const ev = document.getElementById('linked-evidence');
+    if (ev) ev.textContent = status !== 'Not Started' ? `Last audit: ${status} — ${score || 0}%` : 'No audit performed yet';
+}
 
+function updateDot(id, status) {
+    const item = document.querySelector(`.control-item[data-id="${id}"]`);
+    if (item) {
+        const dot = item.querySelector('.status-dot');
+        if (dot) dot.style.background = getDotColor(status);
+    }
+}
+
+function setMode(m) {
+    currentMode = m;
+    document.getElementById('audit-mode-btn').classList.toggle('active', m === 'audit');
+    document.getElementById('guide-mode-btn').classList.toggle('active', m === 'guide');
+    if (selectedControlInfo) selectControl(selectedControlInfo, document.querySelector(`.control-item[data-id="${currentControlId}"]`));
+}
+
+function appendMsg(role, txt) {
+    const cm = document.getElementById('chat-messages'), m = document.createElement('div');
+    m.className = `message ${role}-message`;
+    m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
+    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+}
+
+function showTyping() {
+    const cm = document.getElementById('chat-messages');
+    const ind = document.createElement('div'); ind.id = 'typing-indicator'; ind.className = 'message ai-message';
+    ind.innerHTML = `<div class="message-content"><div class="message-text"><i class="fas fa-ellipsis-h fa-beat"></i> AI is working...</div></div>`;
+    cm.appendChild(ind); cm.scrollTop = cm.scrollHeight;
+}
+
+function hideTyping() { const el = document.getElementById('typing-indicator'); if (el) el.remove(); }
+
+async function handleUserMessage() {
+    const input = document.getElementById('user-query'), text = input.value.trim();
+    if (!text) return; if (!currentControlId) { appendMsg('ai', 'Please select a control first.'); return; }
+    appendMsg('user', text); input.value = ''; showTyping();
+    try {
+        const r = await callAIEngine(text, currentControlId, currentMode);
+        hideTyping(); appendMsg('ai', r.answer || 'No specific guidance available.');
+    } catch (e) { hideTyping(); appendMsg('ai', 'Error connecting to AI engine.'); }
+}
+
+// دالة مضافة لـ Guide Mode
+async function finishGuide() {
+    appendMsg('ai', `<em style="color:var(--text-muted);font-size:12px">Generating final recommendations...</em>`);
+    const answersText = auditAnswers.map(a => `${a.question}: ${a.answer}`).join('\n');
+    try {
+        const r = await getAIRecommendations(currentControlId, answersText);
+        appendMsg('ai', `<div style="border:1px solid #8b5cf630; padding:15px; background:rgba(139,92,246,0.05); border-radius:8px;"><strong>Recommendations:</strong><br>${r.answer}</div>`);
+    } catch(e) { appendMsg('ai', 'Could not generate recommendations.'); }
+    setTimeout(() => showSubControlOptions(selectedControlInfo), 2500);
+}
 
 
 
