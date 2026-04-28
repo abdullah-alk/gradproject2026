@@ -36,13 +36,13 @@
                 <a href="scheduler.html" class="nav-item active"><i class="fas fa-calendar-alt"></i><span>Audit Scheduler</span></a>
             </nav>
             <div class="sidebar-footer">
-                <div class="user-profile">
+                <div class="user-profile" style="cursor:pointer" onclick="window.location.href='profile.html'">
                     <div class="user-avatar" id="user-initials">??</div>
                     <div class="user-info">
                         <h4 id="user-name">Loading...</h4>
                         <p id="user-role">User</p>
                     </div>
-                    <button onclick="logout()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:auto;" title="Sign Out"><i class="fas fa-sign-out-alt"></i></button>
+                    <button onclick="event.stopPropagation();logout()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:auto;" title="Sign Out"><i class="fas fa-sign-out-alt"></i></button>
                 </div>
             </div>
         </aside>
