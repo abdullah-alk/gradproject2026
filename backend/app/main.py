@@ -10,6 +10,10 @@ import json
 import re
 from datetime import datetime, timedelta
 from typing import Optional
+import smtplib
+import random
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 app = FastAPI(title="CyberGuard GRC - Production Ready")
 
@@ -1377,6 +1381,105 @@ async def admin_get_stats(current_user: dict = Depends(require_admin)):
             "avg_compliance_score": avg_score,
             "total_gaps": total_gaps,
         }
+    finally:
+        cur.close()
+        conn.close()
+
+# --- 17. OTP & Email ---
+otp_store = {}
+ 
+def send_email(to_email: str, subject: str, body: str):
+    gmail_user = os.environ.get("GMAIL_USER")
+    gmail_pass = os.environ.get("GMAIL_PASS")
+    if not gmail_user or not gmail_pass:
+        raise Exception("Email service not configured")
+    msg = MIMEMultipart()
+    msg['From'] = gmail_user
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'html'))
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+        server.login(gmail_user, gmail_pass)
+        server.sendmail(gmail_user, to_email, msg.as_string())
+ 
+@app.post("/api/auth/send-otp")
+async def send_otp(data: dict = Body(...)):
+    email = data.get("email", "").strip().lower()
+    purpose = data.get("purpose", "verify")
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        if purpose == "reset":
+            cur.execute("SELECT id FROM users WHERE email = %s AND is_active = true", (email,))
+            if not cur.fetchone():
+                raise HTTPException(status_code=404, detail="No account found with this email")
+        otp = str(random.randint(100000, 999999))
+        otp_store[email] = {"otp": otp, "expires": datetime.now() + timedelta(minutes=10), "purpose": purpose}
+        subject = "ECC Auditor — Your Verification Code"
+        body = f"""
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#0f172a;color:#f1f5f9;padding:32px;border-radius:12px">
+            <div style="text-align:center;margin-bottom:24px">
+                <div style="font-size:32px">🛡️</div>
+                <h2 style="color:#06b6d4;margin:8px 0">ECC Auditor</h2>
+            </div>
+            <p style="color:#94a3b8;margin-bottom:20px">Your verification code is:</p>
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:20px;text-align:center;margin-bottom:20px">
+                <span style="font-size:36px;font-weight:800;letter-spacing:8px;color:#06b6d4">{otp}</span>
+            </div>
+            <p style="color:#64748b;font-size:13px">This code expires in 10 minutes. Do not share it with anyone.</p>
+        </div>
+        """
+        send_email(email, subject, body)
+        return {"message": "OTP sent successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to send OTP")
+    finally:
+        cur.close()
+        conn.close()
+ 
+@app.post("/api/auth/verify-otp")
+async def verify_otp(data: dict = Body(...)):
+    email = data.get("email", "").strip().lower()
+    otp = data.get("otp", "").strip()
+    if not email or not otp:
+        raise HTTPException(status_code=400, detail="Email and OTP are required")
+    stored = otp_store.get(email)
+    if not stored:
+        raise HTTPException(status_code=400, detail="No OTP found. Please request a new one")
+    if datetime.now() > stored["expires"]:
+        del otp_store[email]
+        raise HTTPException(status_code=400, detail="OTP expired. Please request a new one")
+    if stored["otp"] != otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+    del otp_store[email]
+    return {"message": "OTP verified", "verified": True}
+ 
+@app.post("/api/auth/reset-password")
+async def reset_password(data: dict = Body(...)):
+    email = data.get("email", "").strip().lower()
+    new_password = data.get("new_password", "")
+    if not email or not new_password:
+        raise HTTPException(status_code=400, detail="Email and new password are required")
+    pwd_valid, pwd_msg = validate_password(new_password)
+    if not pwd_valid:
+        raise HTTPException(status_code=400, detail=pwd_msg)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("UPDATE users SET password_hash = %s WHERE email = %s AND is_active = true", (hash_password(new_password), email))
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        conn.commit()
+        return {"message": "Password reset successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
         conn.close()
