@@ -12,11 +12,11 @@ let currentMode = 'audit',
 
 // 1. هيكلية الضوابط (الأساسي والفرعي)
 const eccDomains = [
-    { id: '1-1', title: 'Cybersecurity Governance', subControls: ['1-1-1', '1-1-2', '1-1-3'] },
-    { id: '1-2', title: 'Cybersecurity Risk Management', subControls: ['1-2-1', '1-2-2', '1-2-3'] },
-    { id: '1-3', title: 'Cybersecurity Asset Management', subControls: ['1-3-1', '1-3-2', '1-3-3', '1-3-4'] },
-    { id: '1-4', title: 'Cybersecurity Operations', subControls: ['1-4-1', '1-4-2'] },
-    { id: '1-5', title: 'System & Network Hardening', subControls: ['1-5-1', '1-5-2', '1-5-3-1', '1-5-3-2', '1-5-3-3', '1-5-3-4', '1-5-4'] }
+    { id: '1-1', title: 'Cybersecurity Strategy', subControls: ['1-1-1', '1-1-2', '1-1-3'] },
+    { id: '1-2', title: 'Cybersecurity Management', subControls: ['1-2-1', '1-2-2', '1-2-3'] },
+    { id: '1-3', title: 'Cybersecurity Policies and Procedures', subControls: ['1-3-1', '1-3-2', '1-3-3', '1-3-4'] },
+    { id: '1-4', title: 'Cybersecurity Roles and Responsibilities', subControls: ['1-4-1', '1-4-2'] },
+    { id: '1-5', title: 'Cybersecurity Risk Management', subControls: ['1-5-1', '1-5-2', '1-5-3-1', '1-5-3-2', '1-5-3-3', '1-5-3-4', '1-5-4'] }
 ];
 
 document.addEventListener('DOMContentLoaded', async () => {
