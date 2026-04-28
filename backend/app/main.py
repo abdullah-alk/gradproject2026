@@ -8,7 +8,7 @@ import shutil
 import uuid
 import json
 import re
-from datetime import datetime, timedelta
+from app.config import settings
 from typing import Optional
 import smtplib
 import random
