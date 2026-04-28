@@ -342,9 +342,7 @@ async function finishGuide() {
                         <a href="evidence.html?control=${currentControlId}" style="flex:1;text-align:center;background:rgba(139,92,246,0.15);border:1px solid #8b5cf6;color:#8b5cf6;padding:12px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">
                             <i class="fas fa-folder-open" style="margin-right:6px"></i>Evidence Vault
                         </a>
-                        <button onclick="window.print()" style="flex:0.4;background:rgba(6,182,212,0.1);border:1px solid #06b6d4;color:#06b6d4;padding:12px;border-radius:8px;cursor:pointer;font-size:13px">
-                            <i class="fas fa-print"></i> Print
-                        </button>
+
                     </div>
                 </div>`);
             try {
