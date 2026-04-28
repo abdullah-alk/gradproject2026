@@ -317,21 +317,47 @@ async function handleUserMessage() {
 // دالة مضافة لـ Guide Mode
 async function finishGuide() {
     appendMsg('ai', `<em style="color:var(--text-muted);font-size:12px">Generating final recommendations...</em>`);
-    const answersText = auditAnswers.map(a => `${a.question}: ${a.answer}`).join('\n');
+    showTyping();
+    const answersText = auditAnswers.map((a,i) => `Q${i+1}: "${a.question}" => ${a.answer.toUpperCase()}`).join('\n');
     try {
         const r = await getAIRecommendations(currentControlId, answersText);
-        let fmt = r.answer
-          .replace(/\*\*(.*?)\*\*/g,'<strong style="color:#e2e8f0">$1</strong>')
-          .replace(/^#{1,3}\s+(.+)$/gm,'<div style="font-size:15px;font-weight:700;color:#8b5cf6;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(139,92,246,0.2)">$1</div>')
-          .replace(/^(\d+)\.\s+\*\*(.*?)\*\*/gm,'<div style="margin:12px 0 6px;display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(6,182,212,0.15);color:#06b6d4;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">$1</span><strong style="color:#e2e8f0">$2</strong></div>')
-          .replace(/^\s*-\s+\*\*(.*?)\*\*:\s*/gm,'<div style="margin:6px 0 3px;padding-left:16px"><span style="color:#06b6d4;font-weight:600;font-size:12px">▸ $1:</span> ')
-          .replace(/^\s*-\s+/gm,'<div style="margin:4px 0;padding-left:16px;color:var(--text-secondary);font-size:13px">• ')
-          .replace(/\n\n/g,'</div><br>')
-          .replace(/\n/g,'</div>');
-        appendMsg('ai', `<div style="border:1px solid rgba(139,92,246,0.3);border-radius:12px;padding:24px;background:rgba(139,92,246,0.05)"><div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(139,92,246,0.2)"><i class="fas fa-lightbulb" style="color:#8b5cf6;font-size:20px"></i><strong style="font-size:16px;color:#8b5cf6">Recommendations — ${currentControlId}</strong></div><div style="font-size:13.5px;line-height:1.9;color:var(--text-secondary)">${fmt}</div></div>`);
-
-    } catch(e) { appendMsg('ai', 'Could not generate recommendations.'); }
-    setTimeout(() => showSubControlOptions(selectedControlInfo), 2500);
+        hideTyping();
+        if (r?.answer) {
+            let fmt = r.answer
+                .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#e2e8f0">$1</strong>')
+                .replace(/^#{1,3}\s+(.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#8b5cf6;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(139,92,246,0.2)">$1</div>')
+                .replace(/^(\d+)\.\s+\*\*(.*?)\*\*/gm, '<div style="margin:12px 0 4px;display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(6,182,212,0.15);color:#06b6d4;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">$1</span><strong style="color:#e2e8f0">$2</strong></div>')
+                .replace(/^\s*-\s+\*\*(.*?)\*\*:\s*/gm, '<div style="margin:5px 0 2px;padding-left:16px"><span style="color:#06b6d4;font-weight:600;font-size:12px">▸ $1:</span> ')
+                .replace(/^\s*-\s+/gm, '<div style="margin:3px 0;padding-left:16px;color:var(--text-secondary);font-size:13px">• ')
+                .replace(/\n\n/g, '</div><br>')
+                .replace(/\n/g, '</div>');
+            appendMsg('ai', `
+                <div style="border:1px solid rgba(139,92,246,0.3);border-radius:12px;padding:24px;background:rgba(139,92,246,0.05)">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(139,92,246,0.2)">
+                        <i class="fas fa-lightbulb" style="color:#8b5cf6;font-size:20px"></i>
+                        <strong style="font-size:16px;color:#8b5cf6">Recommendations — ${currentControlId}</strong>
+                    </div>
+                    <div style="font-size:13.5px;line-height:1.9;color:var(--text-secondary)">${fmt}</div>
+                    <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(139,92,246,0.2);display:flex;gap:12px">
+                        <a href="evidence.html?control=${currentControlId}" style="flex:1;text-align:center;background:rgba(139,92,246,0.15);border:1px solid #8b5cf6;color:#8b5cf6;padding:12px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">
+                            <i class="fas fa-folder-open" style="margin-right:6px"></i>Evidence Vault
+                        </a>
+                        <button onclick="window.print()" style="flex:0.4;background:rgba(6,182,212,0.1);border:1px solid #06b6d4;color:#06b6d4;padding:12px;border-radius:8px;cursor:pointer;font-size:13px">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                    </div>
+                </div>`);
+            try {
+                await saveAuditRecommendation({control_id:currentControlDbId, session_id:currentSessionId, gap_description:answersText, recommendation:r.answer, priority:'High'});
+            } catch(e) { console.error('[❌] Gap save error:', e); }
+        } else {
+            appendMsg('ai', 'Could not generate recommendations.');
+        }
+    } catch(e) {
+        hideTyping();
+        appendMsg('ai', `<span style="color:#ef4444">Error generating recommendations.</span>`);
+    }
+    setTimeout(() => showSubControlOptions(selectedControlInfo), 3000);
 }
 
 
