@@ -1392,6 +1392,7 @@ otp_store = {}
 def send_email(to_email: str, subject: str, body: str):
     gmail_user = os.environ.get("GMAIL_USER")
     gmail_pass = os.environ.get("GMAIL_PASS")
+    print(f"[DEBUG] GMAIL_USER={gmail_user}, GMAIL_PASS length={len(gmail_pass) if gmail_pass else 0}")
     if not gmail_user or not gmail_pass:
         raise Exception("Email service not configured")
     msg = MIMEMultipart()
