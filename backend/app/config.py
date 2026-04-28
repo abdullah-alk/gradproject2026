@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
     CORS_ORIGINS: List[str] = ["*"]
+    GMAIL_USER: str = ""
+    GMAIL_PASS: str = ""
 
     class Config:
         env_file = ".env"
