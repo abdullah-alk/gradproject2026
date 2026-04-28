@@ -666,6 +666,7 @@ async def upload_evidence(control_id: str = Form(...), file: UploadFile = File(.
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+    
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -1436,7 +1437,8 @@ async def send_otp(data: dict = Body(...)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to send OTP")
+        print(f"[❌] OTP Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
         conn.close()
