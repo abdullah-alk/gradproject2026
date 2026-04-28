@@ -1278,6 +1278,109 @@ async def update_profile(data: dict = Body(...), current_user: dict = Depends(ge
         cur.close()
         conn.close()
 
+# --- 16. Admin ---
+def require_admin(current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "Admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+@app.get("/api/admin/users")
+async def admin_get_users(current_user: dict = Depends(require_admin)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT u.id, u.full_name, u.username, u.email, u.role, u.is_active, u.created_at,
+                   COUNT(DISTINCT cs.control_id) as audited_controls,
+                   COALESCE(AVG(cs.score), 0) as avg_score
+            FROM users u
+            LEFT JOIN compliance_scores cs ON u.id = cs.user_id
+            GROUP BY u.id ORDER BY u.created_at DESC
+        """)
+        rows = cur.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/api/admin/users/{user_id}/toggle")
+async def admin_toggle_user(user_id: int, current_user: dict = Depends(require_admin)):
+    if user_id == current_user["id"]:
+        raise HTTPException(status_code=400, detail="Cannot deactivate your own account")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("UPDATE users SET is_active = NOT is_active WHERE id = %s RETURNING is_active", (user_id,))
+        result = cur.fetchone()
+        conn.commit()
+        return {"message": "User status updated", "is_active": result["is_active"]}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/api/admin/users/{user_id}/role")
+async def admin_change_role(user_id: int, data: dict = Body(...), current_user: dict = Depends(require_admin)):
+    role = data.get("role")
+    if role not in ["Admin", "User", "Auditor"]:
+        raise HTTPException(status_code=400, detail="Invalid role")
+    if user_id == current_user["id"]:
+        raise HTTPException(status_code=400, detail="Cannot change your own role")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("UPDATE users SET role = %s WHERE id = %s", (role, user_id))
+        conn.commit()
+        return {"message": "Role updated", "role": role}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+@app.delete("/api/admin/users/{user_id}")
+async def admin_delete_user(user_id: int, current_user: dict = Depends(require_admin)):
+    if user_id == current_user["id"]:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        conn.commit()
+        return {"message": "User deleted"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+@app.get("/api/admin/stats")
+async def admin_get_stats(current_user: dict = Depends(require_admin)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT COUNT(*) as total FROM users WHERE is_active = true")
+        total_users = cur.fetchone()["total"]
+        cur.execute("SELECT COUNT(*) as total FROM audit_sessions WHERE status NOT IN ('cancelled')")
+        total_sessions = cur.fetchone()["total"]
+        cur.execute("SELECT COALESCE(AVG(score), 0) as avg FROM compliance_scores")
+        avg_score = round(float(cur.fetchone()["avg"]), 1)
+        cur.execute("SELECT COUNT(*) as total FROM gaps_recommendations")
+        total_gaps = cur.fetchone()["total"]
+        return {
+            "total_users": total_users,
+            "total_sessions": total_sessions,
+            "avg_compliance_score": avg_score,
+            "total_gaps": total_gaps,
+        }
+    finally:
+        cur.close()
+        conn.close()
+
 # --- Health ---
 @app.get("/")
 async def root():
