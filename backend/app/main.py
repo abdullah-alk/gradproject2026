@@ -169,8 +169,8 @@ async def register(data: dict = Body(...)):
         hashed_pw = hash_password(data["password"])
         cur.execute(
             """
-            INSERT INTO users (full_name, username, email, password_hash, role, is_active, is_verified, created_at)
-            VALUES (%s, %s, %s, %s, 'User', true, false, NOW())
+            "INSERT INTO users (full_name, username, email, password_hash, role, is_active, is_verified, created_at)
+            VALUES (%s, %s, %s, %s, 'User', true, true, NOW())"
             RETURNING id
             """,
             (data["full_name"].strip(), data["username"].strip(), data["email"].strip(), hashed_pw),
