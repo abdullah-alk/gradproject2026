@@ -179,6 +179,10 @@ async function verifyOTP() {
             });
             const regResult = await regRes.json();
             if (regRes.ok) {
+                await fetch(`${API}/api/auth/verify-email`, {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ email: pendingData.email })
+                });
                 showSuccess('Account created! Redirecting to login...');
                 setTimeout(() => window.location.href = 'login.html', 1500);
             } else {
