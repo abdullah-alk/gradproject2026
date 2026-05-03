@@ -1391,19 +1391,26 @@ async def admin_get_stats(current_user: dict = Depends(require_admin)):
 otp_store = {}
  
 def send_email(to_email: str, subject: str, body: str):
-    gmail_user = os.environ.get("GMAIL_USER", "").strip() or settings.GMAIL_USER
-    gmail_pass = os.environ.get("GMAIL_PASS", "").strip() or settings.GMAIL_PASS
-    print(f"[DEBUG] gmail_user={gmail_user}")
-    if not gmail_user or not gmail_pass:
+    import requests
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    if not api_key:
         raise Exception("Email service not configured")
-    msg = MIMEMultipart()
-    msg['From'] = gmail_user
-    msg['To'] = to_email
-    msg['Subject'] = subject
-    msg.attach(MIMEText(body, 'html'))
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-        server.login(gmail_user, gmail_pass)
-        server.sendmail(gmail_user, to_email, msg.as_string())
+    response = requests.post(
+        "https://api.resend.com/emails",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "from": "ECC Auditor <onboarding@resend.dev>",
+            "to": [to_email],
+            "subject": subject,
+            "html": body
+        }
+    )
+    if response.status_code != 200:
+        raise Exception(f"Email failed: {response.text}")
+    print(f"[📧] Email sent to {to_email}")
  
 @app.post("/api/auth/send-otp")
 async def send_otp(data: dict = Body(...)):
