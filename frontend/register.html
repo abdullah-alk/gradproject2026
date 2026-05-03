@@ -161,43 +161,55 @@
             }
         });
 
-        async function verifyOTP() {
-            const otp = Array.from(document.querySelectorAll('.otp-digit')).map(i => i.value).join('');
-            if (otp.length < 6) { showError('Please enter the complete 6-digit code.'); return; }
-            const loader = document.getElementById('loader');
-            loader.classList.add('active');
-            try {
-                // 3. تحقق من OTP
-                const res = await fetch(API + '/api/auth/verify-otp', {
+async function verifyOTP() {
+    const otp = Array.from(document.querySelectorAll('.otp-digit')).map(i => i.value).join('');
+    if (otp.length < 6) { showError('Please enter the complete 6-digit code.'); return; }
+    const loader = document.getElementById('loader');
+    loader.classList.add('active');
+    try {
+        const res = await fetch(API + '/api/auth/verify-otp', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email: pendingData.email, otp: otp })
+        });
+        const result = await res.json();
+        if (res.ok && result.verified) {
+            const regRes = await fetch(API + '/api/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(pendingData)
+            });
+            const regResult = await regRes.json();
+            if (regRes.ok) {
+                const loginForm = new FormData();
+                loginForm.append('username', pendingData.username);
+                loginForm.append('password', pendingData.password);
+                const loginRes = await fetch(API + '/api/auth/login', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ email: pendingData.email, otp: otp })
+                    body: loginForm
                 });
-                const result = await res.json();
-                if (res.ok && result.verified) {
-                    // 4. بعد التحقق فقط — سجل في DB
-                    const regRes = await fetch(API + '/api/register', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(pendingData)
-                    });
-                    const regResult = await regRes.json();
-                    if (regRes.ok) {
-                        showSuccess('Account created! Redirecting to login...');
-                        setTimeout(() => window.location.href = 'login.html', 1500);
-                    } else {
-                        showError(regResult.detail || 'Registration failed.');
-                    }
+                const loginResult = await loginRes.json();
+                if (loginRes.ok) {
+                    localStorage.setItem('authToken', loginResult.access_token);
+                    localStorage.setItem('userInfo', JSON.stringify(loginResult.user));
+                    localStorage.setItem('user', JSON.stringify(loginResult.user));
+                    showSuccess('Account created! Welcome to CyberGuard...');
+                    setTimeout(() => window.location.href = 'index.html', 1500);
                 } else {
-                    showError(result.detail || 'Invalid OTP.');
+                    setTimeout(() => window.location.href = 'login.html', 1500);
                 }
-            } catch (err) {
-                showError('Verification failed.');
-            } finally {
-                loader.classList.remove('active');
+            } else {
+                showError(regResult.detail || 'Registration failed.');
             }
+        } else {
+            showError(result.detail || 'Invalid OTP.');
         }
-
+    } catch (err) {
+        showError('Verification failed.');
+    } finally {
+        loader.classList.remove('active');
+    }
+}
         async function resendOTP() {
             if (!pendingData) return;
             try {
