@@ -1475,32 +1475,21 @@ async def send_otp(data: dict = Body(...)):
  
 @app.post("/api/auth/verify-otp")
 async def verify_otp(data: dict = Body(...)):
-    email = data.get("email")
-    # التأكد من تحويل الـ OTP لنص (String) وحذف الفراغات
-    user_otp = str(data.get("otp")).strip() 
-    
-    conn = get_db_connection()
-    cur = conn.cursor()
-    try:
-        # البحث عن الكود المخزن لهذا الإيميل تحديداً
-        cur.execute("SELECT id, otp_code FROM users WHERE email = %s AND is_verified = false", (email,))
-        user = cur.fetchone()
-        
-        # طباعة للـ Debugging (تظهر في Terminal السيرفر عندك للتأكد)
-        if user:
-            print(f"Stored OTP: {user['otp_code']}, Entered OTP: {user_otp}")
+    email = data.get("email", "").strip().lower()
+    otp = str(data.get("otp", "")).strip()
+    if not email or not otp:
+        raise HTTPException(status_code=400, detail="Email and OTP are required")
+    stored = otp_store.get(email)
+    if not stored:
+        raise HTTPException(status_code=400, detail="No OTP found. Please request a new one")
+    if datetime.now() > stored["expires"]:
+        del otp_store[email]
+        raise HTTPException(status_code=400, detail="OTP expired. Please request a new one")
+    if stored["otp"] != otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+    del otp_store[email]
+    return {"message": "OTP verified", "verified": True}
 
-        if not user or str(user['otp_code']) != user_otp:
-            raise HTTPException(status_code=400, detail="Invalid or expired OTP code")
-        
-        # التوثيق عند النجاح
-        cur.execute("UPDATE users SET is_verified = true, otp_code = NULL WHERE id = %s", (user['id'],))
-        conn.commit()
-        
-        return {"verified": True, "message": "Email verified successfully"}
-    finally:
-        cur.close()
-        conn.close()
 @app.post("/api/auth/reset-password")
 async def reset_password(data: dict = Body(...)):
     email = data.get("email", "").strip().lower()
