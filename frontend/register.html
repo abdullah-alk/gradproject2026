@@ -39,8 +39,6 @@
             </div>
             <div id="error-box" class="error-box"></div>
             <div id="success-box" class="success-box"></div>
-
-            <!-- Step 1: Register Form -->
             <div class="step active" id="step1">
                 <a href="landing.html" style="display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);text-decoration:none;font-size:13px;margin-bottom:20px">
                     <i class="fas fa-arrow-left"></i> Back to Home
@@ -70,8 +68,6 @@
                     Already have an account? <a href="login.html" style="color:var(--accent-primary);text-decoration:none;font-weight:600;">Sign In</a>
                 </div>
             </div>
-
-            <!-- Step 2: OTP Verification -->
             <div class="step" id="step2">
                 <div style="text-align:center;margin-bottom:20px;">
                     <div style="width:56px;height:56px;background:rgba(6,182,212,0.1);border:2px solid rgba(6,182,212,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
@@ -121,88 +117,93 @@
             document.getElementById('success-box').classList.remove('show');
         }
 
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const loader = document.getElementById('loader');
-    loader.classList.add('active');
-    const data = {
-        full_name: document.getElementById('full_name').value.trim(),
-        username: document.getElementById('username').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        password: document.getElementById('password').value
-    };
-    try {
-        const checkRes = await fetch(`${API}/api/auth/check-availability`, {
-            method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ username: data.username, email: data.email })
-        });
-        const checkResult = await checkRes.json();
-        if (!checkRes.ok) {
-            showError(checkResult.detail || 'Username or email already exists.');
-            return;
-        }
-        const otpRes = await fetch(`${API}/api/auth/send-otp`, {
-            method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ email: data.email, purpose: 'verify' })
-        });
-        if (otpRes.ok) {
-            pendingData = data;
-            document.getElementById('otp-email-display').textContent = data.email;
-            goToStep(2);
-            setupOTPInputs();
-        } else {
-            const otpResult = await otpRes.json();
-            showError(otpResult.detail || 'Failed to send verification code.');
-        }
-    } catch (err) {
-        showError('Connection failed.');
-    } finally {
-        loader.classList.remove('active');
-    }
-});
-
-async function verifyOTP() {
-    const otp = Array.from(document.querySelectorAll('.otp-digit')).map(i => i.value).join('');
-    if (otp.length < 6) { showError('Please enter the complete 6-digit code.'); return; }
-    const loader = document.getElementById('loader');
-    loader.classList.add('active');
-    try {
-        const res = await fetch(`${API}/api/auth/verify-otp`, {
-            method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ email: pendingData.email, otp })
-        });
-        const result = await res.json();
-        if (res.ok && result.verified) {
-            const regRes = await fetch(`${API}/api/register`, {
-                method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify(pendingData)
-            });
-            const regResult = await regRes.json();
-            if (regRes.ok) {
-                await fetch(`${API}/api/auth/verify-email`, {
-                    method: 'POST', headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({ email: pendingData.email })
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const loader = document.getElementById('loader');
+            loader.classList.add('active');
+            const data = {
+                full_name: document.getElementById('full_name').value.trim(),
+                username: document.getElementById('username').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                password: document.getElementById('password').value
+            };
+            try {
+                // 1. تحقق من التوفر فقط
+                const checkRes = await fetch(API + '/api/auth/check-availability', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username: data.username, email: data.email })
                 });
-                showSuccess('Account created! Redirecting to login...');
-                setTimeout(() => window.location.href = 'login.html', 1500);
-            } else {
-                showError(regResult.detail || 'Registration failed.');
+                const checkResult = await checkRes.json();
+                if (!checkRes.ok) {
+                    showError(checkResult.detail || 'Username or email already exists.');
+                    return;
+                }
+                // 2. أرسل OTP فقط — لا تسجل في DB
+                const otpRes = await fetch(API + '/api/auth/send-otp', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email: data.email, purpose: 'verify' })
+                });
+                if (otpRes.ok) {
+                    pendingData = data;
+                    document.getElementById('otp-email-display').textContent = data.email;
+                    goToStep(2);
+                    setupOTPInputs();
+                } else {
+                    const otpResult = await otpRes.json();
+                    showError(otpResult.detail || 'Failed to send verification code.');
+                }
+            } catch (err) {
+                showError('Connection failed.');
+            } finally {
+                loader.classList.remove('active');
             }
-        } else {
-            showError(result.detail || 'Invalid OTP.');
+        });
+
+        async function verifyOTP() {
+            const otp = Array.from(document.querySelectorAll('.otp-digit')).map(i => i.value).join('');
+            if (otp.length < 6) { showError('Please enter the complete 6-digit code.'); return; }
+            const loader = document.getElementById('loader');
+            loader.classList.add('active');
+            try {
+                // 3. تحقق من OTP
+                const res = await fetch(API + '/api/auth/verify-otp', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email: pendingData.email, otp: otp })
+                });
+                const result = await res.json();
+                if (res.ok && result.verified) {
+                    // 4. بعد التحقق فقط — سجل في DB
+                    const regRes = await fetch(API + '/api/register', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(pendingData)
+                    });
+                    const regResult = await regRes.json();
+                    if (regRes.ok) {
+                        showSuccess('Account created! Redirecting to login...');
+                        setTimeout(() => window.location.href = 'login.html', 1500);
+                    } else {
+                        showError(regResult.detail || 'Registration failed.');
+                    }
+                } else {
+                    showError(result.detail || 'Invalid OTP.');
+                }
+            } catch (err) {
+                showError('Verification failed.');
+            } finally {
+                loader.classList.remove('active');
+            }
         }
-    } catch (err) {
-        showError('Verification failed.');
-    } finally {
-        loader.classList.remove('active');
-    }
-}
 
         async function resendOTP() {
             if (!pendingData) return;
             try {
-                await fetch(`${API}/api/auth/send-otp`, {
-                    method: 'POST', headers: {'Content-Type':'application/json'},
+                await fetch(API + '/api/auth/send-otp', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ email: pendingData.email, purpose: 'verify' })
                 });
                 showSuccess('New code sent to your email.');
