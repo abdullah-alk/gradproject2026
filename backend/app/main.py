@@ -1495,6 +1495,22 @@ async def reset_password(data: dict = Body(...)):
         cur.close()
         conn.close()
 
+@app.post("/api/auth/check-availability")
+async def check_availability(data: dict = Body(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT id FROM users WHERE username = %s OR email = %s",
+            (data.get("username"), data.get("email"))
+        )
+        if cur.fetchone():
+            raise HTTPException(status_code=400, detail="Username or email already exists")
+        return {"available": True}
+    finally:
+        cur.close()
+        conn.close()
+
 # --- Health ---
 @app.get("/")
 async def root():
