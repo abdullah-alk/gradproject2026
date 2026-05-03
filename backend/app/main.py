@@ -1476,19 +1476,24 @@ async def send_otp(data: dict = Body(...)):
 @app.post("/api/auth/verify-otp")
 async def verify_otp(data: dict = Body(...)):
     email = data.get("email")
-    otp = data.get("otp")
+    # التأكد من تحويل الـ OTP لنص (String) وحذف الفراغات
+    user_otp = str(data.get("otp")).strip() 
     
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        # البحث عن المستخدم ومطابقة الكود
+        # البحث عن الكود المخزن لهذا الإيميل تحديداً
         cur.execute("SELECT id, otp_code FROM users WHERE email = %s AND is_verified = false", (email,))
         user = cur.fetchone()
         
-        if not user or user['otp_code'] != otp:
+        # طباعة للـ Debugging (تظهر في Terminal السيرفر عندك للتأكد)
+        if user:
+            print(f"Stored OTP: {user['otp_code']}, Entered OTP: {user_otp}")
+
+        if not user or str(user['otp_code']) != user_otp:
             raise HTTPException(status_code=400, detail="Invalid or expired OTP code")
         
-        # إذا تطابق الكود، نحدث حالة المستخدم إلى Verified
+        # التوثيق عند النجاح
         cur.execute("UPDATE users SET is_verified = true, otp_code = NULL WHERE id = %s", (user['id'],))
         conn.commit()
         
@@ -1496,7 +1501,6 @@ async def verify_otp(data: dict = Body(...)):
     finally:
         cur.close()
         conn.close()
- 
 @app.post("/api/auth/reset-password")
 async def reset_password(data: dict = Body(...)):
     email = data.get("email", "").strip().lower()
