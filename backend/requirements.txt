@@ -19,3 +19,4 @@ python-dotenv
 bcrypt
 langchain_groq
 pyjwt
+requests
