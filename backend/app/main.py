@@ -171,7 +171,6 @@ async def register(data: dict = Body(...)):
             "INSERT INTO users (full_name, username, email, password_hash, role, is_active, is_verified, created_at) VALUES (%s, %s, %s, %s, 'User', true, true, NOW())",
             (data["full_name"].strip(), data["username"].strip(), data["email"].strip(), hashed_pw),
         )
-        new_user = cur.fetchone()
         
         # 4. توليد OTP (6 أرقام)
         otp_code = str(random.randint(100000, 999999))
