@@ -586,5 +586,51 @@
     ],
     "cybersecurity_tools": [],
     "full_text": "The cybersecurity requirements in project management must be reviewed periodically."
+  },
+  "1-7": {
+    "control_id": "1-7",
+    "title": "Compliance with Cybersecurity Standard controls, Laws and Regulations",
+    "objective": "To ensure that the organization's cybersecurity program is in compliance with related laws and regulations.",
+    "implementation_guidelines": [],
+    "expected_deliverables": [],
+    "cybersecurity_tools": [],
+    "full_text": "To ensure that the organization's cybersecurity program is in compliance with related laws and regulations."
+  },
+  "1-7-1": {
+    "control_id": "1-7-1",
+    "title": "Compliance with National Cybersecurity Laws and Regulations",
+    "objective": "The organization must comply with related national cybersecurity laws and regulations.",
+    "implementation_guidelines": [
+      "Work with stakeholders in the organization (i.e., legal function and governance and compliance function) to identify, document, and periodically update a list of national cybersecurity laws and regulations and related requirements that are relevant to the organization's operations and issued by the National Cybersecurity Authority (NCA) (which might include, but not limited to, royal orders and decrees, orders issued by the Council of Ministers, and official circulars and regulatory orders issued by the National Cybersecurity Authority (NCA)).",
+      "Ensure compliance with all national cybersecurity laws and regulations requirements referred to in the previous point.",
+      "Provide necessary technologies; to verify compliance with national cybersecurity laws and regulations.",
+      "Prepare periodic reports for organization's compliance with all national cybersecurity laws and regulations to be submitted to the National Cybersecurity Authority (NCA) whenever requested."
+    ],
+    "expected_deliverables": [
+      "A document (such as a policy, procedure, or/and letter approved by the authorization official) indicating the identification and documentation of the requirements related to this control.",
+      "An updated list that clarifies the national cybersecurity laws and regulations that are relevant to the organization's operations and issued by the National Cybersecurity Authority (NCA).",
+      "A report that clarifies the extent of organization's compliance with national cybersecurity laws and regulations applicable to the organization."
+    ],
+    "cybersecurity_tools": [
+      "Compliance with Cybersecurity Standard controls, Laws and Regulations Policy Template"
+    ],
+    "full_text": "The organization must comply with related national cybersecurity laws and regulations."
+  },
+  "1-7-2": {
+    "control_id": "1-7-2",
+    "title": "Compliance with International Cybersecurity Agreements and Commitments",
+    "objective": "The organization must comply with any nationally-approved international agreements and commitments related to cybersecurity.",
+    "implementation_guidelines": [
+      "Work with the organization's stakeholders to identify, document, approve and periodically update the list of international cybersecurity agreements or obligations, and periodically document and update them, subject to prior approval by the National Cybersecurity Authority.",
+      "Ensure compliance with all cybersecurity national laws and regulations requirements approved by the National Cybersecurity Authority within the organization.",
+      "Provide necessary technologies to verify compliance with the laws and regulations related to cybersecurity."
+    ],
+    "expected_deliverables": [
+      "A document (such as approved policy or procedure) indicating the identification and documentation of the requirements related to this control.",
+      "An updated list of locally approved international agreements and obligations applicable to cybersecurity function.",
+      "A report that outlines the extent of compliance with cybersecurity international agreements and obligations applicable to the organization."
+    ],
+    "cybersecurity_tools": [],
+    "full_text": "The organization must comply with any nationally-approved international agreements and commitments related to cybersecurity."
   }
 }
