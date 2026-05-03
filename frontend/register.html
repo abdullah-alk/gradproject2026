@@ -121,33 +121,37 @@
             document.getElementById('success-box').classList.remove('show');
         }
 
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const loader = document.getElementById('loader');
-            loader.classList.add('active');
-            const data = {
-            full_name: document.getElementById('full_name').value.trim(),
-            username: document.getElementById('username').value.trim(),
-            email: document.getElementById('email').value.trim(),
-            password: document.getElementById('password').value
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const loader = document.getElementById('loader');
+    loader.classList.add('active');
+    const data = {
+        full_name: document.getElementById('full_name').value.trim(),
+        username: document.getElementById('username').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value
     };
     try {
-        // أولاً: تحقق الإيميل موجود أو لا
-        const checkRes = await fetch(`${API}/api/register`, {
-            method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({...data, check_only: true})
+        const checkRes = await fetch(`${API}/api/auth/check-availability`, {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ username: data.username, email: data.email })
         });
-        // أرسل OTP فقط — لا تحفظ في DB
+        const checkResult = await checkRes.json();
+        if (!checkRes.ok) {
+            showError(checkResult.detail || 'Username or email already exists.');
+            return;
+        }
         const otpRes = await fetch(`${API}/api/auth/send-otp`, {
             method: 'POST', headers: {'Content-Type':'application/json'},
             body: JSON.stringify({ email: data.email, purpose: 'verify' })
         });
-        const otpResult = await otpRes.json();
         if (otpRes.ok) {
             pendingData = data;
             document.getElementById('otp-email-display').textContent = data.email;
             goToStep(2);
             setupOTPInputs();
         } else {
+            const otpResult = await otpRes.json();
             showError(otpResult.detail || 'Failed to send verification code.');
         }
     } catch (err) {
