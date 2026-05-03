@@ -390,5 +390,201 @@
     ],
     "cybersecurity_tools": [],
     "full_text": "1-5 Cybersecurity Risk Management — 1-5-4 Periodic review of risk management methodology and procedures to ensure alignment with laws and organizational needs."
+  },
+   "1-6": {
+    "control_id": "1-6",
+    "title": "Cybersecurity in Information and Technology Project Management",
+    "objective": "To ensure that cybersecurity requirements are included in project management methodology and procedures in order to protect the confidentiality, integrity and availability of information and technology assets as per organization policies and procedures, and related laws and regulations.",
+    "implementation_guidelines": [],
+    "expected_deliverables": [],
+    "cybersecurity_tools": [],
+    "full_text": "To ensure that cybersecurity requirements are included in project management methodology and procedures in order to protect the confidentiality, integrity and availability of information and technology assets as per organization policies and procedures, and related laws and regulations."
+  },
+  "1-6-1": {
+    "control_id": "1-6-1",
+    "title": "Inclusion of Cybersecurity Requirements in Project and Asset Change Management",
+    "objective": "Cybersecurity requirements must be included in project and asset (information/ technology) change management methodology and procedures to identify and manage cybersecurity risks as part of project management lifecycle. The cybersecurity requirements must be a key part of the overall requirements of technology projects.",
+    "implementation_guidelines": [
+      "Include cybersecurity requirements in the project management methodology and procedures and in the change management of the information and technology assets in the organization to ensure that cybersecurity risks are identified and addressed. Such requirements include:",
+      "Assess and detect vulnerabilities before the deployment of services or systems online, or upon any change to systems within Information and Technology Project Management.",
+      "Fix identified vulnerabilities before launching projects and changes.",
+      "Review Secure Configuration and Hardening and Patching and address observations identified before launching projects and changes.",
+      "Define the requirements for connection with cyber surveillance systems.",
+      "Support cybersecurity requirements of the project management methodology and procedures by the Executive Management through the approval of the head of the organization or his/her deputy."
+    ],
+    "expected_deliverables": [
+      "Project Management Methodology Document in the organization.",
+      "Change management methodology or procedures in the organization's information and technology assets document."
+    ],
+    "cybersecurity_tools": [
+      "Secure Software Development Cycle Policy Template",
+      "Secure Software Development Cycle Procedure Template"
+    ],
+    "full_text": "Cybersecurity requirements must be included in project and asset (information/ technology) change management methodology and procedures to identify and manage cybersecurity risks as part of project management lifecycle. The cybersecurity requirements must be a key part of the overall requirements of technology projects."
+  },
+  "1-6-2": {
+    "control_id": "1-6-2",
+    "title": "Cybersecurity Requirements in Project and Assets Change Management",
+    "objective": "The cybersecurity requirements in project and assets (information/technology) change management must include at least the following: 1-6-2-1 Vulnerability assessment and remediation. 1-6-2-2 Conducting a configurations' review, secure configuration and hardening and patching before changes or going live for technology projects.",
+    "implementation_guidelines": [],
+    "expected_deliverables": [],
+    "cybersecurity_tools": [],
+    "full_text": "The cybersecurity requirements in project and assets (information/technology) change management must include at least the following: 1-6-2-1 Vulnerability assessment and remediation. 1-6-2-2 Conducting a configurations' review, secure configuration and hardening and patching before changes or going live for technology projects."
+  },
+  "1-6-2-1": {
+    "control_id": "1-6-2-1",
+    "title": "Vulnerability Assessment and Remediation",
+    "objective": "1-6-2-1 Vulnerability assessment and remediation.",
+    "implementation_guidelines": [
+      "Define and document the requirements of this control in the cybersecurity requirements document and approve them by the representative.",
+      "Define systems, services, and technology components subject to Vulnerabilities Assessment within the scope of technical projects and change requests.",
+      "Develop and adopt procedures for the implementation of Vulnerabilities Assessment and remediation in accordance with related laws and regulations.",
+      "Conduct Vulnerabilities Assessment before launching technical projects in the production environment and assess it in a timely manner and address it effectively.",
+      "Conduct Vulnerabilities Assessment before the implementation of changes to the production environment and assess it in a timely manner and address it effectively."
+    ],
+    "expected_deliverables": [
+      "A document (such as approved policy or procedure) indicating the identification and documentation of the requirements related to this control.",
+      "A report that outlines the assessment and remediation of cybersecurity vulnerabilities throughout the technical project lifecycle and changes to information and technology assets."
+    ],
+    "cybersecurity_tools": [
+      "Cybersecurity Requirements Checklist Template for Project Management and Changes to Information and Technology Assets"
+    ],
+    "full_text": "1-6-2-1 Vulnerability assessment and remediation."
+  },
+  "1-6-2-2": {
+    "control_id": "1-6-2-2",
+    "title": "Secure Configuration, Hardening and Patching Review",
+    "objective": "1-6-2-2 Conducting a configurations' review, secure configuration and hardening and patching before changes or going live for technology projects.",
+    "implementation_guidelines": [
+      "Define and document the requirements of this ECC in the cybersecurity requirements document and approve them by the representative.",
+      "Define systems, services, and technology components subject to Secure Configuration and Hardening review within the scope of technical projects and change requests.",
+      "Provide technical Security Standard controls for systems, services, and technology components subject to Secure Configuration and Hardening review.",
+      "Develop and adopt procedures for the implementation of Secure Configuration and Hardening review in accordance with the relevant laws and regulations.",
+      "Review secure Configuration and Hardening and Patching before launching technology projects in the production environment.",
+      "Review secure Configuration and Hardening and Patching before implementing changes to the production environment."
+    ],
+    "expected_deliverables": [
+      "A document (such as approved policy or procedure) indicating the identification and documentation of the requirements related to this control.",
+      "Technical Security Standard controls for systems, services, and technology components subject to Secure Configuration and Hardening review.",
+      "A report that outlines the assessment and review of Secure Configuration and Hardening throughout the technical project lifecycle and changes to information and technology assets in the organization before launching projects and implementing changes."
+    ],
+    "cybersecurity_tools": [
+      "Cybersecurity Requirements Checklist Template for Application Development"
+    ],
+    "full_text": "1-6-2-2 Conducting a configurations' review, secure configuration and hardening and patching before changes or going live for technology projects."
+  },
+  "1-6-3": {
+    "control_id": "1-6-3",
+    "title": "Cybersecurity Requirements Related to Software and Application Development Projects",
+    "objective": "The cybersecurity requirements related to software and application development projects must include at least the following: 1-6-3-1 Using secure coding standards. 1-6-3-2 Using trusted and licensed sources for software development tools and libraries. 1-6-3-3 Conducting compliance test for software against the defined organizational cybersecurity requirements. 1-6-3-4 Secure integration between software components. 1-6-3-5 Conducting a configurations review, secure configuration and hardening and patching before going live for software products.",
+    "implementation_guidelines": [],
+    "expected_deliverables": [],
+    "cybersecurity_tools": [],
+    "full_text": "The cybersecurity requirements related to software and application development projects must include at least the following: 1-6-3-1 Using secure coding standards. 1-6-3-2 Using trusted and licensed sources for software development tools and libraries. 1-6-3-3 Conducting compliance test for software against the defined organizational cybersecurity requirements. 1-6-3-4 Secure integration between software components. 1-6-3-5 Conducting a configurations review, secure configuration and hardening and patching before going live for software products."
+  },
+  "1-6-3-1": {
+    "control_id": "1-6-3-1",
+    "title": "Using Secure Coding Standards",
+    "objective": "1-6-3-1 Using secure coding standards.",
+    "implementation_guidelines": [
+      "Define and document the requirements of this ECC in the cybersecurity requirements document and approve them by the representative.",
+      "Define and document technical cybersecurity requirements for Secure Coding Standard controls (covering all phases of the secure coding process) based on relevant laws and regulations, best practices and standard controls related to the development and protection of software and applications against internal and external threats in the organization to minimize cyber risks and focus on key security objectives namely; confidentiality, integrity, and availability.",
+      "Communicate Secure Coding Standard controls to the relevant departments in the organization (e.g., IT department) and their implementation periodically."
+    ],
+    "expected_deliverables": [
+      "A document (such as approved policy or procedure) indicating the identification and documentation of the requirements related to this control.",
+      "Secure Coding Standard controls approved by the organization.",
+      "Documents that confirm the implementation of Secure Coding Standard controls to information and technology assets."
+    ],
+    "cybersecurity_tools": [
+      "Secure Coding Standard Template"
+    ],
+    "full_text": "1-6-3-1 Using secure coding standards."
+  },
+  "1-6-3-2": {
+    "control_id": "1-6-3-2",
+    "title": "Trusted and Licensed Sources for Software Tools and Libraries",
+    "objective": "1-6-3-2 Using trusted and licensed sources for software development tools and libraries.",
+    "implementation_guidelines": [
+      "Define and document the requirements of this ECC in the cybersecurity requirements document and approve them by the representative.",
+      "Use only modern, reliable and licensed sources for software development tools and libraries."
+    ],
+    "expected_deliverables": [
+      "A document (such as approved policy or procedure) indicating the identification and documentation of the requirements related to this control.",
+      "An updated list of licensed and documented software used for application development tools and libraries."
+    ],
+    "cybersecurity_tools": [],
+    "full_text": "1-6-3-2 Using trusted and licensed sources for software development tools and libraries."
+  },
+  "1-6-3-3": {
+    "control_id": "1-6-3-3",
+    "title": "Compliance Test for Software Against Defined Requirements",
+    "objective": "1-6-3-3 Conducting compliance test for software against the defined organizational cybersecurity requirements.",
+    "implementation_guidelines": [
+      "Define and document the requirements of this ECC in the cybersecurity requirements document and approve them by the representative.",
+      "Conduct testing to verify that applications meet the cybersecurity requirements of the organizations, such as penetration testing, to ensure that cybersecurity controls are applied to the development of secure coding standard controls and detect weaknesses, vulnerabilities, and issues in software.",
+      "Access Management requirements for users and review the cybersecurity architecture."
+    ],
+    "expected_deliverables": [
+      "A document (such as approved policy or procedure) indicating the identification and documentation of the requirements related to this control.",
+      "List of application development projects and list of security tests performed to verify the comprehensiveness of the tests and the extent to which the applications meet the organization's cybersecurity requirements and implementation reports."
+    ],
+    "cybersecurity_tools": [
+      "Cybersecurity Requirements Checklist Template for Application Development"
+    ],
+    "full_text": "1-6-3-3 Conducting compliance test for software against the defined organizational cybersecurity requirements."
+  },
+  "1-6-3-4": {
+    "control_id": "1-6-3-4",
+    "title": "Secure Integration Between Software Components",
+    "objective": "1-6-3-4 Secure integration between software components.",
+    "implementation_guidelines": [
+      "Define and document the requirements of this ECC in the cybersecurity requirements document and approve them by the representative.",
+      "Ensure security of integration between applications by, but not limited to, security testing of various integration technologies, including:",
+      "Perform System Integration Testing (SIT).",
+      "Perform API testing."
+    ],
+    "expected_deliverables": [
+      "A document (such as approved policy or procedure) indicating the identification and documentation of the requirements related to this control.",
+      "A report that outlines the testing and assessment of secure Integration between applications based on the organization's cybersecurity requirements and implementation reports."
+    ],
+    "cybersecurity_tools": [],
+    "full_text": "1-6-3-4 Secure integration between software components."
+  },
+  "1-6-3-5": {
+    "control_id": "1-6-3-5",
+    "title": "Review Before Going Live for Software Products",
+    "objective": "1-6-3-5 Conducting a configurations review, secure configuration and hardening and patching before going live for software products.",
+    "implementation_guidelines": [
+      "Define and document the requirements of this ECC in the cybersecurity requirements document and approve them by the representative.",
+      "Review secure Configuration and Hardening and Patching before launching applications and ensure their implementation in the following cases:",
+      "Secure Configuration and Hardening of information and technology assets and applications must be reviewed periodically and their implementation according to the approved technical security standard controls must be ensured.",
+      "Secure configuration and hardening must be reviewed before launching projects and changes in information and technology assets.",
+      "Secure Configuration and Hardening must be reviewed before launching applications.",
+      "Approve the Image for the Secure configuration and hardening of information and technology assets in accordance with the technical security standard controls and kept it in a safe place.",
+      "Provide technology required to centrally manage Secure Configuration and Hardening and ensure the automated implementation or update of Secure Configuration and Hardening for all information and technology assets at pre-determined regular intervals."
+    ],
+    "expected_deliverables": [
+      "A document (such as approved policy or procedure) indicating the identification and documentation of the requirements related to this control.",
+      "Reports or evidence that Secure Configuration and Hardening and patching are reviewed before launching applications.",
+      "Reports or evidence that Secure Configuration and Hardening and patching are periodically reviewed."
+    ],
+    "cybersecurity_tools": [],
+    "full_text": "1-6-3-5 Conducting a configurations review, secure configuration and hardening and patching before going live for software products."
+  },
+  "1-6-4": {
+    "control_id": "1-6-4",
+    "title": "Periodic Review of Project Management Requirements",
+    "objective": "The cybersecurity requirements in project management must be reviewed periodically.",
+    "implementation_guidelines": [
+      "Review the cybersecurity project management requirements periodically according to a documented and approved plan for review and based on a planned interval (e.g., periodic review must be conducted annually).",
+      "Document the review and changes to the cybersecurity requirements for project management in the organization and approve them by the head of the organization or his/her deputy."
+    ],
+    "expected_deliverables": [
+      "An approved document that defines the review schedule for the cybersecurity requirements for project management.",
+      "Evidence that the periodic review of cybersecurity requirements in project management and changes to the information and technology assets of the organization is performed."
+    ],
+    "cybersecurity_tools": [],
+    "full_text": "The cybersecurity requirements in project management must be reviewed periodically."
   }
 }
