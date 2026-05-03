@@ -1495,10 +1495,11 @@ async def check_availability(data: dict = Body(...)):
     cur = conn.cursor()
     try:
         cur.execute(
-            "SELECT id FROM users WHERE username = %s OR email = %s",
+            "SELECT id, is_verified FROM users WHERE username = %s OR email = %s",
             (data.get("username"), data.get("email"))
         )
-        if cur.fetchone():
+        existing = cur.fetchone()
+        if existing and existing['is_verified']:
             raise HTTPException(status_code=400, detail="Username or email already exists")
         return {"available": True}
     finally:
