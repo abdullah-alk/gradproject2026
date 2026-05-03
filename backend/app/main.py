@@ -168,11 +168,7 @@ async def register(data: dict = Body(...)):
         # 3. تشفير كلمة المرور وحفظ المستخدم (كـ Unverified)
         hashed_pw = hash_password(data["password"])
         cur.execute(
-            """
-            "INSERT INTO users (full_name, username, email, password_hash, role, is_active, is_verified, created_at)
-            VALUES (%s, %s, %s, %s, 'User', true, true, NOW())"
-            RETURNING id
-            """,
+            "INSERT INTO users (full_name, username, email, password_hash, role, is_active, is_verified, created_at) VALUES (%s, %s, %s, %s, 'User', true, true, NOW())",
             (data["full_name"].strip(), data["username"].strip(), data["email"].strip(), hashed_pw),
         )
         new_user = cur.fetchone()
