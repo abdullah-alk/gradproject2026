@@ -159,8 +159,8 @@ async def register(data: dict = Body(...)):
         hashed_pw = hash_password(data["password"])
         cur.execute(
             """
-            INSERT INTO users (full_name, username, email, password_hash, role, is_active, created_at)
-            VALUES (%s, %s, %s, %s, 'User', true, NOW())
+            INSERT INTO users (full_name, username, email, password_hash, role, is_active, is_verified, created_at)
+            VALUES (%s, %s, %s, %s, 'User', true, false, NOW())
             """,
             (
                 data["full_name"].strip(),
@@ -191,6 +191,8 @@ async def login(username: str = Form(...), password: str = Form(...)):
         cur.execute("SELECT * FROM users WHERE username = %s AND is_active = true", (username,))
         user = cur.fetchone()
         if user and verify_password(password, user["password_hash"]):
+            if not user.get("is_verified", True):
+                raise HTTPException(status_code=401, detail="Please verify your email before logging in")
             print(f"[🔑] User logged in: {username}")
             return {
                 "access_token": f"token_{user['id']}_{datetime.now().timestamp()}",
@@ -1507,6 +1509,18 @@ async def check_availability(data: dict = Body(...)):
         if cur.fetchone():
             raise HTTPException(status_code=400, detail="Username or email already exists")
         return {"available": True}
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/api/auth/verify-email")
+async def verify_email(data: dict = Body(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("UPDATE users SET is_verified = true WHERE email = %s", (data.get("email"),))
+        conn.commit()
+        return {"message": "Email verified"}
     finally:
         cur.close()
         conn.close()
