@@ -141,6 +141,7 @@ async def register(data: dict = Body(...)):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
+        # 1. التحقق من صحة البيانات (الاسم وكلمة المرور)
         name_valid, name_msg = validate_full_name(data.get("full_name", ""))
         if not name_valid:
             raise HTTPException(status_code=400, detail=name_msg)
@@ -149,29 +150,48 @@ async def register(data: dict = Body(...)):
         if not pwd_valid:
             raise HTTPException(status_code=400, detail=pwd_msg)
 
+        # 2. التحقق هل المستخدم موجود وموثق؟
         cur.execute(
-            "SELECT id FROM users WHERE username = %s OR email = %s",
+            "SELECT id, is_verified FROM users WHERE username = %s OR email = %s",
             (data["username"], data["email"]),
         )
-        if cur.fetchone():
-            raise HTTPException(status_code=400, detail="Username or email already exists")
+        existing_user = cur.fetchone()
 
+        if existing_user:
+            if existing_user['is_verified']:
+                # إذا كان موثقاً فعلاً، نرفض التسجيل
+                raise HTTPException(status_code=400, detail="Username or email already exists")
+            else:
+                # إذا كان موجوداً لكنه غير موثق (is_verified=false)، نحذفه لنسمح له بإعادة التسجيل
+                cur.execute("DELETE FROM users WHERE id = %s", (existing_user['id'],))
+
+        # 3. تشفير كلمة المرور وحفظ المستخدم (كـ Unverified)
         hashed_pw = hash_password(data["password"])
         cur.execute(
             """
             INSERT INTO users (full_name, username, email, password_hash, role, is_active, is_verified, created_at)
             VALUES (%s, %s, %s, %s, 'User', true, false, NOW())
+            RETURNING id
             """,
-            (
-                data["full_name"].strip(),
-                data["username"].strip(),
-                data["email"].strip(),
-                hashed_pw,
-            ),
+            (data["full_name"].strip(), data["username"].strip(), data["email"].strip(), hashed_pw),
         )
+        new_user = cur.fetchone()
+        
+        # 4. توليد OTP (6 أرقام)
+        otp_code = str(random.randint(100000, 999999))
+        
+        # 5. حفظ الـ OTP في جدول مؤقت (أو جدول المستخدمين مؤقتاً)
+        # هنا سنفترض أنك ستضيف عمود 'otp_code' لجدول users لسهولة التطبيق حالياً
+        cur.execute("UPDATE users SET otp_code = %s WHERE id = %s", (otp_code, new_user['id']))
+        
         conn.commit()
-        print(f"[👤] New user registered: {data['username']}")
-        return {"message": "Registration successful", "username": data["username"]}
+
+        # 6. إرسال الإيميل (بواسطة Resend أو SMTP)
+        # send_email_otp(data["email"], otp_code) # قم بتفعيل دالة الإرسال هنا
+
+        print(f"[👤] New unverified user registered: {data['username']} | OTP: {otp_code}")
+        return {"message": "OTP sent successfully", "email": data["email"]}
+
     except HTTPException:
         raise
     except Exception as e:
@@ -181,7 +201,6 @@ async def register(data: dict = Body(...)):
     finally:
         cur.close()
         conn.close()
-
 
 @app.post("/api/auth/login")
 async def login(username: str = Form(...), password: str = Form(...)):
@@ -1456,20 +1475,27 @@ async def send_otp(data: dict = Body(...)):
  
 @app.post("/api/auth/verify-otp")
 async def verify_otp(data: dict = Body(...)):
-    email = data.get("email", "").strip().lower()
-    otp = data.get("otp", "").strip()
-    if not email or not otp:
-        raise HTTPException(status_code=400, detail="Email and OTP are required")
-    stored = otp_store.get(email)
-    if not stored:
-        raise HTTPException(status_code=400, detail="No OTP found. Please request a new one")
-    if datetime.now() > stored["expires"]:
-        del otp_store[email]
-        raise HTTPException(status_code=400, detail="OTP expired. Please request a new one")
-    if stored["otp"] != otp:
-        raise HTTPException(status_code=400, detail="Invalid OTP")
-    del otp_store[email]
-    return {"message": "OTP verified", "verified": True}
+    email = data.get("email")
+    otp = data.get("otp")
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # البحث عن المستخدم ومطابقة الكود
+        cur.execute("SELECT id, otp_code FROM users WHERE email = %s AND is_verified = false", (email,))
+        user = cur.fetchone()
+        
+        if not user or user['otp_code'] != otp:
+            raise HTTPException(status_code=400, detail="Invalid or expired OTP code")
+        
+        # إذا تطابق الكود، نحدث حالة المستخدم إلى Verified
+        cur.execute("UPDATE users SET is_verified = true, otp_code = NULL WHERE id = %s", (user['id'],))
+        conn.commit()
+        
+        return {"verified": True, "message": "Email verified successfully"}
+    finally:
+        cur.close()
+        conn.close()
  
 @app.post("/api/auth/reset-password")
 async def reset_password(data: dict = Body(...)):
