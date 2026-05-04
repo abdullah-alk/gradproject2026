@@ -213,27 +213,8 @@ async def get_me():
 
 
 # --- 7. Controls ---
-# @app.get("/api/controls/")
-# async def get_controls():
-#     conn = get_db_connection()
-#     cur = conn.cursor()
-#     try:
-#         cur.execute(
-#             """
-#             SELECT id, control_id, title, domain, description, status, level
-#             FROM ecc_controls
-#             WHERE level = 1
-#             ORDER BY control_id ASC
-#             """
-#         )
-#         return cur.fetchall()
-#     finally:
-#         cur.close()
-#         conn.close()
-
-# UPDATED CODE
 @app.get("/api/controls/")
-async def get_controls(level: Optional[int] = 1): # جعلنا المستوى 1 هو الافتراضي
+async def get_controls():
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -241,165 +222,158 @@ async def get_controls(level: Optional[int] = 1): # جعلنا المستوى 1 
             """
             SELECT id, control_id, title, domain, description, status, level
             FROM ecc_controls
-            WHERE level = %s
+            WHERE level = 1
             ORDER BY control_id ASC
-            """, (level,)
+            """
         )
         return cur.fetchall()
     finally:
         cur.close()
         conn.close()
 
-
-# @app.get("/api/controls/hierarchy")
-# async def get_controls_hierarchy():
+# # UPDATED CODE
+# @app.get("/api/controls/")
+# async def get_controls(level: Optional[int] = 1): # جعلنا المستوى 1 هو الافتراضي
 #     conn = get_db_connection()
 #     cur = conn.cursor()
 #     try:
 #         cur.execute(
 #             """
-#             SELECT id, control_id, title, domain, description, parent_control_id, level, status
-#             FROM ecc_controls ORDER BY control_id ASC
-#             """
+#             SELECT id, control_id, title, domain, description, status, level
+#             FROM ecc_controls
+#             WHERE level = %s
+#             ORDER BY control_id ASC
+#             """, (level,)
 #         )
 #         return cur.fetchall()
 #     finally:
 #         cur.close()
 #         conn.close()
 
-# UPDATED CODE
+
 @app.get("/api/controls/hierarchy")
 async def get_controls_hierarchy():
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        # جلب كافة الضوابط دون استثناء لأي مستوى
         cur.execute(
             """
             SELECT id, control_id, title, domain, description, parent_control_id, level, status
-            FROM ecc_controls 
-            ORDER BY level ASC, control_id ASC
+            FROM ecc_controls ORDER BY control_id ASC
             """
         )
-        rows = cur.fetchall()
-
-        # بناء قاموس لتخزين الضوابط وترتيبها
-        all_controls = {}
-        hierarchy = []
-
-        for row in rows:
-            # تجهيز بيانات الضابط مع قائمة أبناء فارغة
-            control_item = {
-                "id": row["id"],
-                "control_id": row["control_id"],
-                "title": row["title"],
-                "domain": row["domain"],
-                "description": row["description"],
-                "status": row["status"],
-                "level": row["level"],
-                "sub_controls": []
-            }
-            all_controls[row["control_id"]] = control_item
-
-            # إذا كان المستوى 1، نضفه كجذر أساسي في الشجرة
-            if row["level"] == 1 or not row["parent_control_id"]:
-                hierarchy.append(control_item)
-            else:
-                # إذا كان ضابطاً فرعياً، نبحث عن والده في القاموس ونحقنه داخله
-                parent_id = row["parent_control_id"]
-                if parent_id in all_controls:
-                    all_controls[parent_id]["sub_controls"].append(control_item)
-                else:
-                    # حالة احتياطية: إذا لم يجد الأب (مثلاً خطأ في إدخال البيانات)، يضعه في المستوى الأول
-                    hierarchy.append(control_item)
-
-        return hierarchy
+        return cur.fetchall()
     finally:
         cur.close()
         conn.close()
 
-
-# @app.get("/api/controls/{control_id}")
-# async def get_control_by_id(control_id: str):
+# # UPDATED CODE
+# @app.get("/api/controls/hierarchy")
+# async def get_controls_hierarchy():
 #     conn = get_db_connection()
 #     cur = conn.cursor()
 #     try:
-#         cur.execute("SELECT * FROM ecc_controls WHERE control_id = %s", (control_id,))
-#         res = cur.fetchone()
-#         if not res:
-#             raise HTTPException(status_code=404, detail="Control not found")
-#         return res
+#         # جلب كافة الضوابط دون استثناء لأي مستوى
+#         cur.execute(
+#             """
+#             SELECT id, control_id, title, domain, description, parent_control_id, level, status
+#             FROM ecc_controls 
+#             ORDER BY level ASC, control_id ASC
+#             """
+#         )
+#         rows = cur.fetchall()
+
+#         # بناء قاموس لتخزين الضوابط وترتيبها
+#         all_controls = {}
+#         hierarchy = []
+
+#         for row in rows:
+#             # تجهيز بيانات الضابط مع قائمة أبناء فارغة
+#             control_item = {
+#                 "id": row["id"],
+#                 "control_id": row["control_id"],
+#                 "title": row["title"],
+#                 "domain": row["domain"],
+#                 "description": row["description"],
+#                 "status": row["status"],
+#                 "level": row["level"],
+#                 "sub_controls": []
+#             }
+#             all_controls[row["control_id"]] = control_item
+
+#             # إذا كان المستوى 1، نضفه كجذر أساسي في الشجرة
+#             if row["level"] == 1 or not row["parent_control_id"]:
+#                 hierarchy.append(control_item)
+#             else:
+#                 # إذا كان ضابطاً فرعياً، نبحث عن والده في القاموس ونحقنه داخله
+#                 parent_id = row["parent_control_id"]
+#                 if parent_id in all_controls:
+#                     all_controls[parent_id]["sub_controls"].append(control_item)
+#                 else:
+#                     # حالة احتياطية: إذا لم يجد الأب (مثلاً خطأ في إدخال البيانات)، يضعه في المستوى الأول
+#                     hierarchy.append(control_item)
+
+#         return hierarchy
 #     finally:
 #         cur.close()
 #         conn.close()
 
-# UPDATED CODE
+
 @app.get("/api/controls/{control_id}")
 async def get_control_by_id(control_id: str):
     conn = get_db_connection()
-    # نستخدم RealDictCursor لضمان عودة البيانات كقاموس (Dictionary) مفاتحه هي أسماء الأعمدة
     cur = conn.cursor()
     try:
-        # نقوم بجلب كافة الأعمدة للتأكد من وجود الوصف (description) والأهداف (objective) 
-        # لأن محرك AI يحتاج هذه النصوص لتوليد الأسئلة
-        cur.execute(
-            """
-            SELECT id, control_id, title, domain, description, objective, 
-                   implementation_guidelines, expected_deliverables, 
-                   parent_control_id, level, status 
-            FROM ecc_controls 
-            WHERE control_id = %s
-            """, 
-            (control_id,)
-        )
-        
+        cur.execute("SELECT * FROM ecc_controls WHERE control_id = %s", (control_id,))
         res = cur.fetchone()
-        
         if not res:
-            # في حال لم يجد الضابط (مثل 1-9-3-1)، يفضل إرجاع رسالة واضحة للمساعدة في التشخيص
-            print(f"[⚠️] Control ID '{control_id}' requested but not found in DB.")
-            raise HTTPException(status_code=404, detail=f"Control '{control_id}' not found")
-        
-        # تحويل القيم التي قد تكون None إلى نصوص فارغة لتجنب أخطاء JSON في المتصفح
-        for key, value in res.items():
-            if value is None:
-                res[key] = ""
-                
+            raise HTTPException(status_code=404, detail="Control not found")
         return res
-    except Exception as e:
-        print(f"[❌] Error fetching control {control_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal Server Error during fetching control")
     finally:
         cur.close()
         conn.close()
 
-
-# @app.post("/api/controls/{control_id}/status")
-# async def update_control_status(control_id: str, data: dict = Body(...)):
+# # UPDATED CODE
+# @app.get("/api/controls/{control_id}")
+# async def get_control_by_id(control_id: str):
 #     conn = get_db_connection()
+#     # نستخدم RealDictCursor لضمان عودة البيانات كقاموس (Dictionary) مفاتحه هي أسماء الأعمدة
 #     cur = conn.cursor()
 #     try:
-#         status = data.get("status")
-#         if status not in ["Compliant", "Non-Compliant", "Partial", "Not Started"]:
-#             raise HTTPException(status_code=400, detail="Invalid status")
-
+#         # نقوم بجلب كافة الأعمدة للتأكد من وجود الوصف (description) والأهداف (objective) 
+#         # لأن محرك AI يحتاج هذه النصوص لتوليد الأسئلة
 #         cur.execute(
-#             "UPDATE ecc_controls SET status = %s WHERE control_id = %s",
-#             (status, control_id),
+#             """
+#             SELECT id, control_id, title, domain, description, objective, 
+#                    implementation_guidelines, expected_deliverables, 
+#                    parent_control_id, level, status 
+#             FROM ecc_controls 
+#             WHERE control_id = %s
+#             """, 
+#             (control_id,)
 #         )
-#         conn.commit()
-#         print(f"[✅] Control {control_id} updated to: {status}")
-#         return {"message": "Status updated", "control_id": control_id, "status": status}
-#     except HTTPException:
-#         raise
+        
+#         res = cur.fetchone()
+        
+#         if not res:
+#             # في حال لم يجد الضابط (مثل 1-9-3-1)، يفضل إرجاع رسالة واضحة للمساعدة في التشخيص
+#             print(f"[⚠️] Control ID '{control_id}' requested but not found in DB.")
+#             raise HTTPException(status_code=404, detail=f"Control '{control_id}' not found")
+        
+#         # تحويل القيم التي قد تكون None إلى نصوص فارغة لتجنب أخطاء JSON في المتصفح
+#         for key, value in res.items():
+#             if value is None:
+#                 res[key] = ""
+                
+#         return res
 #     except Exception as e:
-#         conn.rollback()
-#         raise HTTPException(status_code=500, detail=str(e))
+#         print(f"[❌] Error fetching control {control_id}: {str(e)}")
+#         raise HTTPException(status_code=500, detail="Internal Server Error during fetching control")
 #     finally:
 #         cur.close()
 #         conn.close()
 
-# UPDATED CODE 
+
 @app.post("/api/controls/{control_id}/status")
 async def update_control_status(control_id: str, data: dict = Body(...)):
     conn = get_db_connection()
@@ -413,15 +387,11 @@ async def update_control_status(control_id: str, data: dict = Body(...)):
             "UPDATE ecc_controls SET status = %s WHERE control_id = %s",
             (status, control_id),
         )
-        
-        # --- السطر المضاف للتحقق ---
-        if cur.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Control ID not found")
-        # --------------------------
-
         conn.commit()
+        print(f"[✅] Control {control_id} updated to: {status}")
         return {"message": "Status updated", "control_id": control_id, "status": status}
-    except HTTPException: raise
+    except HTTPException:
+        raise
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
@@ -429,67 +399,37 @@ async def update_control_status(control_id: str, data: dict = Body(...)):
         cur.close()
         conn.close()
 
-# --- 8. AI routes ---
-# @app.post("/api/ai/generate-questions")
-# async def generate_questions(data: dict = Body(...)):
-#     control_id = data.get("control_id")
-#     mode = data.get("mode", "audit")
-
-#     if not control_id:
-#         raise HTTPException(status_code=400, detail="control_id is required")
-
+# # UPDATED CODE 
+# @app.post("/api/controls/{control_id}/status")
+# async def update_control_status(control_id: str, data: dict = Body(...)):
+#     conn = get_db_connection()
+#     cur = conn.cursor()
 #     try:
-#         engine = get_rag_engine()
-#     except Exception as e:
-#         print(f"[❌] AI ENGINE ERROR: {e}")
-#         raise HTTPException(status_code=500, detail="AI Engine is offline. Please contact administrator.")
+#         status = data.get("status")
+#         if status not in ["Compliant", "Non-Compliant", "Partial", "Not Started"]:
+#             raise HTTPException(status_code=400, detail="Invalid status")
 
-#     print(f"[🤖] Generating 10 {mode} questions for control: {control_id}")
-
-#     try:
-#         raw_response = engine.process_request(
-#             control_id=control_id,
-#             query="",
-#             mode=mode,
+#         cur.execute(
+#             "UPDATE ecc_controls SET status = %s WHERE control_id = %s",
+#             (status, control_id),
 #         )
+        
+#         # --- السطر المضاف للتحقق ---
+#         if cur.rowcount == 0:
+#             raise HTTPException(status_code=404, detail="Control ID not found")
+#         # --------------------------
 
-#         clean = raw_response.strip()
-#         start = clean.find("[")
-#         end = clean.rfind("]") + 1
-
-#         if start != -1 and end > start:
-#             json_str = clean[start:end]
-#             questions = json.loads(json_str)
-
-#             if len(questions) == 0:
-#                 print(f"[⚠️] AI returned 0 questions for {control_id}")
-#                 return {
-#                     "questions": [],
-#                     "error": "AI could not generate questions. Ensure ECC documents are indexed in ChromaDB.",
-#                 }
-
-#             print(f"[✅] Generated {len(questions)} questions for {control_id}")
-#             return {"questions": questions}
-
-#         print(f"[⚠️] No JSON array found in AI response for {control_id}")
-#         return {
-#             "questions": [],
-#             "raw_response": raw_response[:500],
-#             "error": "AI response was not in expected JSON format",
-#         }
-
-#     except json.JSONDecodeError as e:
-#         print(f"[❌] JSON Parse Error for {control_id}: {e}")
-#         return {
-#             "questions": [],
-#             "raw_response": raw_response[:500],
-#             "error": f"Could not parse AI response: {str(e)}",
-#         }
+#         conn.commit()
+#         return {"message": "Status updated", "control_id": control_id, "status": status}
+#     except HTTPException: raise
 #     except Exception as e:
-#         print(f"[❌] Generate Questions Error: {e}")
+#         conn.rollback()
 #         raise HTTPException(status_code=500, detail=str(e))
+#     finally:
+#         cur.close()
+#         conn.close()
 
-# UPDATED CODE
+--- 8. AI routes ---
 @app.post("/api/ai/generate-questions")
 async def generate_questions(data: dict = Body(...)):
     control_id = data.get("control_id")
@@ -498,34 +438,18 @@ async def generate_questions(data: dict = Body(...)):
     if not control_id:
         raise HTTPException(status_code=400, detail="control_id is required")
 
-    # 1. جلب بيانات الضابط من SQL لضمان وجود سياق (Context) حتى للمستويات العميقة
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT title, description, objective FROM ecc_controls WHERE control_id = %s", (control_id,))
-    control_data = cur.fetchone()
-    cur.close()
-    conn.close()
-
-    if not control_data:
-         print(f"[⚠️] Control {control_id} not found in SQL database.")
-         return {"questions": [], "error": f"Control {control_id} not found in database."}
-
-    # تجهيز سياق إضافي للذكاء الاصطناعي
-    control_context = f"Control Title: {control_data['title']}\nDescription: {control_data['description']}\nObjective: {control_data['objective']}"
-
     try:
         engine = get_rag_engine()
     except Exception as e:
         print(f"[❌] AI ENGINE ERROR: {e}")
-        raise HTTPException(status_code=500, detail="AI Engine is offline.")
+        raise HTTPException(status_code=500, detail="AI Engine is offline. Please contact administrator.")
 
-    print(f"[🤖] Generating 10 {mode} questions for control: {control_id} using SQL Context")
+    print(f"[🤖] Generating 10 {mode} questions for control: {control_id}")
 
     try:
-        # 2. نرسل السياق الذي جلبناه من SQL مع الطلب
         raw_response = engine.process_request(
             control_id=control_id,
-            query=f"Based on this control details: {control_context}, generate 10 audit questions.",
+            query="",
             mode=mode,
         )
 
@@ -539,20 +463,96 @@ async def generate_questions(data: dict = Body(...)):
 
             if len(questions) == 0:
                 print(f"[⚠️] AI returned 0 questions for {control_id}")
-                return {"questions": [], "error": "AI could not generate questions."}
+                return {
+                    "questions": [],
+                    "error": "AI could not generate questions. Ensure ECC documents are indexed in ChromaDB.",
+                }
 
             print(f"[✅] Generated {len(questions)} questions for {control_id}")
             return {"questions": questions}
 
+        print(f"[⚠️] No JSON array found in AI response for {control_id}")
         return {
             "questions": [],
-            "error": "AI response format error",
-            "raw_response": raw_response[:200]
+            "raw_response": raw_response[:500],
+            "error": "AI response was not in expected JSON format",
         }
 
+    except json.JSONDecodeError as e:
+        print(f"[❌] JSON Parse Error for {control_id}: {e}")
+        return {
+            "questions": [],
+            "raw_response": raw_response[:500],
+            "error": f"Could not parse AI response: {str(e)}",
+        }
     except Exception as e:
         print(f"[❌] Generate Questions Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# # UPDATED CODE
+# @app.post("/api/ai/generate-questions")
+# async def generate_questions(data: dict = Body(...)):
+#     control_id = data.get("control_id")
+#     mode = data.get("mode", "audit")
+
+#     if not control_id:
+#         raise HTTPException(status_code=400, detail="control_id is required")
+
+#     # 1. جلب بيانات الضابط من SQL لضمان وجود سياق (Context) حتى للمستويات العميقة
+#     conn = get_db_connection()
+#     cur = conn.cursor()
+#     cur.execute("SELECT title, description, objective FROM ecc_controls WHERE control_id = %s", (control_id,))
+#     control_data = cur.fetchone()
+#     cur.close()
+#     conn.close()
+
+#     if not control_data:
+#          print(f"[⚠️] Control {control_id} not found in SQL database.")
+#          return {"questions": [], "error": f"Control {control_id} not found in database."}
+
+#     # تجهيز سياق إضافي للذكاء الاصطناعي
+#     control_context = f"Control Title: {control_data['title']}\nDescription: {control_data['description']}\nObjective: {control_data['objective']}"
+
+#     try:
+#         engine = get_rag_engine()
+#     except Exception as e:
+#         print(f"[❌] AI ENGINE ERROR: {e}")
+#         raise HTTPException(status_code=500, detail="AI Engine is offline.")
+
+#     print(f"[🤖] Generating 10 {mode} questions for control: {control_id} using SQL Context")
+
+#     try:
+#         # 2. نرسل السياق الذي جلبناه من SQL مع الطلب
+#         raw_response = engine.process_request(
+#             control_id=control_id,
+#             query=f"Based on this control details: {control_context}, generate 10 audit questions.",
+#             mode=mode,
+#         )
+
+#         clean = raw_response.strip()
+#         start = clean.find("[")
+#         end = clean.rfind("]") + 1
+
+#         if start != -1 and end > start:
+#             json_str = clean[start:end]
+#             questions = json.loads(json_str)
+
+#             if len(questions) == 0:
+#                 print(f"[⚠️] AI returned 0 questions for {control_id}")
+#                 return {"questions": [], "error": "AI could not generate questions."}
+
+#             print(f"[✅] Generated {len(questions)} questions for {control_id}")
+#             return {"questions": questions}
+
+#         return {
+#             "questions": [],
+#             "error": "AI response format error",
+#             "raw_response": raw_response[:200]
+#         }
+
+#     except Exception as e:
+#         print(f"[❌] Generate Questions Error: {e}")
+#         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/ai/recommendations")
 async def get_recommendations(data: dict = Body(...)):
