@@ -148,32 +148,40 @@ class RAGEngine:
         if not self.vectorstore:
             return ""
         try:
-            print(f"[🔍] Precision search for: '{control_id}'")
+            # 1. البحث النصي الموسع
+            query_text = f"Control {control_id} details and requirements"
+            results = self.vectorstore.similarity_search(query_text, k=15)
             
-            # 1. جلب عدد أكبر من النتائج (مثلاً 15) لضمان أننا سنجد الضابط المطلوب بينها
-            results = self.vectorstore.similarity_search(
-                f"Technical requirements and guidelines for ECC control {control_id}",
-                k=15 
-            )
-            
-            # 2. الفلترة الصارمة (Strict Manual Filtering)
-            # لن نقبل أي قطعة نصية لا تحتوي صراحة على رقم الضابط في الميتا داتا أو في النص
             relevant_chunks = []
+            target_id = str(control_id).strip() # تنظيف الرقم المطلوب
+    
             for doc in results:
-                doc_id = str(doc.metadata.get("control_id", ""))
-                # التأكد من أن المعرف يطابق تماماً أو أن النص يبدأ بذكر الضابط
-                if doc_id == control_id or f"CONTROL_ID: {control_id}" in doc.page_content:
-                    relevant_chunks.append(doc.page_content)
-            
+                # جلب المعرف من الميتا داتا وتنظيفه
+                meta_id = str(doc.metadata.get("control_id", "")).strip()
+                content = doc.page_content
+                
+                # 2. فحص مرن: هل الرقم موجود في الميتا داتا أو في أول النص؟
+                if target_id == meta_id or content.startswith(f"CONTROL_ID: {target_id}"):
+                    relevant_chunks.append(content)
+                # خيار احتياطي: إذا وجد الرقم في بداية النص بأي شكل
+                elif target_id in content[:50]: 
+                    relevant_chunks.append(content)
+    
             if not relevant_chunks:
-                print(f"[⚠️] No precise matches for {control_id} after filtering.")
+                # إذا فشلت الفلترة، سنأخذ أول نتيجة كملجأ أخير بشرط احتوائها على الرقم
+                for doc in results:
+                    if target_id in doc.page_content:
+                        relevant_chunks.append(doc.page_content)
+                        break
+    
+            if not relevant_chunks:
+                print(f"[⚠️] No precise context for {target_id}")
                 return ""
                 
-            # 3. إعادة النتائج ذات الصلة فقط (أول k نتائج)
             return "\n\n---\n\n".join(relevant_chunks[:k])
             
         except Exception as e:
-            print(f"[❌] Context retrieval error for {control_id}: {e}")
+            print(f"[❌] Retrieval error: {e}")
             return ""
         
     def load_ecc_data(self, json_path: str):
