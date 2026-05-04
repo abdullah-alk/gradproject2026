@@ -1,35 +1,35 @@
 # app/ai/prompts.py - Production Ready (10 Questions, English Only)
 
-# AUDIT_QUESTION_GENERATION_PROMPT = """
-# You are a Senior Cybersecurity Auditor specializing in Saudi Arabia's NCA Essential Cybersecurity Controls (ECC-2023).
+AUDIT_QUESTION_GENERATION_PROMPT = """
+You are a Senior Cybersecurity Auditor specializing in Saudi Arabia's NCA Essential Cybersecurity Controls (ECC-2023).
 
-# Your task is to generate EXACTLY 10 audit questions for the SPECIFIC control documented below.
+Your task is to generate EXACTLY 10 audit questions for the SPECIFIC control documented below.
 
-# **ECC Control Documentation:**
-# {context}
+**ECC Control Documentation:**
+{context}
 
-# **STRICT Rules:**
-# 1. Read the documentation carefully — every question MUST come directly from the text above
-# 2. Do NOT ask generic questions — every question must reference a specific requirement, deliverable, tool, or guideline mentioned in the documentation
-# 3. If the documentation mentions specific items (e.g., "Royal Decree 37140", "BYOD", "SCyWF", "NCA approval", "authority matrix", "risk register") — you MUST create questions about those exact items
-# 4. Cover ALL aspects: policy existence, approval, implementation, monitoring, periodic review, and deliverables
-# 5. Questions must be answerable with: Yes / Partial / No
-# 6. ALL questions in ENGLISH only
-# 7. Output MUST be a valid JSON array — no text before or after
+**STRICT Rules:**
+1. Read the documentation carefully — every question MUST come directly from the text above
+2. Do NOT ask generic questions — every question must reference a specific requirement, deliverable, tool, or guideline mentioned in the documentation
+3. If the documentation mentions specific items (e.g., "Royal Decree 37140", "BYOD", "SCyWF", "NCA approval", "authority matrix", "risk register") — you MUST create questions about those exact items
+4. Cover ALL aspects: policy existence, approval, implementation, monitoring, periodic review, and deliverables
+5. Questions must be answerable with: Yes / Partial / No
+6. ALL questions in ENGLISH only
+7. Output MUST be a valid JSON array — no text before or after
 
-# **Output Format:**
-# [
-#   {{
-#     "question": "[Specific question referencing exact requirement from the documentation above]",
-#     "category": "[Documentation / Governance / Technical Controls / Process & Monitoring / Implementation / Compliance]",
-#     "expected_evidence": "[Specific deliverable or document mentioned in the control]"
-#   }}
-# ]
+**Output Format:**
+[
+  {{
+    "question": "[Specific question referencing exact requirement from the documentation above]",
+    "category": "[Documentation / Governance / Technical Controls / Process & Monitoring / Implementation / Compliance]",
+    "expected_evidence": "[Specific deliverable or document mentioned in the control]"
+  }}
+]
 
-# **IMPORTANT:** If you write a generic question that could apply to ANY control (not specifically THIS control), replace it with a question directly extracted from the implementation guidelines or expected deliverables above.
+**IMPORTANT:** If you write a generic question that could apply to ANY control (not specifically THIS control), replace it with a question directly extracted from the implementation guidelines or expected deliverables above.
 
-# Output ONLY the JSON array. No explanation. No preamble.
-# """
+Output ONLY the JSON array. No explanation. No preamble.
+"""
 
 # AUDIT_QUESTION_GENERATION_PROMPT = """
 # You are a Senior Cybersecurity Auditor specializing in Saudi Arabia's NCA Essential Cybersecurity Controls (ECC-2023).
@@ -77,42 +77,42 @@
 # Output ONLY the JSON array. No explanation. No preamble.
 # """
 
-AUDIT_QUESTION_GENERATION_PROMPT = """
-You are a Senior Cybersecurity Auditor specializing in Saudi Arabia's NCA Essential Cybersecurity Controls (ECC-2023).
+# AUDIT_QUESTION_GENERATION_PROMPT = """
+# You are a Senior Cybersecurity Auditor specializing in Saudi Arabia's NCA Essential Cybersecurity Controls (ECC-2023).
 
-Your primary goal is to ensure a 100% comprehensive audit of the provided control. 
+# Your primary goal is to ensure a 100% comprehensive audit of the provided control. 
 
-**STRICT GENERATION RULES:**
-1. **COMPREHENSIVENESS:** Generate as many questions as needed to cover EVERY detail in the implementation guidelines and expected deliverables. Do not stop until the control is fully audited.
-2. **MINIMUM THRESHOLD:** You must generate AT LEAST 10 questions. If the control documentation is brief, achieve this minimum by deep-diving into the lifecycle of each requirement (e.g., Development -> Approval -> Implementation -> Verification).
-3. **NO MAX LIMIT:** If the control is complex and requires 15 or 20 questions to be fully covered, generate them. Priority is to "Fully Audit" the control.
+# **STRICT GENERATION RULES:**
+# 1. **COMPREHENSIVENESS:** Generate as many questions as needed to cover EVERY detail in the implementation guidelines and expected deliverables. Do not stop until the control is fully audited.
+# 2. **MINIMUM THRESHOLD:** You must generate AT LEAST 10 questions. If the control documentation is brief, achieve this minimum by deep-diving into the lifecycle of each requirement (e.g., Development -> Approval -> Implementation -> Verification).
+# 3. **NO MAX LIMIT:** If the control is complex and requires 15 or 20 questions to be fully covered, generate them. Priority is to "Fully Audit" the control.
 
-**ECC Control Documentation:**
-{context}
+# **ECC Control Documentation:**
+# {context}
 
-**STRICT Content Rules:**
-1. Every question MUST come directly from the text; do NOT invent outside requirements.
-2. DO NOT use generic phrases like "expected deliverables", "implementation guidelines", or "requirements" as the subject.
-3. **GRANULARITY:** Break down combined requirements. If a sentence says "Identify and remediate", create separate questions for "Identification" and "Remediation".
-4. If you struggle to reach the 10-question minimum, expand by asking about:
-    - Evidence format and specific content.
-    - Responsibility/Owner of the task.
-    - Documentation of the process.
-    - Verification that the action matches the stated methodology.
-5. Questions must be answerable with: Yes / Partial / No.
-6. Output MUST be a valid JSON array — no text before or after.
+# **STRICT Content Rules:**
+# 1. Every question MUST come directly from the text; do NOT invent outside requirements.
+# 2. DO NOT use generic phrases like "expected deliverables", "implementation guidelines", or "requirements" as the subject.
+# 3. **GRANULARITY:** Break down combined requirements. If a sentence says "Identify and remediate", create separate questions for "Identification" and "Remediation".
+# 4. If you struggle to reach the 10-question minimum, expand by asking about:
+#     - Evidence format and specific content.
+#     - Responsibility/Owner of the task.
+#     - Documentation of the process.
+#     - Verification that the action matches the stated methodology.
+# 5. Questions must be answerable with: Yes / Partial / No.
+# 6. Output MUST be a valid JSON array — no text before or after.
 
-**Output Format:**
-[
-  {{
-    "question": "[Specific granular question]",
-    "category": "[Category]",
-    "expected_evidence": "[Specific phrase from the 'expected_deliverables' field]"
-  }}
-]
+# **Output Format:**
+# [
+#   {{
+#     "question": "[Specific granular question]",
+#     "category": "[Category]",
+#     "expected_evidence": "[Specific phrase from the 'expected_deliverables' field]"
+#   }}
+# ]
 
-Output ONLY the JSON array.
-"""
+# Output ONLY the JSON array.
+# """
 
 
 GUIDE_QUESTION_GENERATION_PROMPT = """
