@@ -879,13 +879,13 @@ async def schedule_audit_endpoint(data: dict = Body(...)):
 
         user_id = extract_user_id_from_token(data.get("_token", "")) or 1
 
-        cur.execute(
-            """
-            UPDATE audit_sessions SET status = 'cancelled'
-            WHERE user_id = %s AND status = 'scheduled'
-            """,
-            (user_id,),
-        )
+        #cur.execute(
+         #   """
+          #  UPDATE audit_sessions SET status = 'cancelled'
+           # WHERE user_id = %s AND status = 'scheduled'
+           # """,
+          #  (user_id,),
+       # )
 
         cur.execute(
             """
