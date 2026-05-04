@@ -123,6 +123,25 @@
     </div>
     <div id="loader" class="loader"><div class="spinner"></div></div>
     <script src="js/api.js"></script>
+    <!-- Scheduled Audits List -->
+    <div class="card" style="margin-top:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <h3 style="font-size:17px;font-weight:600;">Scheduled Audits</h3>
+            <span id="audits-count" style="background:rgba(6,182,212,0.1);color:var(--accent-primary);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">0 Scheduled</span>
+        </div>
+        <div id="scheduled-audits-list">
+            <div style="text-align:center;padding:32px;color:var(--text-muted);">
+                <i class="fas fa-calendar" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.4;"></i>
+                <p>No audits scheduled yet</p>
+            </div>
+        </div>
+    </div>
+
+<!-- Toast Notification -->
+    <div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1e293b;border:1px solid var(--border-color);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);transform:translateY(100px);opacity:0;transition:all 0.3s ease;z-index:9999;min-width:300px;">
+        <div id="toast-icon" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>
+        <div><div id="toast-title" style="font-weight:600;font-size:14px;margin-bottom:2px;"></div><div id="toast-msg" style="font-size:12px;color:var(--text-muted);"></div></div>
+    </div>
     <script src="js/scheduler.js"></script>
 </body>
 </html>
