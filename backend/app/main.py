@@ -1402,7 +1402,7 @@ def send_email(to_email: str, subject: str, body: str):
             "Content-Type": "application/json"
         },
         json={
-            "from": "ECC Auditor <onboarding@resend.dev>",
+            "from": "ECC Auditor <noreply@xn--mgb2dctb.online>",
             "to": [to_email],
             "subject": subject,
             "html": body
