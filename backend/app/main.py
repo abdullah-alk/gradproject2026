@@ -430,6 +430,66 @@ async def update_control_status(control_id: str, data: dict = Body(...)):
         conn.close()
 
 # --- 8. AI routes ---
+# @app.post("/api/ai/generate-questions")
+# async def generate_questions(data: dict = Body(...)):
+#     control_id = data.get("control_id")
+#     mode = data.get("mode", "audit")
+
+#     if not control_id:
+#         raise HTTPException(status_code=400, detail="control_id is required")
+
+#     try:
+#         engine = get_rag_engine()
+#     except Exception as e:
+#         print(f"[❌] AI ENGINE ERROR: {e}")
+#         raise HTTPException(status_code=500, detail="AI Engine is offline. Please contact administrator.")
+
+#     print(f"[🤖] Generating 10 {mode} questions for control: {control_id}")
+
+#     try:
+#         raw_response = engine.process_request(
+#             control_id=control_id,
+#             query="",
+#             mode=mode,
+#         )
+
+#         clean = raw_response.strip()
+#         start = clean.find("[")
+#         end = clean.rfind("]") + 1
+
+#         if start != -1 and end > start:
+#             json_str = clean[start:end]
+#             questions = json.loads(json_str)
+
+#             if len(questions) == 0:
+#                 print(f"[⚠️] AI returned 0 questions for {control_id}")
+#                 return {
+#                     "questions": [],
+#                     "error": "AI could not generate questions. Ensure ECC documents are indexed in ChromaDB.",
+#                 }
+
+#             print(f"[✅] Generated {len(questions)} questions for {control_id}")
+#             return {"questions": questions}
+
+#         print(f"[⚠️] No JSON array found in AI response for {control_id}")
+#         return {
+#             "questions": [],
+#             "raw_response": raw_response[:500],
+#             "error": "AI response was not in expected JSON format",
+#         }
+
+#     except json.JSONDecodeError as e:
+#         print(f"[❌] JSON Parse Error for {control_id}: {e}")
+#         return {
+#             "questions": [],
+#             "raw_response": raw_response[:500],
+#             "error": f"Could not parse AI response: {str(e)}",
+#         }
+#     except Exception as e:
+#         print(f"[❌] Generate Questions Error: {e}")
+#         raise HTTPException(status_code=500, detail=str(e))
+
+# UPDATED CODE
 @app.post("/api/ai/generate-questions")
 async def generate_questions(data: dict = Body(...)):
     control_id = data.get("control_id")
@@ -438,18 +498,34 @@ async def generate_questions(data: dict = Body(...)):
     if not control_id:
         raise HTTPException(status_code=400, detail="control_id is required")
 
+    # 1. جلب بيانات الضابط من SQL لضمان وجود سياق (Context) حتى للمستويات العميقة
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT title, description, objective FROM ecc_controls WHERE control_id = %s", (control_id,))
+    control_data = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if not control_data:
+         print(f"[⚠️] Control {control_id} not found in SQL database.")
+         return {"questions": [], "error": f"Control {control_id} not found in database."}
+
+    # تجهيز سياق إضافي للذكاء الاصطناعي
+    control_context = f"Control Title: {control_data['title']}\nDescription: {control_data['description']}\nObjective: {control_data['objective']}"
+
     try:
         engine = get_rag_engine()
     except Exception as e:
         print(f"[❌] AI ENGINE ERROR: {e}")
-        raise HTTPException(status_code=500, detail="AI Engine is offline. Please contact administrator.")
+        raise HTTPException(status_code=500, detail="AI Engine is offline.")
 
-    print(f"[🤖] Generating 10 {mode} questions for control: {control_id}")
+    print(f"[🤖] Generating 10 {mode} questions for control: {control_id} using SQL Context")
 
     try:
+        # 2. نرسل السياق الذي جلبناه من SQL مع الطلب
         raw_response = engine.process_request(
             control_id=control_id,
-            query="",
+            query=f"Based on this control details: {control_context}, generate 10 audit questions.",
             mode=mode,
         )
 
@@ -463,32 +539,20 @@ async def generate_questions(data: dict = Body(...)):
 
             if len(questions) == 0:
                 print(f"[⚠️] AI returned 0 questions for {control_id}")
-                return {
-                    "questions": [],
-                    "error": "AI could not generate questions. Ensure ECC documents are indexed in ChromaDB.",
-                }
+                return {"questions": [], "error": "AI could not generate questions."}
 
             print(f"[✅] Generated {len(questions)} questions for {control_id}")
             return {"questions": questions}
 
-        print(f"[⚠️] No JSON array found in AI response for {control_id}")
         return {
             "questions": [],
-            "raw_response": raw_response[:500],
-            "error": "AI response was not in expected JSON format",
+            "error": "AI response format error",
+            "raw_response": raw_response[:200]
         }
 
-    except json.JSONDecodeError as e:
-        print(f"[❌] JSON Parse Error for {control_id}: {e}")
-        return {
-            "questions": [],
-            "raw_response": raw_response[:500],
-            "error": f"Could not parse AI response: {str(e)}",
-        }
     except Exception as e:
         print(f"[❌] Generate Questions Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.post("/api/ai/recommendations")
 async def get_recommendations(data: dict = Body(...)):
