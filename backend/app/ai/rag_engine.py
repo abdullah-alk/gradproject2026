@@ -144,45 +144,100 @@ class RAGEngine:
     #         return ""
 
     # Updated Code 2
+    # def retrieve_context(self, control_id: str, k: int = 5) -> str:
+    #     if not self.vectorstore:
+    #         return ""
+    #     try:
+    #         # 1. البحث النصي الموسع
+    #         query_text = f"Control {control_id} details and requirements"
+    #         results = self.vectorstore.similarity_search(query_text, k=15)
+            
+    #         relevant_chunks = []
+    #         target_id = str(control_id).strip() # تنظيف الرقم المطلوب
+    
+    #         for doc in results:
+    #             # جلب المعرف من الميتا داتا وتنظيفه
+    #             meta_id = str(doc.metadata.get("control_id", "")).strip()
+    #             content = doc.page_content
+                
+    #             # 2. فحص مرن: هل الرقم موجود في الميتا داتا أو في أول النص؟
+    #             if target_id == meta_id or content.startswith(f"CONTROL_ID: {target_id}"):
+    #                 relevant_chunks.append(content)
+    #             # خيار احتياطي: إذا وجد الرقم في بداية النص بأي شكل
+    #             elif target_id in content[:50]: 
+    #                 relevant_chunks.append(content)
+    
+    #         if not relevant_chunks:
+    #             # إذا فشلت الفلترة، سنأخذ أول نتيجة كملجأ أخير بشرط احتوائها على الرقم
+    #             for doc in results:
+    #                 if target_id in doc.page_content:
+    #                     relevant_chunks.append(doc.page_content)
+    #                     break
+    
+    #         if not relevant_chunks:
+    #             print(f"[⚠️] No precise context for {target_id}")
+    #             return ""
+                
+    #         return "\n\n---\n\n".join(relevant_chunks[:k])
+            
+    #     except Exception as e:
+    #         print(f"[❌] Retrieval error: {e}")
+    #         return ""
+
+    # UPDATED CODE 3
     def retrieve_context(self, control_id: str, k: int = 5) -> str:
         if not self.vectorstore:
             return ""
         try:
-            # 1. البحث النصي الموسع
-            query_text = f"Control {control_id} details and requirements"
-            results = self.vectorstore.similarity_search(query_text, k=15)
-            
+            target_id = str(control_id).strip()
             relevant_chunks = []
-            target_id = str(control_id).strip() # تنظيف الرقم المطلوب
     
-            for doc in results:
-                # جلب المعرف من الميتا داتا وتنظيفه
-                meta_id = str(doc.metadata.get("control_id", "")).strip()
-                content = doc.page_content
-                
-                # 2. فحص مرن: هل الرقم موجود في الميتا داتا أو في أول النص؟
-                if target_id == meta_id or content.startswith(f"CONTROL_ID: {target_id}"):
-                    relevant_chunks.append(content)
-                # خيار احتياطي: إذا وجد الرقم في بداية النص بأي شكل
-                elif target_id in content[:50]: 
-                    relevant_chunks.append(content)
+            # 1. محاولة جلب الضابط مباشرة عن طريق الميتاداتا (الأسرع والأدق)
+            # هذا يتخطى البحث بالتشابه ويذهب للهدف مباشرة
+            direct_results = self.vectorstore.get(where={"control_id": target_id})
+            if direct_results and direct_results['documents']:
+                relevant_chunks.extend(direct_results['documents'])
     
-            if not relevant_chunks:
-                # إذا فشلت الفلترة، سنأخذ أول نتيجة كملجأ أخير بشرط احتوائها على الرقم
+            # 2. إذا لم نجد نتائج كافية، نستخدم البحث النصي الموسع
+            if len(relevant_chunks) < 1:
+                query_text = f"Control {target_id} cybersecurity requirements"
+                # زدنا الـ k هنا لضمان مسح أكبر قدر من النتائج
+                results = self.vectorstore.similarity_search(query_text, k=25)
+    
                 for doc in results:
-                    if target_id in doc.page_content:
-                        relevant_chunks.append(doc.page_content)
-                        break
+                    meta_id = str(doc.metadata.get("control_id", "")).strip()
+                    content = doc.page_content
+                    
+                    # فحص دقيق للمطابقة
+                    if target_id == meta_id or content.strip().startswith(target_id):
+                        if content not in relevant_chunks:
+                            relevant_chunks.append(content)
+                    # فحص مرن للضوابط المتشعبة
+                    elif f" {target_id} " in f" {content[:50]} ":
+                        if content not in relevant_chunks:
+                            relevant_chunks.append(content)
+    
+            # 3. ملجأ أخير: البحث عن الرقم في النصوص المخزنة (Fallback)
+            if not relevant_chunks:
+                # نبحث في الـ vectorstore عن أي وثيقة تحتوي حرفياً على الرقم في بدايتها
+                all_docs = self.vectorstore.get()
+                for i, doc_text in enumerate(all_docs['documents']):
+                    if doc_text.strip().startswith(target_id):
+                        relevant_chunks.append(doc_text)
+                        if len(relevant_chunks) >= k: break
     
             if not relevant_chunks:
-                print(f"[⚠️] No precise context for {target_id}")
+                print(f"[⚠️] No precise context found for: {target_id}")
                 return ""
-                
-            return "\n\n---\n\n".join(relevant_chunks[:k])
-            
+    
+            # إزالة التكرار وضمان عدم تجاوز العدد المطلوب
+            unique_chunks = list(dict.fromkeys(relevant_chunks))
+            return "\n\n---\n\n".join(unique_chunks[:k])
+    
         except Exception as e:
-            print(f"[❌] Retrieval error: {e}")
+            print(f"[❌] Retrieval error for {control_id}: {e}")
             return ""
+        
         
     def load_ecc_data(self, json_path: str):
         if not os.path.exists(json_path):
