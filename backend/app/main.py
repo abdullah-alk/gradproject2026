@@ -429,7 +429,7 @@ async def update_control_status(control_id: str, data: dict = Body(...)):
 #         cur.close()
 #         conn.close()
 
---- 8. AI routes ---
+# --- 8. AI routes ---
 @app.post("/api/ai/generate-questions")
 async def generate_questions(data: dict = Body(...)):
     control_id = data.get("control_id")
