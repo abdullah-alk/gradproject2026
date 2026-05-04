@@ -7,25 +7,100 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .profile-hero{background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(139,92,246,.08));border:1px solid var(--border-color);border-radius:16px;padding:40px;margin-bottom:24px;position:relative;overflow:hidden;}
-        .profile-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(139,92,246,.12),transparent 70%);pointer-events:none;}
-        .avatar-circle{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:white;border:3px solid rgba(6,182,212,.3);box-shadow:0 0 24px rgba(6,182,212,.2);}
-        .profile-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:28px;margin-bottom:20px;transition:all 0.3s ease;}
-        .profile-card:hover{border-color:rgba(6,182,212,.3);box-shadow:0 0 20px rgba(6,182,212,.06);}
-        .section-header{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border-color);}
-        .section-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;}
-        .msg{padding:11px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none;align-items:center;gap:8px;}
-        .msg.show{display:flex;}
-        .msg.success{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);color:#10b981;}
-        .msg.error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:#ef4444;}
-        .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-        .info-box{background:var(--bg-secondary);border-radius:10px;padding:14px 16px;border:1px solid transparent;transition:0.2s;}
-        .info-box:hover{border-color:var(--border-color);}
-        .info-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;font-weight:600;}
-        .info-value{font-size:14px;font-weight:500;color:var(--text-primary);}
-        .pwd-strength{height:4px;border-radius:2px;margin-top:8px;background:var(--bg-secondary);overflow:hidden;display:none;}
-        .pwd-strength-bar{height:100%;border-radius:2px;transition:width .3s ease,background .3s ease;}
-        .pwd-hint{font-size:11px;margin-top:4px;display:none;}
+        .profile-hero {
+            background: linear-gradient(135deg, rgba(6,182,212,.08), rgba(139,92,246,.08));
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-hero::before {
+            content: '';
+            position: absolute;
+            top: -80px; right: -80px;
+            width: 280px; height: 280px;
+            background: radial-gradient(circle, rgba(139,92,246,.1), transparent 70%);
+            pointer-events: none;
+        }
+        .profile-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -60px; left: -60px;
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(6,182,212,.08), transparent 70%);
+            pointer-events: none;
+        }
+        .avatar-circle {
+            width: 96px; height: 96px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; font-weight: 800; color: white;
+            border: 3px solid rgba(6,182,212,.4);
+            box-shadow: 0 0 30px rgba(6,182,212,.25);
+            flex-shrink: 0;
+        }
+        .profile-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .profile-card:hover {
+            border-color: rgba(6,182,212,.25);
+            box-shadow: 0 4px 24px rgba(6,182,212,.06);
+        }
+        .section-header {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 22px; padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .section-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .msg {
+            padding: 12px 16px; border-radius: 10px;
+            font-size: 13px; margin-bottom: 18px;
+            display: none; align-items: center; gap: 8px;
+        }
+        .msg.show { display: flex; }
+        .msg.success { background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.3); color: #10b981; }
+        .msg.error { background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.3); color: #ef4444; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .info-box {
+            background: var(--bg-secondary);
+            border-radius: 12px; padding: 16px;
+            border: 1px solid transparent; transition: 0.2s;
+        }
+        .info-box:hover { border-color: rgba(6,182,212,.2); }
+        .info-label {
+            font-size: 10px; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: .8px;
+            margin-bottom: 6px; font-weight: 600;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .info-value { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+        .pwd-strength { height: 4px; border-radius: 2px; margin-top: 8px; background: var(--bg-secondary); overflow: hidden; display: none; }
+        .pwd-strength-bar { height: 100%; border-radius: 2px; transition: width .3s ease, background .3s ease; }
+        .pwd-hint { font-size: 11px; margin-top: 4px; display: none; font-weight: 600; }
+        .stat-badge {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 12px 16px;
+        }
+        .stat-badge-icon {
+            width: 36px; height: 36px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
@@ -51,73 +126,107 @@
                     <h4 id="user-name">Loading...</h4>
                     <p id="user-role">User</p>
                 </div>
-                <button onclick="event.stopPropagation();logout()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:auto" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+                <button onclick="event.stopPropagation();logout()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:auto" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
             </div>
         </div>
     </aside>
 
     <main class="main-content">
         <div class="content-wrapper">
-
             <!-- Header -->
-            <div style="margin-bottom:28px;display:flex;align-items:center;justify-content:space-between">
+            <div style="margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
                 <div>
                     <h1 style="font-size:28px;font-weight:700;display:flex;align-items:center;gap:10px">
                         <i class="fas fa-user-circle" style="color:var(--accent-primary)"></i> My Profile
                     </h1>
                     <p style="color:var(--text-muted);font-size:14px;margin-top:4px">Manage your account information and security settings</p>
                 </div>
-                <a href="index.html" style="display:flex;align-items:center;gap:6px;color:var(--text-muted);text-decoration:none;font-size:13px;padding:8px 14px;border:1px solid var(--border-color);border-radius:8px;transition:0.2s" onmouseover="this.style.borderColor='var(--accent-primary)';this.style.color='var(--accent-primary)'" onmouseout="this.style.borderColor='var(--border-color)';this.style.color='var(--text-muted)'">
+                <a href="index.html" style="display:flex;align-items:center;gap:6px;color:var(--text-muted);text-decoration:none;font-size:13px;padding:9px 16px;border:1px solid var(--border-color);border-radius:10px;transition:0.2s"
+                   onmouseover="this.style.borderColor='var(--accent-primary)';this.style.color='var(--accent-primary)'"
+                   onmouseout="this.style.borderColor='var(--border-color)';this.style.color='var(--text-muted)'">
                     <i class="fas fa-arrow-left"></i> Back to Home
                 </a>
             </div>
 
             <!-- Profile Hero -->
             <div class="profile-hero">
-                <div style="display:flex;align-items:center;gap:24px">
+                <div style="display:flex;align-items:center;gap:28px;flex-wrap:wrap">
                     <div class="avatar-circle" id="profile-avatar">?</div>
-                    <div>
-                        <h2 id="profile-fullname" style="font-size:24px;font-weight:700;margin-bottom:4px">Loading...</h2>
-                        <p id="profile-username-display" style="color:var(--text-muted);font-size:14px;margin-bottom:10px">@username</p>
+                    <div style="flex:1;min-width:200px">
+                        <h2 id="profile-fullname" style="font-size:26px;font-weight:800;margin-bottom:4px">Loading...</h2>
+                        <p id="profile-username-display" style="color:var(--text-muted);font-size:14px;margin-bottom:14px">@username</p>
                         <div style="display:flex;gap:8px;flex-wrap:wrap">
-                            <span id="profile-role-badge" style="background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.25);color:#06b6d4;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:600">User</span>
-                            <span style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);color:#10b981;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:600"><i class="fas fa-shield-halved" style="margin-right:4px"></i>ECC Auditor</span>
+                            <span id="profile-role-badge" style="background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.25);color:#06b6d4;padding:5px 16px;border-radius:20px;font-size:12px;font-weight:700">
+                                <i class="fas fa-user" style="margin-right:4px"></i>User
+                            </span>
+                            <span style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);color:#10b981;padding:5px 16px;border-radius:20px;font-size:12px;font-weight:700">
+                                <i class="fas fa-shield-halved" style="margin-right:4px"></i>ECC Auditor
+                            </span>
+                            <span style="background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);color:#8b5cf6;padding:5px 16px;border-radius:20px;font-size:12px;font-weight:700">
+                                <i class="fas fa-circle-check" style="margin-right:4px"></i>Verified
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Quick Stats -->
+                    <div style="display:flex;gap:12px;flex-wrap:wrap">
+                        <div class="stat-badge">
+                            <div class="stat-badge-icon" style="background:rgba(6,182,212,.12);color:#06b6d4">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px">Member Since</div>
+                                <div style="font-size:14px;font-weight:700">2026</div>
+                            </div>
+                        </div>
+                        <div class="stat-badge">
+                            <div class="stat-badge-icon" style="background:rgba(139,92,246,.12);color:#8b5cf6">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px">Platform</div>
+                                <div style="font-size:14px;font-weight:700">ECC-2023</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-
                 <!-- Account Info -->
                 <div class="profile-card">
                     <div class="section-header">
-                        <div class="section-icon" style="background:rgba(6,182,212,.12);color:#06b6d4"><i class="fas fa-id-card"></i></div>
+                        <div class="section-icon" style="background:rgba(6,182,212,.12);color:#06b6d4">
+                            <i class="fas fa-id-card"></i>
+                        </div>
                         <div>
-                            <h3 style="font-size:15px;font-weight:600">Account Information</h3>
+                            <h3 style="font-size:15px;font-weight:700">Account Information</h3>
                             <p style="font-size:12px;color:var(--text-muted)">Your current account details</p>
                         </div>
                     </div>
                     <div class="info-grid">
                         <div class="info-box">
-                            <div class="info-label">Full Name</div>
+                            <div class="info-label"><i class="fas fa-user"></i> Full Name</div>
                             <div class="info-value" id="info-name">—</div>
                         </div>
                         <div class="info-box">
-                            <div class="info-label">Username</div>
+                            <div class="info-label"><i class="fas fa-at"></i> Username</div>
                             <div class="info-value" id="info-username">—</div>
                         </div>
                         <div class="info-box" style="grid-column:1/-1">
-                            <div class="info-label">Email Address</div>
+                            <div class="info-label"><i class="fas fa-envelope"></i> Email Address</div>
                             <div class="info-value" id="info-email">—</div>
                         </div>
                         <div class="info-box">
-                            <div class="info-label">Role</div>
+                            <div class="info-label"><i class="fas fa-shield"></i> Role</div>
                             <div class="info-value" id="info-role">—</div>
                         </div>
                         <div class="info-box">
-                            <div class="info-label">Member Since</div>
-                            <div class="info-value">2026</div>
+                            <div class="info-label"><i class="fas fa-circle-check"></i> Status</div>
+                            <div class="info-value" style="color:#10b981">
+                                <i class="fas fa-check-circle" style="margin-right:4px"></i>Active
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -125,9 +234,11 @@
                 <!-- Edit Name -->
                 <div class="profile-card">
                     <div class="section-header">
-                        <div class="section-icon" style="background:rgba(139,92,246,.12);color:#8b5cf6"><i class="fas fa-user-pen"></i></div>
+                        <div class="section-icon" style="background:rgba(139,92,246,.12);color:#8b5cf6">
+                            <i class="fas fa-user-pen"></i>
+                        </div>
                         <div>
-                            <h3 style="font-size:15px;font-weight:600">Edit Display Name</h3>
+                            <h3 style="font-size:15px;font-weight:700">Edit Display Name</h3>
                             <p style="font-size:12px;color:var(--text-muted)">Update how your name appears</p>
                         </div>
                     </div>
@@ -136,7 +247,7 @@
                         <label class="form-label">Full Name</label>
                         <input type="text" id="new-name" class="form-input" placeholder="e.g. Ahmed Al-Rashidi">
                     </div>
-                    <button onclick="updateName()" class="btn btn-primary" style="width:100%;padding:11px">
+                    <button onclick="updateName()" class="btn btn-primary" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary))">
                         <i class="fas fa-save" style="margin-right:6px"></i> Save Changes
                     </button>
                 </div>
@@ -144,9 +255,11 @@
                 <!-- Change Password -->
                 <div class="profile-card" style="grid-column:1/-1">
                     <div class="section-header">
-                        <div class="section-icon" style="background:rgba(239,68,68,.12);color:#ef4444"><i class="fas fa-lock"></i></div>
+                        <div class="section-icon" style="background:rgba(239,68,68,.12);color:#ef4444">
+                            <i class="fas fa-lock"></i>
+                        </div>
                         <div>
-                            <h3 style="font-size:15px;font-weight:600">Change Password</h3>
+                            <h3 style="font-size:15px;font-weight:700">Change Password</h3>
                             <p style="font-size:12px;color:var(--text-muted)">Keep your account secure with a strong password</p>
                         </div>
                     </div>
@@ -167,16 +280,14 @@
                             <input type="password" id="confirm-pwd" class="form-input" placeholder="Repeat new password">
                         </div>
                     </div>
-                    <button onclick="updatePassword()" class="btn btn-primary" style="margin-top:20px;padding:11px 28px;background:linear-gradient(135deg,#ef4444,#dc2626)">
+                    <button onclick="updatePassword()" class="btn btn-primary" style="margin-top:20px;padding:12px 28px;background:linear-gradient(135deg,#ef4444,#dc2626)">
                         <i class="fas fa-key" style="margin-right:6px"></i> Update Password
                     </button>
                 </div>
-
             </div>
         </div>
     </main>
 </div>
-
 <div id="loader" class="loader"><div class="spinner"></div></div>
 <script src="js/api.js"></script>
 <script>
@@ -189,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profile-avatar').textContent = initials;
     document.getElementById('profile-fullname').textContent = user.full_name;
     document.getElementById('profile-username-display').textContent = '@' + (user.username || '');
-    document.getElementById('profile-role-badge').textContent = user.role || 'User';
+    document.getElementById('profile-role-badge').innerHTML = `<i class="fas fa-user" style="margin-right:4px"></i>${user.role || 'User'}`;
     document.getElementById('info-name').textContent = user.full_name;
     document.getElementById('info-username').textContent = '@' + (user.username || '');
     document.getElementById('info-email').textContent = user.email || '—';
