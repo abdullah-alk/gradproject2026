@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import bcrypt
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import os
+import os 
 import shutil
 import uuid
 import json
@@ -862,7 +862,7 @@ async def get_scheduler_recommendations():
 
 
 @app.post("/api/scheduler/schedule")
-async def schedule_audit_endpoint(data: dict = Body(...)):
+async def schedule_audit_endpoint(data: dict = Body(...), current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -877,7 +877,8 @@ async def schedule_audit_endpoint(data: dict = Body(...)):
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format")
 
-        user_id = extract_user_id_from_token(data.get("_token", "")) or 1
+       # user_id = extract_user_id_from_token(data.get("_token", "")) or 
+        user_id = current_user["id"]
 
         #cur.execute(
          #   """
@@ -971,7 +972,7 @@ async def toggle_auto_scheduling(data: dict = Body(...)):
 
 
 @app.get("/api/audit/sessions/scheduled")
-async def get_scheduled_audits():
+async def get_scheduled_audits(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -986,9 +987,11 @@ async def get_scheduled_audits():
             LEFT JOIN ecc_controls ec ON s.control_id = ec.id
             WHERE s.status = 'scheduled'
             AND s.scheduled_next_audit > NOW()
+            AND s.user_id = %s
             ORDER BY s.scheduled_next_audit ASC
             LIMIT 20
-            """
+            """,
+            (current_user["id"],)
         )
         rows = cur.fetchall()
 
