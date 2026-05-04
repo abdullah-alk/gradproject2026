@@ -243,39 +243,39 @@ class RAGEngine:
         if not self.vectorstore:
             return ""
         try:
-            # 1. تنظيف المعرف لضمان مطابقة دقيقة للميتاداتا
+            # 1. تنظيف المعرف لضمان مطابقة دقيقة
             target_id = str(control_id).strip()
             relevant_chunks = []
     
-            # 2. البحث المباشر والصارم في الميتاداتا (Direct Metadata Filter)
-            # هذا يضمن جلب الضابط المطلوب بعينه سواء كان 1-2 أو 1-5-3-1
+            # 2. البحث المباشر في الميتاداتا (المطابقة الحرفية)
+            # هذا السطر هو الذي سيجلب 1-5-3-1 فوراً وبدقة 100%
             direct_results = self.vectorstore.get(where={"control_id": target_id})
             
             if direct_results and direct_results['documents']:
                 relevant_chunks.extend(direct_results['documents'])
     
-            # 3. خطة بديلة (Fallback) في حال وجود اختلاف طفيف في تخزين الميتاداتا
+            # 3. خطة بديلة (Fallback) في حال فشل الفلتر لأي سبب تنسيقي
             if not relevant_chunks:
-                # بحث نصي مركز جداً على المعرف فقط
-                results = self.vectorstore.similarity_search(target_id, k=5)
+                # بحث نصي مركز على المعرف ككلمة مفتاحية
+                results = self.vectorstore.similarity_search(target_id, k=10)
                 for doc in results:
-                    # التحقق يدوياً من الميتاداتا المسترجعة
                     meta_id = str(doc.metadata.get("control_id", "")).strip()
+                    # التأكد من أننا جلبنا الضابط الصحيح وليس ضابطاً قريباً منه
                     if meta_id == target_id:
                         relevant_chunks.append(doc.page_content)
     
             if not relevant_chunks:
-                print(f"[⚠️] No precise metadata match for: {target_id}")
+                print(f"[⚠️] No precise context found for: {target_id}")
                 return ""
     
-            # إزالة التكرار (رغم أن البحث المباشر غالباً يعيد نتيجة واحدة فريدة)
+            # إزالة التكرار وضمان استرجاع النتائج المطلوبة
             unique_chunks = list(dict.fromkeys(relevant_chunks))
             return "\n\n---\n\n".join(unique_chunks[:k])
     
         except Exception as e:
             print(f"[❌] Retrieval error for {control_id}: {e}")
             return ""
-        
+            
     def load_ecc_data(self, json_path: str):
         if not os.path.exists(json_path):
             print(f"[❌] FATAL ERROR: ECC data file not found at: {json_path}")
