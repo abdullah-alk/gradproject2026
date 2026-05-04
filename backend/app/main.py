@@ -877,8 +877,11 @@ async def schedule_audit_endpoint(data: dict = Body(...), current_user: dict = D
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format")
 
-       # user_id = extract_user_id_from_token(data.get("_token", "")) or 
+        
         user_id = current_user["id"]
+
+       # user_id = extract_user_id_from_token(data.get("_token", "")) or 
+       
 
         #cur.execute(
          #   """
