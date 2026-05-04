@@ -240,41 +240,43 @@ class RAGEngine:
 
     # UPDATED CODE 4
     def retrieve_context(self, control_id: str, k: int = 5) -> str:
-        if not self.vectorstore:
+    if not self.vectorstore:
+        return ""
+    try:
+        # 1. تنظيف المعرف لضمان مطابقة دقيقة للميتاداتا
+        target_id = str(control_id).strip()
+
+        # 2. البحث باستخدام "الفلترة الصارمة" (Exact Metadata Filtering)
+        # هذا هو الخيار الأسرع والأدق لهيكلية بياناتك
+        results = self.vectorstore.get(
+            where={"control_id": target_id}
+        )
+
+        relevant_chunks = []
+        if results and results['documents']:
+            relevant_chunks.extend(results['documents'])
+
+        # 3. خطة احتياطية في حال وجود خلل في ميتاداتا قاعدة البيانات
+        if not relevant_chunks:
+            # البحث عن المعرف في أول النص (لأن حقل full_text يبدأ دائماً بالرقم)
+            # نرفع الـ k لضمان مسح أكبر قدر من القطع النصية
+            fallback_results = self.vectorstore.similarity_search(target_id, k=15)
+            for doc in fallback_results:
+                content = doc.page_content.strip()
+                # التحقق أن النص يبدأ فعلياً بالرقم المطلوب
+                if content.startswith(target_id):
+                    relevant_chunks.append(content)
+
+        if not relevant_chunks:
             return ""
-        try:
-            # 1. تنظيف المعرف لضمان مطابقة دقيقة
-            target_id = str(control_id).strip()
-            relevant_chunks = []
-    
-            # 2. البحث المباشر في الميتاداتا (المطابقة الحرفية)
-            # هذا السطر هو الذي سيجلب 1-5-3-1 فوراً وبدقة 100%
-            direct_results = self.vectorstore.get(where={"control_id": target_id})
-            
-            if direct_results and direct_results['documents']:
-                relevant_chunks.extend(direct_results['documents'])
-    
-            # 3. خطة بديلة (Fallback) في حال فشل الفلتر لأي سبب تنسيقي
-            if not relevant_chunks:
-                # بحث نصي مركز على المعرف ككلمة مفتاحية
-                results = self.vectorstore.similarity_search(target_id, k=10)
-                for doc in results:
-                    meta_id = str(doc.metadata.get("control_id", "")).strip()
-                    # التأكد من أننا جلبنا الضابط الصحيح وليس ضابطاً قريباً منه
-                    if meta_id == target_id:
-                        relevant_chunks.append(doc.page_content)
-    
-            if not relevant_chunks:
-                print(f"[⚠️] No precise context found for: {target_id}")
-                return ""
-    
-            # إزالة التكرار وضمان استرجاع النتائج المطلوبة
-            unique_chunks = list(dict.fromkeys(relevant_chunks))
-            return "\n\n---\n\n".join(unique_chunks[:k])
-    
-        except Exception as e:
-            print(f"[❌] Retrieval error for {control_id}: {e}")
-            return ""
+
+        # إزالة التكرار وضمان استرجاع العدد المطلوب فقط
+        unique_chunks = list(dict.fromkeys(relevant_chunks))
+        return "\n\n---\n\n".join(unique_chunks[:k])
+
+    except Exception as e:
+        print(f"[❌] Retrieval error for {control_id}: {e}")
+        return ""
             
     def load_ecc_data(self, json_path: str):
         if not os.path.exists(json_path):
