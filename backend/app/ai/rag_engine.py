@@ -95,25 +95,53 @@ class RAGEngine:
             print(f"[❌] RAG Error (mode={mode}, control={control_id}): {e}")
             return f"AI Service Error: Unable to process request. {str(e)}"
 
-    def retrieve_context(self, control_id: str, k: int = 5) -> str:
-        if not self.vectorstore:
-            return ""
-        try:
-            print(f"[🔍] Frontend is asking for Control ID: '{control_id}'")
-            print(f"[📊] Total documents currently inside ChromaDB: {self.vectorstore._collection.count()}")
+    # def retrieve_context(self, control_id: str, k: int = 5) -> str:
+    #     if not self.vectorstore:
+    #         return ""
+    #     try:
+    #         print(f"[🔍] Frontend is asking for Control ID: '{control_id}'")
+    #         print(f"[📊] Total documents currently inside ChromaDB: {self.vectorstore._collection.count()}")
 
-            results = self.vectorstore.similarity_search(
-                f"Technical requirements, implementation guidelines, and deliverables for ECC control {control_id}",
-                k=k,
-                filter={"control_id": control_id}
-            )
-            if not results:
-                print(f"[⚠️] No context found for control {control_id}")
-                return ""
-            return "\n\n---\n\n".join([doc.page_content for doc in results])
-        except Exception as e:
-            print(f"[❌] Context retrieval error for {control_id}: {e}")
+    #         results = self.vectorstore.similarity_search(
+    #             f"Technical requirements, implementation guidelines, and deliverables for ECC control {control_id}",
+    #             k=k,
+    #             filter={"control_id": control_id}
+    #         )
+    #         if not results:
+    #             print(f"[⚠️] No context found for control {control_id}")
+    #             return ""
+    #         return "\n\n---\n\n".join([doc.page_content for doc in results])
+    #     except Exception as e:
+    #         print(f"[❌] Context retrieval error for {control_id}: {e}")
+    #         return ""
+
+    # UPDATED CODE
+    def retrieve_context(self, control_id: str, k: int = 5) -> str:
+    if not self.vectorstore:
+        return ""
+    try:
+        # البحث النصي المباشر هو الأكثر دقة في حالات الضوابط الفرعية
+        query_text = f"Control ID {control_id} details, requirements, guidelines, and deliverables"
+        
+        # جرب البحث مع الفلتر أولاً
+        results = self.vectorstore.similarity_search(
+            query_text,
+            k=k,
+            filter={"control_id": control_id}
+        )
+        
+        # إذا لم يجد نتائج (وهذا ما يحدث معك)، ابحث بدون فلتر لضمان الاسترجاع
+        if not results:
+            print(f"[🔍] Filter failed for {control_id}, trying broad search...")
+            results = self.vectorstore.similarity_search(query_text, k=k)
+
+        if not results:
             return ""
+            
+        return "\n\n---\n\n".join([doc.page_content for doc in results])
+    except Exception as e:
+        print(f"[❌] Context retrieval error: {e}")
+        return ""
 
     def load_ecc_data(self, json_path: str):
         if not os.path.exists(json_path):
