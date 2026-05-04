@@ -31,6 +31,7 @@ async function loadSchedulerData(){
       d.setDate(d.getDate()+daysRec);
       startCountdown(d);
     }
+    await loadScheduledAudits();
     
     hideLoader();
   }catch(e){
@@ -80,7 +81,7 @@ async function handleScheduleManualAudit(){
   
   // Validation 1: Date selected
   if(!dateInput||!dateInput.value){
-    alert('⚠️ Please select an audit date.');
+    showToast('error', 'Missing Date', 'Please select an audit date.');
     return;
   }
   
@@ -89,7 +90,7 @@ async function handleScheduleManualAudit(){
   try{
     selectedDate=new Date(dateInput.value+'T00:00:00');
   }catch(e){
-    alert('❌ Invalid date format.');
+    showToast('error', 'Invalid Date', 'Invalid date format.');
     return;
   }
   
@@ -98,7 +99,7 @@ async function handleScheduleManualAudit(){
   today.setHours(0,0,0,0);
   
   if(selectedDate<today){
-    alert('❌ Audit date cannot be in the past. Please select today or a future date.');
+    showToast('error', 'Invalid Date', 'Audit date cannot be in the past.');
     return;
   }
   
@@ -107,7 +108,7 @@ async function handleScheduleManualAudit(){
   maxDate.setFullYear(maxDate.getFullYear()+1);
   
   if(selectedDate>maxDate){
-    alert('❌ Audit date cannot be more than 1 year in the future.');
+   showToast('error', 'Invalid Date', 'Audit date cannot be more than 1 year in the future.');
     return;
   }
   
@@ -132,17 +133,71 @@ async function handleScheduleManualAudit(){
       day:'numeric'
     });
     
-    alert(`✅ Audit successfully scheduled for ${dateStr}`);
+    showToast('success', 'Audit Scheduled', `Successfully scheduled for ${dateStr}`);
+await loadScheduledAudits();
     
     // Clear form
     dateInput.value='';
     
   }catch(e){
     console.error('Schedule error:',e);
-    alert('❌ Failed to schedule audit. Please try again.');
+    showToast('error', 'Failed', 'Failed to schedule audit. Please try again.');
   }finally{
     hideLoader();
   }
+}
+function showToast(type, title, msg) {
+    const toast = document.getElementById('toast');
+    const icon = document.getElementById('toast-icon');
+    const t = document.getElementById('toast-title');
+    const m = document.getElementById('toast-msg');
+    const colors = { success: '#10b981', error: '#ef4444', info: '#06b6d4' };
+    const icons = { success: 'fa-check', error: 'fa-times', info: 'fa-info' };
+    icon.style.background = colors[type] + '20';
+    icon.style.color = colors[type];
+    icon.innerHTML = `<i class="fas ${icons[type]}"></i>`;
+    t.textContent = title;
+    m.textContent = msg;
+    toast.style.transform = 'translateY(0)';
+    toast.style.opacity = '1';
+    setTimeout(() => {
+        toast.style.transform = 'translateY(100px)';
+        toast.style.opacity = '0';
+    }, 4000);
+}
+
+async function loadScheduledAudits() {
+    try {
+        const audits = await getScheduledAudits();
+        const list = document.getElementById('scheduled-audits-list');
+        const count = document.getElementById('audits-count');
+        if (!audits || audits.length === 0) {
+            list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);"><i class="fas fa-calendar" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.4;"></i><p>No audits scheduled yet</p></div>`;
+            if (count) count.textContent = '0 Scheduled';
+            return;
+        }
+        if (count) count.textContent = `${audits.length} Scheduled`;
+        list.innerHTML = audits.map(a => `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg-secondary);border-radius:10px;margin-bottom:10px;border:1px solid var(--border-color);">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="width:40px;height:40px;background:rgba(6,182,212,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fas fa-calendar-check" style="color:var(--accent-primary);"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:600;font-size:14px;">${a.title || 'Scheduled Audit'}</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+                            <i class="fas fa-clock" style="margin-right:4px;"></i>${a.date}
+                            &nbsp;·&nbsp;
+                            <i class="fas fa-user" style="margin-right:4px;"></i>${a.auditor}
+                        </div>
+                    </div>
+                </div>
+                <span style="background:rgba(16,185,129,0.1);color:#10b981;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;">Scheduled</span>
+            </div>
+        `).join('');
+    } catch(e) {
+        console.error('Load audits error:', e);
+    }
 }
 
 // Cleanup on page unload
