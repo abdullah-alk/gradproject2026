@@ -115,34 +115,67 @@ class RAGEngine:
     #         print(f"[❌] Context retrieval error for {control_id}: {e}")
     #         return ""
 
-    # UPDATED CODE
+    # UPDATED CODE 1
+    # def retrieve_context(self, control_id: str, k: int = 5) -> str:
+    #     if not self.vectorstore:
+    #         return ""
+    #     try:
+    #         # البحث النصي المباشر هو الأكثر دقة في حالات الضوابط الفرعية
+    #         query_text = f"Control ID {control_id} details, requirements, guidelines, and deliverables"
+            
+    #         # جرب البحث مع الفلتر أولاً
+    #         results = self.vectorstore.similarity_search(
+    #             query_text,
+    #             k=k,
+    #             filter={"control_id": control_id}
+    #         )
+        
+    #     # إذا لم يجد نتائج (وهذا ما يحدث معك)، ابحث بدون فلتر لضمان الاسترجاع
+    #         if not results:
+    #             print(f"[🔍] Filter failed for {control_id}, trying broad search...")
+    #             results = self.vectorstore.similarity_search(query_text, k=k)
+
+    #         if not results:
+    #             return ""
+            
+    #         return "\n\n---\n\n".join([doc.page_content for doc in results])
+    #     except Exception as e:
+    #         print(f"[❌] Context retrieval error: {e}")
+    #         return ""
+
+    # Updated Code 2
     def retrieve_context(self, control_id: str, k: int = 5) -> str:
         if not self.vectorstore:
             return ""
         try:
-            # البحث النصي المباشر هو الأكثر دقة في حالات الضوابط الفرعية
-            query_text = f"Control ID {control_id} details, requirements, guidelines, and deliverables"
+            print(f"[🔍] Precision search for: '{control_id}'")
             
-            # جرب البحث مع الفلتر أولاً
+            # 1. جلب عدد أكبر من النتائج (مثلاً 15) لضمان أننا سنجد الضابط المطلوب بينها
             results = self.vectorstore.similarity_search(
-                query_text,
-                k=k,
-                filter={"control_id": control_id}
+                f"Technical requirements and guidelines for ECC control {control_id}",
+                k=15 
             )
-        
-        # إذا لم يجد نتائج (وهذا ما يحدث معك)، ابحث بدون فلتر لضمان الاسترجاع
-            if not results:
-                print(f"[🔍] Filter failed for {control_id}, trying broad search...")
-                results = self.vectorstore.similarity_search(query_text, k=k)
-
-            if not results:
-                return ""
             
-            return "\n\n---\n\n".join([doc.page_content for doc in results])
+            # 2. الفلترة الصارمة (Strict Manual Filtering)
+            # لن نقبل أي قطعة نصية لا تحتوي صراحة على رقم الضابط في الميتا داتا أو في النص
+            relevant_chunks = []
+            for doc in results:
+                doc_id = str(doc.metadata.get("control_id", ""))
+                # التأكد من أن المعرف يطابق تماماً أو أن النص يبدأ بذكر الضابط
+                if doc_id == control_id or f"CONTROL_ID: {control_id}" in doc.page_content:
+                    relevant_chunks.append(doc.page_content)
+            
+            if not relevant_chunks:
+                print(f"[⚠️] No precise matches for {control_id} after filtering.")
+                return ""
+                
+            # 3. إعادة النتائج ذات الصلة فقط (أول k نتائج)
+            return "\n\n---\n\n".join(relevant_chunks[:k])
+            
         except Exception as e:
-            print(f"[❌] Context retrieval error: {e}")
+            print(f"[❌] Context retrieval error for {control_id}: {e}")
             return ""
-
+        
     def load_ecc_data(self, json_path: str):
         if not os.path.exists(json_path):
             print(f"[❌] FATAL ERROR: ECC data file not found at: {json_path}")
