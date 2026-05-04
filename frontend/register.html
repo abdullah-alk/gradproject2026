@@ -193,10 +193,9 @@ async function verifyOTP() {
                     localStorage.setItem('authToken', loginResult.access_token);
                     localStorage.setItem('userInfo', JSON.stringify(loginResult.user));
                     localStorage.setItem('user', JSON.stringify(loginResult.user));
-                    showSuccess('Account created! Welcome to CyberGuard...');
-                    setTimeout(() => window.location.href = 'index.html', 1500);
+                    window.location.href = 'index.html';
                 } else {
-                    setTimeout(() => window.location.href = 'login.html', 1500);
+                    window.location.href = 'login.html';
                 }
             } else {
                 showError(regResult.detail || 'Registration failed.');
@@ -225,16 +224,20 @@ async function verifyOTP() {
         function setupOTPInputs() {
             const inputs = document.querySelectorAll('.otp-digit');
             inputs.forEach((input, i) => {
-                input.value = '';
-                input.addEventListener('input', () => {
-                    if (input.value && i < inputs.length - 1) inputs[i+1].focus();
-                });
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Backspace' && !input.value && i > 0) inputs[i-1].focus();
-                });
-            });
-            inputs[0].focus();
-        }
+            input.value = '';
+            input.addEventListener('input', () => {
+            if (input.value && i < inputs.length - 1) inputs[i+1].focus();
+            // لما يكتمل الكود تلقائياً يضغط
+            const otp = Array.from(inputs).map(x => x.value).join('');
+            if (otp.length === 6) verifyOTP();
+        });
+            input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && !input.value && i > 0) inputs[i-1].focus();
+            if (e.key === 'Enter') verifyOTP();
+        });
+    });
+    inputs[0].focus();
+}
     </script>
 </body>
 </html>
