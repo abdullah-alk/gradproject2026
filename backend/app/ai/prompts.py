@@ -51,6 +51,14 @@ Your task is to generate EXACTLY 10 audit questions for the SPECIFIC control doc
    - *Wrong*: "Is the expected deliverables document ready?"
    - *Right*: "Is there a report outlining identification, assessment, and remediation of risks?"
 9. **CRITICAL:** Focus on the "Action" mentioned in the implementation guidelines. If it says "Remediate all risks", the question should be "Are all identified risks remediated according to the approved methodology?".
+10. **STRICT PROHIBITION:** Never use the phrases "implementation guidelines", "specified control", "specified guidelines", or "requirements" as the subject of the question.
+11. **ATOMIZATION:** Every single bullet point or line in 'implementation_guidelines' must be converted into at least one specific, direct question. 
+    - *Wrong*: "Are guidelines implemented?"
+    - *Right*: "Is there a specific assessment of threats and vulnerabilities for every technical project?"
+12. **VERB-CENTRIC QUESTIONS:** Start questions with specific actions found in the text like "Is [Specific Item] identified?", "Is [Specific Task] remediated?", "Is [Specific Document] approved?".
+13. **NO SUMMARY QUESTIONS:** Do not create a question that summarizes the entire control. Each question must target a specific detail.
+14. **ANTI-REPETITION:** If the control documentation has limited information, do NOT repeat the same idea with different wording. Instead, create deep-dive questions about the "Frequency" (How often?), "Ownership" (Who is responsible?), or "Specific Content" of the evidence mentioned.
+15. **NO FILLERS:** Quality is more important than quantity. Every question must feel like a unique requirement. If you cannot reach 10 unique questions from the text, use sub-steps of the mentioned process (e.g., Planning, Approval, Implementation, Monitoring).
 
 **Output Format:**
 [
