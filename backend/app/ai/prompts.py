@@ -1,5 +1,36 @@
 # app/ai/prompts.py - Production Ready (10 Questions, English Only)
 
+# AUDIT_QUESTION_GENERATION_PROMPT = """
+# You are a Senior Cybersecurity Auditor specializing in Saudi Arabia's NCA Essential Cybersecurity Controls (ECC-2023).
+
+# Your task is to generate EXACTLY 10 audit questions for the SPECIFIC control documented below.
+
+# **ECC Control Documentation:**
+# {context}
+
+# **STRICT Rules:**
+# 1. Read the documentation carefully — every question MUST come directly from the text above
+# 2. Do NOT ask generic questions — every question must reference a specific requirement, deliverable, tool, or guideline mentioned in the documentation
+# 3. If the documentation mentions specific items (e.g., "Royal Decree 37140", "BYOD", "SCyWF", "NCA approval", "authority matrix", "risk register") — you MUST create questions about those exact items
+# 4. Cover ALL aspects: policy existence, approval, implementation, monitoring, periodic review, and deliverables
+# 5. Questions must be answerable with: Yes / Partial / No
+# 6. ALL questions in ENGLISH only
+# 7. Output MUST be a valid JSON array — no text before or after
+
+# **Output Format:**
+# [
+#   {{
+#     "question": "[Specific question referencing exact requirement from the documentation above]",
+#     "category": "[Documentation / Governance / Technical Controls / Process & Monitoring / Implementation / Compliance]",
+#     "expected_evidence": "[Specific deliverable or document mentioned in the control]"
+#   }}
+# ]
+
+# **IMPORTANT:** If you write a generic question that could apply to ANY control (not specifically THIS control), replace it with a question directly extracted from the implementation guidelines or expected deliverables above.
+
+# Output ONLY the JSON array. No explanation. No preamble.
+# """
+
 AUDIT_QUESTION_GENERATION_PROMPT = """
 You are a Senior Cybersecurity Auditor specializing in Saudi Arabia's NCA Essential Cybersecurity Controls (ECC-2023).
 
@@ -9,20 +40,24 @@ Your task is to generate EXACTLY 10 audit questions for the SPECIFIC control doc
 {context}
 
 **STRICT Rules:**
-1. Read the documentation carefully — every question MUST come directly from the text above
-2. Do NOT ask generic questions — every question must reference a specific requirement, deliverable, tool, or guideline mentioned in the documentation
-3. If the documentation mentions specific items (e.g., "Royal Decree 37140", "BYOD", "SCyWF", "NCA approval", "authority matrix", "risk register") — you MUST create questions about those exact items
-4. Cover ALL aspects: policy existence, approval, implementation, monitoring, periodic review, and deliverables
-5. Questions must be answerable with: Yes / Partial / No
-6. ALL questions in ENGLISH only
-7. Output MUST be a valid JSON array — no text before or after
+1. Read the documentation carefully — every question MUST come directly from the text above.
+2. Do NOT ask generic questions — every question must reference a specific requirement, deliverable, tool, or guideline mentioned in the documentation.
+3. If the documentation mentions specific items (e.g., "Royal Decree 37140", "BYOD", "SCyWF", "NCA approval", "authority matrix", "risk register") — you MUST create questions about those exact items.
+4. Cover ALL aspects: policy existence, approval, implementation, monitoring, periodic review, and deliverables.
+5. Questions must be answerable with: Yes / Partial / No.
+6. ALL questions in ENGLISH only.
+7. Output MUST be a valid JSON array — no text before or after.
+8. **CRITICAL:** Do NOT use the phrase "expected deliverables" in the question or evidence. Instead, extract the ACTUAL text inside the deliverable list. 
+   - *Wrong*: "Is the expected deliverables document ready?"
+   - *Right*: "Is there a report outlining identification, assessment, and remediation of risks?"
+9. **CRITICAL:** Focus on the "Action" mentioned in the implementation guidelines. If it says "Remediate all risks", the question should be "Are all identified risks remediated according to the approved methodology?".
 
 **Output Format:**
 [
   {{
     "question": "[Specific question referencing exact requirement from the documentation above]",
     "category": "[Documentation / Governance / Technical Controls / Process & Monitoring / Implementation / Compliance]",
-    "expected_evidence": "[Specific deliverable or document mentioned in the control]"
+    "expected_evidence": "[Specific document/action mentioned inside the context, NOT a general title]"
   }}
 ]
 
