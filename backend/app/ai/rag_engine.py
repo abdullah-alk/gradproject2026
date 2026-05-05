@@ -101,40 +101,77 @@ class RAGEngine:
         
         try:
             target_id = str(control_id).strip()
-            all_results = []
-    
-            # 1. القنص المباشر بالميتاداتا (الأولوية القصوى)
-            direct_results = self.vectorstore.get(where={"control_id": target_id})
-            if direct_results and direct_results['documents']:
-                all_results.extend(direct_results['documents'])
-    
-            # 2. البحث النصي (في حال عدم وجود ميتاداتا)
-            if not all_results:
-                fallback_results = self.vectorstore.similarity_search(target_id, k=15)
-                all_results.extend([doc.page_content for doc in fallback_results])
-    
-            # 3. الفلترة الصارمة (هنا يكمن الحل لمنع التداخل)
-            # سنبقي فقط النصوص التي تحتوي فعلياً على المعرف المطلوب في بدايتها
             final_chunks = []
-            for content in all_results:
-                clean_content = content.strip()
-                # التأكد أن القطعة النصية تخص الضابط المطلوب حصراً
-                # نبحث عن المعرف متبوعاً بنقطة أو مسافة أو بداية سطر
-                if clean_content.startswith(target_id) or f"CONTROL_ID: {target_id}" in clean_content:
-                    final_chunks.append(clean_content)
     
+            # ✅ الطريقة الصحيحة: استخدام similarity_search مع فلتر metadata
+            results = self.vectorstore.similarity_search(
+                query=f"Control {target_id}",
+                k=k,
+                filter={"control_id": target_id}
+            )
+    
+            # استخراج النصوص
+            for doc in results:
+                content = doc.page_content.strip()
+                
+                # ✅ تحقق إضافي (حماية من أي خلل)
+                if f"CONTROL_ID: {target_id}" in content:
+                    final_chunks.append(content)
+    
+            # ❌ إذا ما فيه نتائج → لا تجيب أي شيء (منع الهلوسة)
             if not final_chunks:
-                # إذا فشلت الفلترة الصارمة، لا ترجع نتائج خاطئة (تجنباً للخلط)
-                print(f"[⚠️] Blocked mismatched context for: {target_id}")
+                print(f"[⚠️] No strict match found for: {target_id}")
                 return ""
     
             # إزالة التكرار
             unique_chunks = list(dict.fromkeys(final_chunks))
+    
             return "\n\n---\n\n".join(unique_chunks[:k])
     
         except Exception as e:
             print(f"[❌] Retrieval error for {control_id}: {e}")
             return ""
+    
+    # def retrieve_context(self, control_id: str, k: int = 5) -> str:
+    #     if not self.vectorstore:
+    #         return ""
+        
+    #     try:
+    #         target_id = str(control_id).strip()
+    #         all_results = []
+    
+    #         # 1. القنص المباشر بالميتاداتا (الأولوية القصوى)
+    #         direct_results = self.vectorstore.get(where={"control_id": target_id})
+    #         if direct_results and direct_results['documents']:
+    #             all_results.extend(direct_results['documents'])
+    
+    #         # 2. البحث النصي (في حال عدم وجود ميتاداتا)
+    #         if not all_results:
+    #             fallback_results = self.vectorstore.similarity_search(target_id, k=15)
+    #             all_results.extend([doc.page_content for doc in fallback_results])
+    
+    #         # 3. الفلترة الصارمة (هنا يكمن الحل لمنع التداخل)
+    #         # سنبقي فقط النصوص التي تحتوي فعلياً على المعرف المطلوب في بدايتها
+    #         final_chunks = []
+    #         for content in all_results:
+    #             clean_content = content.strip()
+    #             # التأكد أن القطعة النصية تخص الضابط المطلوب حصراً
+    #             # نبحث عن المعرف متبوعاً بنقطة أو مسافة أو بداية سطر
+    #             if clean_content.startswith(target_id) or f"CONTROL_ID: {target_id}" in clean_content:
+    #                 final_chunks.append(clean_content)
+    
+    #         if not final_chunks:
+    #             # إذا فشلت الفلترة الصارمة، لا ترجع نتائج خاطئة (تجنباً للخلط)
+    #             print(f"[⚠️] Blocked mismatched context for: {target_id}")
+    #             return ""
+    
+    #         # إزالة التكرار
+    #         unique_chunks = list(dict.fromkeys(final_chunks))
+    #         return "\n\n---\n\n".join(unique_chunks[:k])
+    
+    #     except Exception as e:
+    #         print(f"[❌] Retrieval error for {control_id}: {e}")
+    #         return ""
 
     # def retrieve_context(self, control_id: str, k: int = 5) -> str:
     #     """
