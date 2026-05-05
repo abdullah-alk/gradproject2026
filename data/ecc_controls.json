@@ -25,7 +25,7 @@
     "cybersecurity_tools": [
       "All cybersecurity strategy models and roadmap"
     ],
-    "full_text": "1-1 Cybersecurity Strategy — 1-1-1 A cybersecurity strategy must be defined, documented and approved. It must be supported by the head of the organization or his/her delegate (Authorizing Official). The strategy goals must be in-line with related laws and regulations."
+    "full_text": "1-1-1 A cybersecurity strategy must be defined, documented and approved. It must be supported by the head of the organization or his/her delegate (Authorizing Official). Guidelines: Conduct a workshop with stakeholders; Develop and document the strategy to align with related laws and regulations; The strategy must include Vision, Mission, and Strategic Objectives. Deliverables: Approved cybersecurity strategy document, List of initiatives and projects, and all cybersecurity strategy models and roadmap."
   },
   "1-1-2": {
     "control_id": "1-1-2",
@@ -46,7 +46,7 @@
       "All cybersecurity strategy models and roadmap",
       "Cybersecurity performance report and measurement template"
     ],
-    "full_text": "1-1 Cybersecurity Strategy — 1-1-2 A roadmap must be executed to implement the cybersecurity strategy."
+    "full_text": "1-1-2 Strategy Implementation Roadmap: The objective is to execute a roadmap for implementing the cybersecurity strategy. Guidelines: Develop a roadmap for implementing the strategy including the execution of initiatives and projects; Define cybersecurity priorities and make recommendations consistent with the nature of work; Monitor the implementation of strategy projects and take corrective steps if necessary; Provide a clear and unified vision and communicate it to all internal and external stakeholders; Obtain NCA's approval for any cybersecurity initiatives that are beyond the scope of the organization. Deliverables: Strategy implementation roadmap, List of cybersecurity projects and initiatives and their status. Tools: All cybersecurity strategy models and roadmap, Cybersecurity performance report and measurement template."
   },
   "1-1-3": {
     "control_id": "1-1-3",
@@ -65,7 +65,7 @@
       "Formal approval by the representative on the updated strategy"
     ],
     "cybersecurity_tools": [],
-    "full_text": "1-1 Cybersecurity Strategy — 1-1-3 The cybersecurity strategy must be reviewed periodically according to planned intervals or upon changes to related laws and regulations."
+    "full_text": "1-1-3 Periodic Review of Strategy: The objective is to ensure the cybersecurity strategy is reviewed periodically or upon material changes. Guidelines: Review and update the strategy according to a documented and approved review plan; Review at specific intervals according to best practices; Review upon changes in relevant laws and regulations or material changes in the organization; Document and approve the review procedures and changes by the representative. Deliverables: Approved document defining the review schedule, Updated cybersecurity strategy document, Project status reports, and Formal approval by the representative on the updated strategy."
   },
   "1-2": {
     "control_id": "1-2",
@@ -95,7 +95,7 @@
       "Cybersecurity Roles and Responsibilities Template",
       "Cybersecurity General Policy Template"
     ],
-    "full_text": "1-2 Cybersecurity Management — 1-2-1 A dedicated cybersecurity function must be established. This function must be independent from the IT/ICT functions (Royal Decree 37140). It reports directly to the head of the organization."
+    "full_text": "1-2-1 Establishment of a Dedicated Cybersecurity Function: The objective is to establish a dedicated cybersecurity function (division, department) within the organization. Guidelines: Establish a cybersecurity function independent from the IT/ICT functions as per Royal Decree number 37140 dated 14/8/1438H; Ensure the cybersecurity function reports directly to the head of the organization or his/her delegate; The function is responsible for all cybersecurity monitoring (compliance, operation) and governance (requirements, risks). Deliverables: Organization's organizational structure covering the cybersecurity function, The decision to establish the Cybersecurity functions and its mandate, and Reports on the cybersecurity policies compliance results. Tools: Cybersecurity Function Organizational Structure, Roles and Responsibilities Template, and General Policy Template."
   },
   "1-2-2": {
     "control_id": "1-2-2",
@@ -111,7 +111,7 @@
       "Job descriptions of the head of cybersecurity and supervisory/critical positions relying on (SCyWF)"
     ],
     "cybersecurity_tools": [],
-    "full_text": "1-2 Cybersecurity Management — 1-2-2 The position of cybersecurity function head (e.g., CISO), and related supervisory and critical positions, must be filled with full-time and experienced Saudi cybersecurity professionals."
+    "full_text": "1-2-2 Cybersecurity Human Resources: The objective is to fill critical cybersecurity positions with full-time and experienced Saudi cybersecurity professionals. Guidelines: Appoint full-time and highly qualified Saudi cybersecurity professionals for the Head of cybersecurity (CISO), supervisory positions, and critical roles; Define required academic qualifications and years of experience relying on The Saudi Cybersecurity Workforce Framework (SCyWF); Develop job descriptions for the head of cybersecurity and critical positions including minimum experience and professional certificates. Deliverables: Detailed list of all personnel (direct, indirect, and contractors) including names, nationality, and qualifications, and Job descriptions of the head of cybersecurity and supervisory or critical positions relying on SCyWF."
   },
   "1-2-3": {
     "control_id": "1-2-3",
@@ -130,7 +130,7 @@
     "cybersecurity_tools": [
       "Cybersecurity supervisory committee governance document template"
     ],
-    "full_text": "1-2 Cybersecurity Management — 1-2-3 A cybersecurity steering committee must be established to ensure support and implementation of cybersecurity programs. The committee must include the head of the cybersecurity function."
+    "full_text": "1-2-3 Cybersecurity Steering Committee: The objective is to establish a cybersecurity steering committee by the Authorizing Official to ensure support and implementation of cybersecurity programs. Guidelines: Identify committee members including the head of organization or deputy, head of cybersecurity, head of IT, head of Compliance, and head of HR; Formally document duties and responsibilities in the Committee's Charter approved by the organization's representative; Conduct periodic meetings to follow up on implementation, manage risks, and ensure alignment with the organization's strategy. Deliverables: Supervisory committee charter approved by the representative, Documented and approved list of committee members, and Cybersecurity supervisory committee's agenda and minutes of meetings. Tools: Cybersecurity supervisory committee governance document template."
   },
   "1-3": {
     "control_id": "1-3",
