@@ -328,8 +328,8 @@
       "Report outlining identification, assessment, and remediation of risks throughout the project lifecycle"
     ],
     "cybersecurity_tools": [],
-    "full_text": "1-5 Cybersecurity Risk Management — 1-5-3-1 Implementation of cybersecurity risk assessment in the early stages of technical projects."
-  },
+    "full_text": "Control ID: 1-5-3-1\nTitle: Early Stages of Technology Projects\nObjective: Implement risk assessment during the first phase of the information and technology projects lifecycle.\nImplementation Guidelines: 1. Include cybersecurity requirements within the Technical Project Lifecycle. 2. Assess risks early to identify asset exposure, potential threats, and vulnerabilities. 3. Remediate all risks in accordance with the approved methodology.\nExpected Deliverables: Report outlining identification, assessment, and remediation of risks throughout the project lifecycle."
+  }و
   "1-5-3-2": {
     "control_id": "1-5-3-2",
     "title": "Major Changes to Technology Infrastructure",
