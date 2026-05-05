@@ -200,68 +200,68 @@ class RAGEngine:
     #     except Exception as e:
     #         print(f"[❌] Indexing error: {e}")
 
-def load_ecc_data(self, json_path: str):
-    if not os.path.exists(json_path):
-        print(f"[❌] FATAL ERROR: ECC data file not found at: {json_path}")
-        return
-    
-    try:
-        with open(json_path, 'r', encoding='utf-8') as f:
-            controls_data = json.load(f)
-
-        documents = []
-        for cid, content in controls_data.items():
-            # --- 1. معالجة الأدوات (Cybersecurity Tools) ---
-            tools = content.get('cybersecurity_tools', [])
-            if isinstance(tools, list) and tools:
-                tools_text = "\n".join([f"• {t}" for t in tools])
-            else:
-                tools_text = "No specific tools mentioned."
-
-            # --- 2. معالجة المخرجات والإرشادات ---
-            def list_to_text(data):
-                if isinstance(data, list):
-                    return "\n".join([f"• {item}" for item in data])
-                return data
-
-            guidelines = list_to_text(content.get('implementation_guidelines', ''))
-            deliverables = list_to_text(content.get('expected_deliverables', ''))
-
-            # --- 3. بناء النص الكامل (النسخة المحسنة لتعزيز دقة البحث) ---
-            full_content = (
-                f"### START OF CONTROL {cid} ###\n"
-                f"CONTROL_ID: {cid}\n"
-                f"REFERENCE: ECC-{cid}\n"
-                f"TITLE: {content.get('title', '')}\n"
-                f"DOMAIN: {content.get('domain', '')}\n"
-                f"OBJECTIVE: {content.get('objective', '')}\n\n"
-                f"CYBERSECURITY TOOLS FOR {cid}:\n{tools_text}\n\n"
-                f"FULL REQUIREMENTS FOR {cid}:\n{content.get('full_text', '')}\n\n"
-                f"IMPLEMENTATION GUIDELINES FOR {cid}:\n{guidelines}\n\n"
-                f"EXPECTED DELIVERABLES FOR {cid}:\n{deliverables}\n"
-                f"### END OF CONTROL {cid} ###"
-            )
-
-            chunks = self.text_splitter.split_text(full_content)
-            for chunk in chunks:
-                doc = Document(
-                    page_content=chunk,
-                    metadata={
-                        "control_id": str(cid).strip(), # تنظيف المعرف من أي مسافات زائدة
-                        "domain": content.get('domain', ''), 
-                        "title": content.get('title', '')
-                    }
-                )
-                documents.append(doc)
-
-        print(f"[⚙️] Indexing {len(documents)} chunks into ChromaDB...")
-        # تنظيف الـ Vectorstore القديم قبل الإضافة لضمان عدم التكرار
-        self.vectorstore = Chroma.from_documents(
-            documents=documents,
-            embedding=self.embeddings,
-            persist_directory=settings.CHROMA_PERSIST_DIRECTORY
-        )
-        print("✅ Vectorstore successfully built and persisted!")
+    def load_ecc_data(self, json_path: str):
+        if not os.path.exists(json_path):
+            print(f"[❌] FATAL ERROR: ECC data file not found at: {json_path}")
+            return
         
-    except Exception as e:
-        print(f"[❌] Indexing error: {e}")
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                controls_data = json.load(f)
+    
+            documents = []
+            for cid, content in controls_data.items():
+                # --- 1. معالجة الأدوات (Cybersecurity Tools) ---
+                tools = content.get('cybersecurity_tools', [])
+                if isinstance(tools, list) and tools:
+                    tools_text = "\n".join([f"• {t}" for t in tools])
+                else:
+                    tools_text = "No specific tools mentioned."
+    
+                # --- 2. معالجة المخرجات والإرشادات ---
+                def list_to_text(data):
+                    if isinstance(data, list):
+                        return "\n".join([f"• {item}" for item in data])
+                    return data
+    
+                guidelines = list_to_text(content.get('implementation_guidelines', ''))
+                deliverables = list_to_text(content.get('expected_deliverables', ''))
+    
+                # --- 3. بناء النص الكامل (النسخة المحسنة لتعزيز دقة البحث) ---
+                full_content = (
+                    f"### START OF CONTROL {cid} ###\n"
+                    f"CONTROL_ID: {cid}\n"
+                    f"REFERENCE: ECC-{cid}\n"
+                    f"TITLE: {content.get('title', '')}\n"
+                    f"DOMAIN: {content.get('domain', '')}\n"
+                    f"OBJECTIVE: {content.get('objective', '')}\n\n"
+                    f"CYBERSECURITY TOOLS FOR {cid}:\n{tools_text}\n\n"
+                    f"FULL REQUIREMENTS FOR {cid}:\n{content.get('full_text', '')}\n\n"
+                    f"IMPLEMENTATION GUIDELINES FOR {cid}:\n{guidelines}\n\n"
+                    f"EXPECTED DELIVERABLES FOR {cid}:\n{deliverables}\n"
+                    f"### END OF CONTROL {cid} ###"
+                )
+    
+                chunks = self.text_splitter.split_text(full_content)
+                for chunk in chunks:
+                    doc = Document(
+                        page_content=chunk,
+                        metadata={
+                            "control_id": str(cid).strip(), # تنظيف المعرف من أي مسافات زائدة
+                            "domain": content.get('domain', ''), 
+                            "title": content.get('title', '')
+                        }
+                    )
+                    documents.append(doc)
+    
+            print(f"[⚙️] Indexing {len(documents)} chunks into ChromaDB...")
+            # تنظيف الـ Vectorstore القديم قبل الإضافة لضمان عدم التكرار
+            self.vectorstore = Chroma.from_documents(
+                documents=documents,
+                embedding=self.embeddings,
+                persist_directory=settings.CHROMA_PERSIST_DIRECTORY
+            )
+            print("✅ Vectorstore successfully built and persisted!")
+            
+        except Exception as e:
+            print(f"[❌] Indexing error: {e}")
