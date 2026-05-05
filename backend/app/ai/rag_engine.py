@@ -95,6 +95,41 @@ class RAGEngine:
             print(f"[❌] RAG Error (mode={mode}, control={control_id}): {e}")
             return f"AI Service Error: Unable to process request. {str(e)}"
 
+
+    def retrieve_context(self, control_id: str, k: int = 5) -> str:
+        if not self.vectorstore:
+            return ""
+        try:
+            target_id = str(control_id).strip()
+            relevant_chunks = []
+    
+            # [السر 1] - القنص المباشر بالميتاداتا (من كود 3)
+            direct_results = self.vectorstore.get(where={"control_id": target_id})
+            if direct_results and direct_results['documents']:
+                relevant_chunks.extend(direct_results['documents'])
+    
+            # [السر 2] - إذا لم نجد، نبحث بالرقم في بداية النص (من كود 4)
+            if not relevant_chunks:
+                # نبحث بـ k عالية جداً لضمان عدم ضياع الضوابط الرباعية
+                fallback_results = self.vectorstore.similarity_search(target_id, k=30)
+                for doc in fallback_results:
+                    content = doc.page_content.strip()
+                    # التحقق الصارم: هل يبدأ النص فعلياً برقم الضابط؟
+                    if content.startswith(target_id) or content.startswith(f"CONTROL_ID: {target_id}"):
+                        relevant_chunks.append(content)
+    
+            if not relevant_chunks:
+                print(f"[⚠️] No precise context found for: {target_id}")
+                return ""
+    
+            # إزالة التكرار
+            unique_chunks = list(dict.fromkeys(relevant_chunks))
+            return "\n\n---\n\n".join(unique_chunks[:k])
+    
+        except Exception as e:
+            print(f"[❌] Retrieval error for {control_id}: {e}")
+            return ""
+    
     # def retrieve_context(self, control_id: str, k: int = 5) -> str:
     #     if not self.vectorstore:
     #         return ""
@@ -136,36 +171,36 @@ class RAGEngine:
     #         print(f"[❌] Context retrieval error for {control_id}: {e}")
     #         return ""
     
-    def retrieve_context(self, control_id: str, k: int = 1) -> str:
-        if not self.vectorstore:
-            return ""
-        try:
-            print(f"[🔍] Targeted Search for Control ID: '{control_id}'")
+    # def retrieve_context(self, control_id: str, k: int = 1) -> str:
+    #     if not self.vectorstore:
+    #         return ""
+    #     try:
+    #         print(f"[🔍] Targeted Search for Control ID: '{control_id}'")
             
-            # 1. البحث الصارم باستخدام الفلتر (لضمان خصوصية الضابط)
-            results = self.vectorstore.similarity_search(
-                f"Requirements for {control_id}",
-                k=k,
-                filter={"control_id": control_id}  # الفلتر يعود لضمان عدم تكرار الأسئلة
-            )
+    #         # 1. البحث الصارم باستخدام الفلتر (لضمان خصوصية الضابط)
+    #         results = self.vectorstore.similarity_search(
+    #             f"Requirements for {control_id}",
+    #             k=k,
+    #             filter={"control_id": control_id}  # الفلتر يعود لضمان عدم تكرار الأسئلة
+    #         )
             
-            # 2. خطة بديلة: إذا فشل الفلتر الصارم، جرب البحث بالهوية ككلمة مفتاحية
-            if not results:
-                print(f"[⚠️] Strict filter failed, trying keyword fallback for {control_id}...")
-                results = self.vectorstore.similarity_search(control_id, k=1)
+    #         # 2. خطة بديلة: إذا فشل الفلتر الصارم، جرب البحث بالهوية ككلمة مفتاحية
+    #         if not results:
+    #             print(f"[⚠️] Strict filter failed, trying keyword fallback for {control_id}...")
+    #             results = self.vectorstore.similarity_search(control_id, k=1)
     
-            if not results:
-                print(f"[⚠️] No context found for control {control_id}")
-                return ""
+    #         if not results:
+    #             print(f"[⚠️] No context found for control {control_id}")
+    #             return ""
     
-            # طباعة أول 50 حرف للتأكد في اللوق أن السياق مختلف
-            print(f"[✅] Context retrieved (Snippet): {results[0].page_content[:50]}...")
+    #         # طباعة أول 50 حرف للتأكد في اللوق أن السياق مختلف
+    #         print(f"[✅] Context retrieved (Snippet): {results[0].page_content[:50]}...")
             
-            return "\n\n".join([doc.page_content for doc in results])
+    #         return "\n\n".join([doc.page_content for doc in results])
             
-        except Exception as e:
-            print(f"[❌] Context retrieval error for {control_id}: {e}")
-            return ""
+    #     except Exception as e:
+    #         print(f"[❌] Context retrieval error for {control_id}: {e}")
+    #         return ""
     
     def load_ecc_data(self, json_path: str):
         if not os.path.exists(json_path):
