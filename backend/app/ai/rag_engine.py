@@ -116,25 +116,25 @@ class RAGEngine:
     #         return ""
 
     def retrieve_context(self, control_id: str, k: int = 5) -> str:
-    if not self.vectorstore:
-        return ""
-    try:
-        print(f"[🔍] Frontend is asking for Control ID: '{control_id}'")
-        
-        # الحل: ابحث بالمعنى (Similarity) دون قيد الفلتر الصارم في البداية
-        results = self.vectorstore.similarity_search(
-            f"Control {control_id} details requirements guidelines",
-            k=k
-            # حذفنا السطر: filter={"control_id": control_id}
-        )
-        
-        if not results:
-            print(f"[⚠️] No context found for control {control_id}")
+        if not self.vectorstore:
             return ""
-        return "\n\n---\n\n".join([doc.page_content for doc in results])
-    except Exception as e:
-        print(f"[❌] Context retrieval error for {control_id}: {e}")
-        return ""
+        try:
+            print(f"[🔍] Frontend is asking for Control ID: '{control_id}'")
+            
+            # الحل: ابحث بالمعنى (Similarity) دون قيد الفلتر الصارم في البداية
+            results = self.vectorstore.similarity_search(
+                f"Control {control_id} details requirements guidelines",
+                k=k
+                # حذفنا السطر: filter={"control_id": control_id}
+            )
+            
+            if not results:
+                print(f"[⚠️] No context found for control {control_id}")
+                return ""
+            return "\n\n---\n\n".join([doc.page_content for doc in results])
+        except Exception as e:
+            print(f"[❌] Context retrieval error for {control_id}: {e}")
+            return ""
 
     
             
