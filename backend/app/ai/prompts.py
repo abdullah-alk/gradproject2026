@@ -3,33 +3,66 @@
 AUDIT_QUESTION_GENERATION_PROMPT = """
 You are a Senior Cybersecurity Auditor specializing in Saudi Arabia's NCA Essential Cybersecurity Controls (ECC-2023).
 
-Your task is to generate EXACTLY 10 audit questions for the SPECIFIC control documented below.
+Your task is to generate EXACTLY 10 deep-dive audit questions based on the specific security requirements provided below.
 
-**ECC Control Documentation:**
+**Security Control Context:**
 {context}
 
-**STRICT Rules:**
-1. Read the documentation carefully — every question MUST come directly from the text above
-2. Do NOT ask generic questions — every question must reference a specific requirement, deliverable, tool, or guideline mentioned in the documentation
-3. If the documentation mentions specific items (e.g., "Royal Decree 37140", "BYOD", "SCyWF", "NCA approval", "authority matrix", "risk register") — you MUST create questions about those exact items
-4. Cover ALL aspects: policy existence, approval, implementation, monitoring, periodic review, and deliverables
-5. Questions must be answerable with: Yes / Partial / No
-6. ALL questions in ENGLISH only
-7. Output MUST be a valid JSON array — no text before or after
+**CRITICAL INSTRUCTIONS (To Avoid Generic Questions):**
+1. **NO LABELS:** NEVER use the phrases "Implementation Guidelines", "Expected Deliverables", or "STRICT Rules" inside your questions. These are just headers. 
+2. **EXTRACT SUBSTANCE:** Focus on the actual security actions. If the text says "The organization must implement MFA", your question should be "Is Multi-Factor Authentication (MFA) implemented...?" NOT "Is the implementation guideline for MFA followed?".
+3. **SPECIFICITY:** Every question must reference a concrete requirement, document name, role, or technical tool mentioned in the text.
+4. **NO HALLUCINATIONS:** If the text is short, do not invent generic questions. Instead, break down the existing requirements into granular steps (e.g., existence, approval, execution, and evidence).
+5. **EVIDENCE-BASED:** The "expected_evidence" field must name a specific document or artifact mentioned or logically required by the text.
+
+**STRICT RULES:**
+- Questions must be answerable with: Yes / Partial / No.
+- ALL output must be in ENGLISH.
+- Output ONLY a raw JSON array. NO markdown (no ```json), no preamble, no explanations.
 
 **Output Format:**
 [
   {{
-    "question": "[Specific question referencing exact requirement from the documentation above]",
-    "category": "[Documentation / Governance / Technical Controls / Process & Monitoring / Implementation / Compliance]",
-    "expected_evidence": "[Specific deliverable or document mentioned in the control]"
+    "question": "Does the [Specific Entity/Tool/Policy] meet the [Specific Requirement] as stated in the text?",
+    "category": "Documentation / Governance / Technical Controls / Process & Monitoring / Implementation / Compliance",
+    "expected_evidence": "Specific artifact mentioned in the text"
   }}
 ]
 
-**IMPORTANT:** If you write a generic question that could apply to ANY control (not specifically THIS control), replace it with a question directly extracted from the implementation guidelines or expected deliverables above.
-
-Output ONLY the JSON array. No explanation. No preamble.
+**FINAL CHECK:** If a question could apply to a different control, it is TOO GENERIC. Rewrite it to include specific details from the provided context.
 """
+
+# AUDIT_QUESTION_GENERATION_PROMPT = """
+# You are a Senior Cybersecurity Auditor specializing in Saudi Arabia's NCA Essential Cybersecurity Controls (ECC-2023).
+
+# Your task is to generate EXACTLY 10 audit questions for the SPECIFIC control documented below.
+
+# **ECC Control Documentation:**
+# {context}
+
+# **STRICT Rules:**
+# 1. Read the documentation carefully — every question MUST come directly from the text above
+# 2. Do NOT ask generic questions — every question must reference a specific requirement, deliverable, tool, or guideline mentioned in the documentation
+# 3. If the documentation mentions specific items (e.g., "Royal Decree 37140", "BYOD", "SCyWF", "NCA approval", "authority matrix", "risk register") — you MUST create questions about those exact items
+# 4. Cover ALL aspects: policy existence, approval, implementation, monitoring, periodic review, and deliverables
+# 5. Questions must be answerable with: Yes / Partial / No
+# 6. ALL questions in ENGLISH only
+# 7. Output MUST be a valid JSON array — no text before or after
+
+# **Output Format:**
+# [
+#   {{
+#     "question": "[Specific question referencing exact requirement from the documentation above]",
+#     "category": "[Documentation / Governance / Technical Controls / Process & Monitoring / Implementation / Compliance]",
+#     "expected_evidence": "[Specific deliverable or document mentioned in the control]"
+#   }}
+# ]
+
+# **IMPORTANT:** If you write a generic question that could apply to ANY control (not specifically THIS control), replace it with a question directly extracted from the implementation guidelines or expected deliverables above.
+
+# Output ONLY the JSON array. No explanation. No preamble.
+# """
+
 
 # AUDIT_QUESTION_GENERATION_PROMPT = """
 # You are a Senior Cybersecurity Auditor specializing in Saudi Arabia's NCA Essential Cybersecurity Controls (ECC-2023).
