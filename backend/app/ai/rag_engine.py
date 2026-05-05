@@ -95,55 +95,94 @@ class RAGEngine:
             print(f"[❌] RAG Error (mode={mode}, control={control_id}): {e}")
             return f"AI Service Error: Unable to process request. {str(e)}"
 
-
-
     def retrieve_context(self, control_id: str, k: int = 5) -> str:
-        """
-        استرجاع السياق بدقة عالية للضوابط الثلاثية والرباعية.
-        """
         if not self.vectorstore:
             return ""
         
         try:
-            # 1. تنظيف المعرف (مثل 1-9-3-1)
             target_id = str(control_id).strip()
-            relevant_chunks = []
+            all_results = []
     
-            # 2. محاولة القنص المباشر عبر الميتاداتا (الأسرع والأدق)
-            # نبحث عن تطابق تام لـ control_id في خصائص الوثيقة
+            # 1. القنص المباشر بالميتاداتا (الأولوية القصوى)
             direct_results = self.vectorstore.get(where={"control_id": target_id})
             if direct_results and direct_results['documents']:
-                relevant_chunks.extend(direct_results['documents'])
+                all_results.extend(direct_results['documents'])
     
-            # 3. خطة البحث المرن (في حال فشل الميتاداتا أو وجود زوائد نصية)
-            if not relevant_chunks:
-                # نرفع k لضمان فحص أكبر عدد ممكن من الاحتمالات
-                fallback_results = self.vectorstore.similarity_search(target_id, k=20)
-                
-                for doc in fallback_results:
-                    content = doc.page_content.strip()
-                    
-                    # [السر هنا]: البحث عن وجود المعرف في أول 50 حرفاً من النص
-                    # هذا الشرط يمسك 1-1-1 ويمسك أيضاً 1-9-3-1 حتى لو قبلها كلمات مثل "Control ID:"
-                    if target_id in content[:50]:
-                        relevant_chunks.append(content)
+            # 2. البحث النصي (في حال عدم وجود ميتاداتا)
+            if not all_results:
+                fallback_results = self.vectorstore.similarity_search(target_id, k=15)
+                all_results.extend([doc.page_content for doc in fallback_results])
     
-            # 4. إذا لم يجد شيئاً، يقوم بمحاولة أخيرة للبحث النصي العادي
-            if not relevant_chunks:
-                print(f"[⚠️] No precise context found for: {target_id}, trying last resort search...")
-                last_resort = self.vectorstore.similarity_search(f"Control {target_id}", k=2)
-                relevant_chunks.extend([d.page_content for d in last_resort])
+            # 3. الفلترة الصارمة (هنا يكمن الحل لمنع التداخل)
+            # سنبقي فقط النصوص التي تحتوي فعلياً على المعرف المطلوب في بدايتها
+            final_chunks = []
+            for content in all_results:
+                clean_content = content.strip()
+                # التأكد أن القطعة النصية تخص الضابط المطلوب حصراً
+                # نبحث عن المعرف متبوعاً بنقطة أو مسافة أو بداية سطر
+                if clean_content.startswith(target_id) or f"CONTROL_ID: {target_id}" in clean_content:
+                    final_chunks.append(clean_content)
     
-            if not relevant_chunks:
+            if not final_chunks:
+                # إذا فشلت الفلترة الصارمة، لا ترجع نتائج خاطئة (تجنباً للخلط)
+                print(f"[⚠️] Blocked mismatched context for: {target_id}")
                 return ""
     
-            # إزالة التكرار وضمان استرجاع العدد المطلوب فقط
-            unique_chunks = list(dict.fromkeys(relevant_chunks))
+            # إزالة التكرار
+            unique_chunks = list(dict.fromkeys(final_chunks))
             return "\n\n---\n\n".join(unique_chunks[:k])
     
         except Exception as e:
             print(f"[❌] Retrieval error for {control_id}: {e}")
             return ""
+
+    # def retrieve_context(self, control_id: str, k: int = 5) -> str:
+    #     """
+    #     استرجاع السياق بدقة عالية للضوابط الثلاثية والرباعية.
+    #     """
+    #     if not self.vectorstore:
+    #         return ""
+        
+    #     try:
+    #         # 1. تنظيف المعرف (مثل 1-9-3-1)
+    #         target_id = str(control_id).strip()
+    #         relevant_chunks = []
+    
+    #         # 2. محاولة القنص المباشر عبر الميتاداتا (الأسرع والأدق)
+    #         # نبحث عن تطابق تام لـ control_id في خصائص الوثيقة
+    #         direct_results = self.vectorstore.get(where={"control_id": target_id})
+    #         if direct_results and direct_results['documents']:
+    #             relevant_chunks.extend(direct_results['documents'])
+    
+    #         # 3. خطة البحث المرن (في حال فشل الميتاداتا أو وجود زوائد نصية)
+    #         if not relevant_chunks:
+    #             # نرفع k لضمان فحص أكبر عدد ممكن من الاحتمالات
+    #             fallback_results = self.vectorstore.similarity_search(target_id, k=20)
+                
+    #             for doc in fallback_results:
+    #                 content = doc.page_content.strip()
+                    
+    #                 # [السر هنا]: البحث عن وجود المعرف في أول 50 حرفاً من النص
+    #                 # هذا الشرط يمسك 1-1-1 ويمسك أيضاً 1-9-3-1 حتى لو قبلها كلمات مثل "Control ID:"
+    #                 if target_id in content[:50]:
+    #                     relevant_chunks.append(content)
+    
+    #         # 4. إذا لم يجد شيئاً، يقوم بمحاولة أخيرة للبحث النصي العادي
+    #         if not relevant_chunks:
+    #             print(f"[⚠️] No precise context found for: {target_id}, trying last resort search...")
+    #             last_resort = self.vectorstore.similarity_search(f"Control {target_id}", k=2)
+    #             relevant_chunks.extend([d.page_content for d in last_resort])
+    
+    #         if not relevant_chunks:
+    #             return ""
+    
+    #         # إزالة التكرار وضمان استرجاع العدد المطلوب فقط
+    #         unique_chunks = list(dict.fromkeys(relevant_chunks))
+    #         return "\n\n---\n\n".join(unique_chunks[:k])
+    
+    #     except Exception as e:
+    #         print(f"[❌] Retrieval error for {control_id}: {e}")
+    #         return ""
     
     # def retrieve_context(self, control_id: str, k: int = 5) -> str:
     #     if not self.vectorstore:
