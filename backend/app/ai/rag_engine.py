@@ -43,9 +43,11 @@ class RAGEngine:
             self.llm = None
         
         # 3. Setup Text Splitter
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1200,
-            chunk_overlap=250
+        
+            self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=2000,        # رفع الحجم لاستيعاب الضابط كاملاً
+            chunk_overlap=300,      # زيادة التداخل لضمان ربط السياق
+            separators=["\n\n", "\n", ". ", "; ", " ", ""] # ترتيب الفواصل
         )
 
         self.vectorstore = None
