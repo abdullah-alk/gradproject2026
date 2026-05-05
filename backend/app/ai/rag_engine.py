@@ -95,35 +95,39 @@ class RAGEngine:
             print(f"[❌] RAG Error (mode={mode}, control={control_id}): {e}")
             return f"AI Service Error: Unable to process request. {str(e)}"
 
+
     def retrieve_context(self, control_id: str, k: int = 5) -> str:
         if not self.vectorstore:
             return ""
         
         try:
             target_id = str(control_id).strip()
-            final_chunks = []
     
-            # ✅ الطريقة الصحيحة: استخدام similarity_search مع فلتر metadata
+            # 1. بحث مرن أولي (لا تعتمد على فلتر صارم)
             results = self.vectorstore.similarity_search(
-                query=f"Control {target_id}",
-                k=k,
-                filter={"control_id": target_id}
+                query=target_id,
+                k=15
             )
     
-            # استخراج النصوص
+            final_chunks = []
+    
             for doc in results:
                 content = doc.page_content.strip()
-                
-                # ✅ تحقق إضافي (حماية من أي خلل)
-                if f"CONTROL_ID: {target_id}" in content:
+    
+                # 2. فلترة ذكية (ليست صارمة)
+                if (
+                    f"CONTROL_ID: {target_id}" in content
+                    or content.startswith(target_id)
+                    or target_id in content[:100]   # مهم للرباعي
+                ):
                     final_chunks.append(content)
     
-            # ❌ إذا ما فيه نتائج → لا تجيب أي شيء (منع الهلوسة)
+            # 3. منع الهلوسة: إذا ما فيه نتائج لا نكمل
             if not final_chunks:
-                print(f"[⚠️] No strict match found for: {target_id}")
+                print(f"[⚠️] No context found for: {target_id}")
                 return ""
     
-            # إزالة التكرار
+            # 4. إزالة التكرار
             unique_chunks = list(dict.fromkeys(final_chunks))
     
             return "\n\n---\n\n".join(unique_chunks[:k])
@@ -131,6 +135,43 @@ class RAGEngine:
         except Exception as e:
             print(f"[❌] Retrieval error for {control_id}: {e}")
             return ""
+    
+    # def retrieve_context(self, control_id: str, k: int = 5) -> str:
+    #     if not self.vectorstore:
+    #         return ""
+        
+    #     try:
+    #         target_id = str(control_id).strip()
+    #         final_chunks = []
+    
+    #         # ✅ الطريقة الصحيحة: استخدام similarity_search مع فلتر metadata
+    #         results = self.vectorstore.similarity_search(
+    #             query=f"Control {target_id}",
+    #             k=k,
+    #             filter={"control_id": target_id}
+    #         )
+    
+    #         # استخراج النصوص
+    #         for doc in results:
+    #             content = doc.page_content.strip()
+                
+    #             # ✅ تحقق إضافي (حماية من أي خلل)
+    #             if f"CONTROL_ID: {target_id}" in content:
+    #                 final_chunks.append(content)
+    
+    #         # ❌ إذا ما فيه نتائج → لا تجيب أي شيء (منع الهلوسة)
+    #         if not final_chunks:
+    #             print(f"[⚠️] No strict match found for: {target_id}")
+    #             return ""
+    
+    #         # إزالة التكرار
+    #         unique_chunks = list(dict.fromkeys(final_chunks))
+    
+    #         return "\n\n---\n\n".join(unique_chunks[:k])
+    
+    #     except Exception as e:
+    #         print(f"[❌] Retrieval error for {control_id}: {e}")
+    #         return ""
     
     # def retrieve_context(self, control_id: str, k: int = 5) -> str:
     #     if not self.vectorstore:
