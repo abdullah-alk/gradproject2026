@@ -96,46 +96,46 @@ class RAGEngine:
             return f"AI Service Error: Unable to process request. {str(e)}"
 
 
-    def retrieve_context(self, control_id: str, k: int = 3) -> str:
-        if not self.vectorstore:
-            return ""
+    # def retrieve_context(self, control_id: str, k: int = 3) -> str:
+    #     if not self.vectorstore:
+    #         return ""
     
-        try:
-            target_id = str(control_id).strip()
+    #     try:
+    #         target_id = str(control_id).strip()
     
-            # 🧠 1. فلترة صارمة 100% من metadata (بدون siblings)
-            results = self.vectorstore.get(
-                where={"control_id": target_id}
-            )
+    #         # 🧠 1. فلترة صارمة 100% من metadata (بدون siblings)
+    #         results = self.vectorstore.get(
+    #             where={"control_id": target_id}
+    #         )
     
-            chunks = results.get("documents", []) if results else []
+    #         chunks = results.get("documents", []) if results else []
     
-            # 🧠 2. fallback آمن جدًا (بدون عائلة الضابط)
-            if not chunks:
-                results = self.vectorstore.similarity_search(
-                    query=f"CONTROL_ID: {target_id}",
-                    k=5
-                )
+    #         # 🧠 2. fallback آمن جدًا (بدون عائلة الضابط)
+    #         if not chunks:
+    #             results = self.vectorstore.similarity_search(
+    #                 query=f"CONTROL_ID: {target_id}",
+    #                 k=5
+    #             )
     
-                chunks = [
-                    doc.page_content
-                    for doc in results
-                    if f"CONTROL_ID: {target_id}" in doc.page_content
-                ]
+    #             chunks = [
+    #                 doc.page_content
+    #                 for doc in results
+    #                 if f"CONTROL_ID: {target_id}" in doc.page_content
+    #             ]
     
-            # 🚨 منع الهلوسة تمامًا
-            if not chunks:
-                print(f"[⚠️] NO CONTEXT for {target_id}")
-                return ""
+    #         # 🚨 منع الهلوسة تمامًا
+    #         if not chunks:
+    #             print(f"[⚠️] NO CONTEXT for {target_id}")
+    #             return ""
     
-            # 🧹 إزالة التكرار
-            unique = list(dict.fromkeys(chunks))
+    #         # 🧹 إزالة التكرار
+    #         unique = list(dict.fromkeys(chunks))
     
-            return "\n\n---\n\n".join(unique[:k])
+    #         return "\n\n---\n\n".join(unique[:k])
     
-        except Exception as e:
-            print(f"[❌] Retrieval error: {e}")
-            return ""
+    #     except Exception as e:
+    #         print(f"[❌] Retrieval error: {e}")
+    #         return ""
         
     # def retrieve_context(self, control_id: str, k: int = 5) -> str:
     #     if not self.vectorstore:
@@ -215,53 +215,53 @@ class RAGEngine:
     #         print(f"[❌] Retrieval error for {control_id}: {e}")
     #         return ""
 
-    # def retrieve_context(self, control_id: str, k: int = 5) -> str:
-    #     """
-    #     استرجاع السياق بدقة عالية للضوابط الثلاثية والرباعية.
-    #     """
-    #     if not self.vectorstore:
-    #         return ""
+    def retrieve_context(self, control_id: str, k: int = 5) -> str:
+        """
+        استرجاع السياق بدقة عالية للضوابط الثلاثية والرباعية.
+        """
+        if not self.vectorstore:
+            return ""
         
-    #     try:
-    #         # 1. تنظيف المعرف (مثل 1-9-3-1)
-    #         target_id = str(control_id).strip()
-    #         relevant_chunks = []
+        try:
+            # 1. تنظيف المعرف (مثل 1-9-3-1)
+            target_id = str(control_id).strip()
+            relevant_chunks = []
     
-    #         # 2. محاولة القنص المباشر عبر الميتاداتا (الأسرع والأدق)
-    #         # نبحث عن تطابق تام لـ control_id في خصائص الوثيقة
-    #         direct_results = self.vectorstore.get(where={"control_id": target_id})
-    #         if direct_results and direct_results['documents']:
-    #             relevant_chunks.extend(direct_results['documents'])
+            # 2. محاولة القنص المباشر عبر الميتاداتا (الأسرع والأدق)
+            # نبحث عن تطابق تام لـ control_id في خصائص الوثيقة
+            direct_results = self.vectorstore.get(where={"control_id": target_id})
+            if direct_results and direct_results['documents']:
+                relevant_chunks.extend(direct_results['documents'])
     
-    #         # 3. خطة البحث المرن (في حال فشل الميتاداتا أو وجود زوائد نصية)
-    #         if not relevant_chunks:
-    #             # نرفع k لضمان فحص أكبر عدد ممكن من الاحتمالات
-    #             fallback_results = self.vectorstore.similarity_search(target_id, k=20)
+            # 3. خطة البحث المرن (في حال فشل الميتاداتا أو وجود زوائد نصية)
+            if not relevant_chunks:
+                # نرفع k لضمان فحص أكبر عدد ممكن من الاحتمالات
+                fallback_results = self.vectorstore.similarity_search(target_id, k=20)
                 
-    #             for doc in fallback_results:
-    #                 content = doc.page_content.strip()
+                for doc in fallback_results:
+                    content = doc.page_content.strip()
                     
-    #                 # [السر هنا]: البحث عن وجود المعرف في أول 50 حرفاً من النص
-    #                 # هذا الشرط يمسك 1-1-1 ويمسك أيضاً 1-9-3-1 حتى لو قبلها كلمات مثل "Control ID:"
-    #                 if target_id in content[:50]:
-    #                     relevant_chunks.append(content)
+                    # [السر هنا]: البحث عن وجود المعرف في أول 50 حرفاً من النص
+                    # هذا الشرط يمسك 1-1-1 ويمسك أيضاً 1-9-3-1 حتى لو قبلها كلمات مثل "Control ID:"
+                    if target_id in content[:50]:
+                        relevant_chunks.append(content)
     
-    #         # 4. إذا لم يجد شيئاً، يقوم بمحاولة أخيرة للبحث النصي العادي
-    #         if not relevant_chunks:
-    #             print(f"[⚠️] No precise context found for: {target_id}, trying last resort search...")
-    #             last_resort = self.vectorstore.similarity_search(f"Control {target_id}", k=2)
-    #             relevant_chunks.extend([d.page_content for d in last_resort])
+            # 4. إذا لم يجد شيئاً، يقوم بمحاولة أخيرة للبحث النصي العادي
+            if not relevant_chunks:
+                print(f"[⚠️] No precise context found for: {target_id}, trying last resort search...")
+                last_resort = self.vectorstore.similarity_search(f"Control {target_id}", k=2)
+                relevant_chunks.extend([d.page_content for d in last_resort])
     
-    #         if not relevant_chunks:
-    #             return ""
+            if not relevant_chunks:
+                return ""
     
-    #         # إزالة التكرار وضمان استرجاع العدد المطلوب فقط
-    #         unique_chunks = list(dict.fromkeys(relevant_chunks))
-    #         return "\n\n---\n\n".join(unique_chunks[:k])
+            # إزالة التكرار وضمان استرجاع العدد المطلوب فقط
+            unique_chunks = list(dict.fromkeys(relevant_chunks))
+            return "\n\n---\n\n".join(unique_chunks[:k])
     
-    #     except Exception as e:
-    #         print(f"[❌] Retrieval error for {control_id}: {e}")
-    #         return ""
+        except Exception as e:
+            print(f"[❌] Retrieval error for {control_id}: {e}")
+            return ""
     
     # def retrieve_context(self, control_id: str, k: int = 5) -> str:
     #     if not self.vectorstore:
@@ -401,23 +401,14 @@ class RAGEngine:
                 )
     
                 # 3. إنشاء مستند واحد لكل ضابط (بدون SPLITTING)
-                # doc = Document(
-                #     page_content=full_content,
-                #     metadata={
-                #         "control_id": str(cid), 
-                #         "domain": str(content.get('domain', '')), 
-                #         "title": str(content.get('title', ''))
-                #     }
-                # )
-
                 doc = Document(
                     page_content=full_content,
                     metadata={
-                        "control_id": str(cid).strip(),
-                        "root_id": str(cid).split("-")[0],   # 👈 مهم جدًا
-                        "full_path": str(cid).strip()
+                        "control_id": str(cid), 
+                        "domain": str(content.get('domain', '')), 
+                        "title": str(content.get('title', ''))
                     }
-                )    
+                )
                 documents.append(doc)
     
             # 4. طباعة العدد الفعلي للتأكد
