@@ -263,13 +263,12 @@ class RAGEngine:
             print(f"[❌] Retrieval error for {control_id}: {e}")
             return ""
     
-    # def retrieve_context(self, control_id: str, k: int = 5) -> str:
+    ## def retrieve_context(self, control_id: str, k: int = 5) -> str:
     #     if not self.vectorstore:
     #         return ""
     #     try:
     #         target_id = str(control_id).strip()
     #         relevant_chunks = []
-    
     #         # [السر 1] - القنص المباشر بالميتاداتا (من كود 3)
     #         direct_results = self.vectorstore.get(where={"control_id": target_id})
     #         if direct_results and direct_results['documents']:
