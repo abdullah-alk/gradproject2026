@@ -1083,16 +1083,12 @@ async def schedule_audit_endpoint(data: dict = Body(...), current_user: dict = D
         
         user_id = current_user["id"]
 
-       # user_id = extract_user_id_from_token(data.get("_token", "")) or 
-       
-
-        #cur.execute(
-         #   """
-          #  UPDATE audit_sessions SET status = 'cancelled'
-           # WHERE user_id = %s AND status = 'scheduled'
-           # """,
-          #  (user_id,),
-       # )
+        cur.execute(
+        "SELECT id FROM audit_sessions WHERE user_id = %s AND scheduled_next_audit = %s AND status = 'scheduled'",
+        (user_id, scheduled_date)
+        )
+       if cur.fetchone():
+       raise HTTPException(status_code=400, detail="This date is already scheduled")
 
         cur.execute(
             """
@@ -1118,6 +1114,29 @@ async def schedule_audit_endpoint(data: dict = Body(...), current_user: dict = D
     except Exception as e:
         conn.rollback()
         print(f"[❌] Schedule Audit Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.delete("/api/scheduler/schedule/{session_id}")
+async def delete_scheduled_audit(session_id: int, current_user: dict = Depends(get_current_user)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "DELETE FROM audit_sessions WHERE id = %s AND user_id = %s AND status = 'scheduled'",
+            (session_id, current_user["id"])
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Audit not found")
+        conn.commit()
+        return {"message": "Audit deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
