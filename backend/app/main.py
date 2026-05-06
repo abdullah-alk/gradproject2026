@@ -1117,7 +1117,7 @@ async def schedule_audit_endpoint(data: dict = Body(...), current_user: dict = D
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
-        conn.close()
+        conn.close() 
 
 
 
