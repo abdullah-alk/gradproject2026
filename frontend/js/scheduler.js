@@ -110,7 +110,7 @@ async function handleScheduleManualAudit() {
             assigned_auditor: document.getElementById('assigned-auditor-select')?.value || 'security-team'
         });
 
-        startCountdown(selectedDate);
+        //startCountdown(selectedDate);
 
         const dateStr = selectedDate.toLocaleDateString('en-US', {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
