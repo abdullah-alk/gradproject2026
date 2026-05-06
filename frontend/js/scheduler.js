@@ -21,14 +21,18 @@ async function loadSchedulerData() {
         if (recEl) {
             recEl.innerHTML = `Based on your current compliance score (<strong>${score}%</strong>) and <strong>${gaps} critical gap${gaps !== 1 ? 's' : ''}</strong>, we recommend scheduling the next audit within <strong>${daysRec} days</strong>, with priority focus on the lowest-scoring domains.`;
         }
-
-        if (stats.next_audit_date) {
-            startCountdown(new Date(stats.next_audit_date));
-        } else {
-            const d = new Date();
-            d.setDate(d.getDate() + daysRec);
-            startCountdown(d);
-        }
+// edit here 
+        const audits = await getScheduledAudits();
+   if (audits && audits.length > 0) {
+      startCountdown(new Date(audits[0].date));
+     } else if (stats.next_audit_date) {
+      startCountdown(new Date(stats.next_audit_date));
+      } else {
+      const d = new Date();
+      d.setDate(d.getDate() + daysRec);
+      startCountdown(d);
+     }
+       
 
         await loadScheduledAudits();
         hideLoader();
