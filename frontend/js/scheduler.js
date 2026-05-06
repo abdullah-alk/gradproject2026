@@ -41,9 +41,6 @@ async function loadSchedulerData() {
        
 
         await loadScheduledAudits();
-        <button onclick="deleteAudit(${a.id})" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;">
-        <i class="fas fa-trash"></i>
-         </button>
         hideLoader();
     } catch (e) {
         console.error('Scheduler load error:', e);
@@ -51,16 +48,6 @@ async function loadSchedulerData() {
         const d = new Date();
         d.setDate(d.getDate() + 14);
         startCountdown(d);
-    }
-}
-
-async function deleteAudit(id) {
-    try {
-        await deleteScheduledAudit(id);
-        showToast('success', 'Deleted', 'Audit removed successfully');
-        await loadScheduledAudits();
-    } catch(e) {
-        showToast('error', 'Failed', 'Could not delete audit');
     }
 }
 
