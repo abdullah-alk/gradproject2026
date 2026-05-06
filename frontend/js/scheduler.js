@@ -23,15 +23,21 @@ async function loadSchedulerData() {
         }
 // edit here 
         const audits = await getScheduledAudits();
-   if (audits && audits.length > 0) {
-      startCountdown(new Date(audits[0].date));
-     } else if (stats.next_audit_date) {
-      startCountdown(new Date(stats.next_audit_date));
+    if (audits && audits.length > 0) {
+    const res = await fetch('https://gradproject2026-production-821d.up.railway.app/api/audit/sessions/scheduled', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+       });
+    const rawAudits = await res.json();
+    if (rawAudits && rawAudits.length > 0) {
+        startCountdown(new Date(rawAudits[0].scheduled_next_audit || rawAudits[0].date));
+    }
+      } else if (stats.next_audit_date) {
+    startCountdown(new Date(stats.next_audit_date));
       } else {
-      const d = new Date();
-      d.setDate(d.getDate() + daysRec);
-      startCountdown(d);
-     }
+    const d = new Date();
+    d.setDate(d.getDate() + daysRec);
+    startCountdown(d);
+    }
        
 
         await loadScheduledAudits();
