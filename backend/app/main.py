@@ -612,6 +612,13 @@ async def start_audit_session(data: dict = Body(...)):
         mode = data.get("mode", "audit")
 
         next_audit = datetime.now() + timedelta(days=30)
+        cur.execute(
+    "SELECT id FROM audit_sessions WHERE user_id = %s AND scheduled_next_audit = %s AND status = 'scheduled'",
+    (user_id, scheduled_date)
+    )
+    if cur.fetchone():
+    raise HTTPException(status_code=400, detail="This date is already scheduled")
+
 
         cur.execute(
             """
