@@ -1084,13 +1084,6 @@ async def schedule_audit_endpoint(data: dict = Body(...), current_user: dict = D
         user_id = current_user["id"]
 
         cur.execute(
-        "SELECT id FROM audit_sessions WHERE user_id = %s AND scheduled_next_audit = %s AND status = 'scheduled'",
-        (user_id, scheduled_date)
-        )
-       if cur.fetchone():
-       raise HTTPException(status_code=400, detail="This date is already scheduled")
-
-        cur.execute(
             """
             INSERT INTO audit_sessions
             (user_id, mode, status, scheduled_next_audit, scope, assigned_auditor, created_at)
