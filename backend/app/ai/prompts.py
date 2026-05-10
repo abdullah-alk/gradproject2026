@@ -23,13 +23,14 @@ Your task is to generate EXACTLY 10 deep-dive audit questions based on the speci
 **Output Format:**
 [
   {{
-    "question": "Does the [Specific Entity/Tool/Policy] meet the [Specific Requirement] as stated in the text?",
+    "question": "Does the [Specific Entity/Tool/Policy] [Specific Action/Requirement]?",
     "category": "Documentation / Governance / Technical Controls / Process & Monitoring / Implementation / Compliance",
     "expected_evidence": "Specific artifact mentioned in the text"
   }}
 ]
 
 **FINAL CHECK:** If a question could apply to a different control, it is TOO GENERIC. Rewrite it to include specific details from the provided context.
+**STRICT PROHIBITION:** NEVER mention control IDs, control numbers, or phrases like "as stated in CONTROL_ID", "as required by CONTROL_ID", or "as per this control" inside any question. Questions must stand alone without referencing any control number.
 """
 
 # AUDIT_QUESTION_GENERATION_PROMPT = """
