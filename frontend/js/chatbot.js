@@ -1,17 +1,18 @@
 // ================================================================
-// CyberGuard ECC Chatbot - INTEGRATED API VERSION (v10.0)
+// CyberGuard ECC Chatbot - FINAL COMPLETE EDITION (v8.8)
+// Includes: Mode Separation, Scoring, Recommendations, and Persistence
 // ================================================================
 
-// --- 1. Variables & State Management ---
 let currentMode = 'audit', 
     currentControlId = null, 
+    currentControlDbId = null, 
     currentQuestions = [], 
     currentQuestionIndex = 0, 
     selectedControlInfo = null, 
     currentSessionId = null, 
     auditAnswers = [];
 
-let chatHistory = {}; // الذاكرة لفصل الـ Audit عن الـ Guide
+let chatHistory = {};
 
 const eccDomains = [
     { id: '1-1', title: 'Cybersecurity Strategy', subControls: ['1-1-1', '1-1-2', '1-1-3'] },
@@ -26,59 +27,87 @@ const eccDomains = [
     { id: '1-10', title: 'Awareness and Training Program', subControls: ['1-10-1', '1-10-2', '1-10-3-1', '1-10-3-2', '1-10-3-3', '1-10-3-4', '1-10-4-1', '1-10-4-2', '1-10-4-3', '1-10-5'] }
 ];
 
-// --- 2. Initialization ---
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
     loadUserToSidebar();
     renderControlBrowser();
-    
-    // Mode Switchers
     document.getElementById('audit-mode-btn')?.addEventListener('click', () => setMode('audit'));
     document.getElementById('guide-mode-btn')?.addEventListener('click', () => setMode('guide'));
-    
-    // Chat Inputs
     document.getElementById('send-btn')?.addEventListener('click', handleUserMessage);
     document.getElementById('user-query')?.addEventListener('keypress', e => { if (e.key === 'Enter') handleUserMessage(); });
-
     addClearChatButton();
 });
 
-// --- 3. Mode & Selection Logic ---
+// --- وظيفة إنهاء التقييم وعرض النتائج ---
+async function finishAudit() {
+    const total = auditAnswers.length;
+    const yes = auditAnswers.filter(a => a.answer === 'yes').length;
+    const partial = auditAnswers.filter(a => a.answer === 'partial').length;
+    const no = auditAnswers.filter(a => a.answer === 'no').length;
+    
+    // حساب النتيجة (Yes=100%, Partial=50%, No=0%)
+    const score = Math.round(((yes * 1 + partial * 0.5) / total) * 100);
+    const status = score >= 90 ? 'Compliant' : score >= 50 ? 'Partial' : 'Non-Compliant';
 
+    appendMsg('ai', `
+        <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 20px; margin-top: 10px;">
+            <h4 style="color: #10b981; margin-bottom: 15px;"><i class="fas fa-clipboard-check"></i> Assessment Complete</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px;">
+                    <small style="color: var(--text-muted); display: block;">Final Score</small>
+                    <strong style="font-size: 18px; color: var(--accent-primary);">${score}%</strong>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px;">
+                    <small style="color: var(--text-muted); display: block;">Status</small>
+                    <strong style="font-size: 14px; color: ${getDotColor(status)};">${status}</strong>
+                </div>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary);">Summary: ${yes} Yes, ${partial} Partial, ${no} No.</p>
+            <button onclick="showSubControlOptions(selectedControlInfo)" style="margin-top: 15px; width: 100%; padding: 10px; background: var(--accent-primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Assess Another Sub-Control</button>
+        </div>
+    `);
+
+    // حفظ النتائج في النظام
+    saveProgress(currentControlId, status, score);
+}
+
+async function finishGuide() {
+    appendMsg('ai', `<i class="fas fa-magic fa-spin"></i> Analyzing your answers to generate customized guidance...`);
+    showTyping();
+    const answersStr = auditAnswers.map((a, i) => `Q${i+1}: ${a.question} -> ${a.answer.toUpperCase()}`).join('\n');
+    
+    try {
+        const r = await getAIRecommendations(currentControlId, answersStr);
+        hideTyping();
+        if (r?.answer) {
+            appendMsg('ai', `
+                <div style="border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 20px; background: rgba(139, 92, 246, 0.05);">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <i class="fas fa-lightbulb" style="color: #8b5cf6; font-size: 20px;"></i>
+                        <strong style="color: #8b5cf6;">Strategic Recommendations</strong>
+                    </div>
+                    <div style="font-size: 13px; line-height: 1.6;">${r.answer.replace(/\n/g, '<br>')}</div>
+                    <button onclick="showSubControlOptions(selectedControlInfo)" style="margin-top: 15px; width: 100%; padding: 10px; border: 1px solid #8b5cf6; background: transparent; color: #8b5cf6; border-radius: 8px; cursor: pointer;">Return to List</button>
+                </div>
+            `);
+        }
+    } catch (e) { hideTyping(); }
+}
+
+// --- حفظ التقدم ---
+async function saveProgress(ctrlId, status, score) {
+    const res = JSON.parse(localStorage.getItem('audit_results') || '{}'); res[ctrlId] = status;
+    localStorage.setItem('audit_results', JSON.stringify(res));
+    updateDot(ctrlId, status);
+    updateRightPanel(ctrlId);
+    if (currentSessionId) { try { await completeAuditSession(currentSessionId, status, score); } catch (e) { } }
+}
+
+// --- بقية الكود الأساسي (مع التأكد من المفاتيح المركبة) ---
 function setMode(m) {
     if (currentMode === m) return;
-    saveToHistory();
-    currentMode = m;
-    
-    // UI Update
-    document.getElementById('audit-mode-btn')?.classList.toggle('active', m === 'audit');
-    document.getElementById('guide-mode-btn')?.classList.toggle('active', m === 'guide');
-    
     if (currentControlId) {
-        loadFromHistory(`${currentMode}_${currentControlId}`);
-    }
-}
-
-async function selectControl(ctrl, el) {
-    saveToHistory();
-    
-    document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
-    if (el) el.classList.add('selected');
-    
-    currentControlId = ctrl.id;
-    selectedControlInfo = ctrl;
-    
-    document.getElementById('current-control-id').textContent = ctrl.id;
-    document.getElementById('current-control-name').textContent = ctrl.title;
-    
-    loadFromHistory(`${currentMode}_${ctrl.id}`);
-    updateRightPanel(ctrl.id);
-}
-
-function saveToHistory() {
-    if (currentControlId) {
-        const key = `${currentMode}_${currentControlId}`;
-        chatHistory[key] = {
+        chatHistory[`${currentMode}_${currentControlId}`] = {
             html: document.getElementById('chat-messages').innerHTML,
             index: currentQuestionIndex,
             questions: [...currentQuestions],
@@ -86,259 +115,202 @@ function saveToHistory() {
             sessionId: currentSessionId
         };
     }
+    currentMode = m;
+    document.getElementById('audit-mode-btn')?.classList.toggle('active', m === 'audit');
+    document.getElementById('guide-mode-btn')?.classList.toggle('active', m === 'guide');
+    if (selectedControlInfo) selectControl(selectedControlInfo, document.querySelector(`.control-item[data-id="${currentControlId}"]`));
 }
 
-function loadFromHistory(key) {
+async function selectControl(ctrl, el) {
+    if (currentControlId) {
+        chatHistory[`${currentMode}_${currentControlId}`] = {
+            html: document.getElementById('chat-messages').innerHTML,
+            index: currentQuestionIndex,
+            questions: [...currentQuestions],
+            answers: [...auditAnswers],
+            sessionId: currentSessionId
+        };
+    }
+    document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
+    if (el) el.classList.add('selected');
+    currentControlId = ctrl.id;
+    selectedControlInfo = ctrl;
+    const currentKey = `${currentMode}_${ctrl.id}`;
     const cm = document.getElementById('chat-messages');
-    if (chatHistory[key] && chatHistory[key].html) {
-        const h = chatHistory[key];
+    
+    if (chatHistory[currentKey] && chatHistory[currentKey].html) {
+        const h = chatHistory[currentKey];
         cm.innerHTML = h.html;
         currentQuestionIndex = h.index;
         currentQuestions = h.questions;
         auditAnswers = h.answers;
         currentSessionId = h.sessionId;
-        
         if (currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
-            if (!document.querySelector('.session-recovery-box')) offerSessionOptions(selectedControlInfo);
+            if (!document.querySelector('.session-recovery-box')) offerSessionOptions(ctrl);
         }
     } else {
         cm.innerHTML = '';
         currentQuestionIndex = 0; currentQuestions = []; auditAnswers = [];
-        showSubControlOptions(selectedControlInfo);
+        showSubControlOptions(ctrl);
     }
+    document.getElementById('current-control-id').textContent = ctrl.id;
+    document.getElementById('current-control-name').textContent = ctrl.title;
+    updateRightPanel(ctrl.id);
     cm.scrollTop = cm.scrollHeight;
 }
-
-// --- 4. Audit/Guide Flow ---
 
 function showAuditQ() {
     if (currentQuestionIndex >= currentQuestions.length) {
-        currentMode === 'audit' ? finishAudit() : finishGuide();
+        if (currentMode === 'audit') finishAudit(); else finishGuide();
         return;
     }
-    
     const q = currentQuestions[currentQuestionIndex];
-    const cm = document.getElementById('chat-messages');
-    const m = document.createElement('div');
+    const cm = document.getElementById('chat-messages'), m = document.createElement('div'); 
     m.className = 'message ai-message';
     m.innerHTML = `
-        <div class="message-content">
-            <div class="message-header">${currentMode === 'audit' ? 'AI Auditor' : 'AI Guide'}</div>
-            <div class="message-text">
-                <p style="font-size:11px; color:var(--text-muted)">Question ${currentQuestionIndex + 1} of ${currentQuestions.length}</p>
-                <p style="margin:10px 0">${q.q}</p>
-                <div class="btn-group" style="display:flex; gap:8px;">
-                    <button onclick="answerAudit('yes', this)" style="border:1px solid #10b981; color:#10b981; background:none; padding:6px 15px; border-radius:6px; cursor:pointer;">Yes</button>
-                    <button onclick="answerAudit('partial', this)" style="border:1px solid #f59e0b; color:#f59e0b; background:none; padding:6px 15px; border-radius:6px; cursor:pointer;">Partial</button>
-                    <button onclick="answerAudit('no', this)" style="border:1px solid #ef4444; color:#ef4444; background:none; padding:6px 15px; border-radius:6px; cursor:pointer;">No</button>
-                </div>
-            </div>
-        </div>`;
-    cm.appendChild(m);
-    cm.scrollTop = cm.scrollHeight;
-}
-
-async function answerAudit(ans, btn) {
-    disableAllPreviousButtons();
-    appendMsg('user', ans.toUpperCase());
-    
-    const currentQText = currentQuestions[currentQuestionIndex].q;
-    auditAnswers.push({ question: currentQText, answer: ans });
-    
-    // API Call: Save Answer
-    if (currentSessionId) {
-        saveAuditAnswer(currentSessionId, currentQText, ans);
-    }
-    
-    currentQuestionIndex++;
-    saveToHistory();
-    setTimeout(showAuditQ, 600);
-}
-
-async function finishAudit() {
-    const total = auditAnswers.length;
-    const yes = auditAnswers.filter(a => a.answer === 'yes').length;
-    const partial = auditAnswers.filter(a => a.answer === 'partial').length;
-    const score = Math.round(((yes + (partial * 0.5)) / total) * 100);
-    const status = score >= 90 ? 'Compliant' : score >= 50 ? 'Partial' : 'Non-Compliant';
-
-    appendMsg('ai', `
-        <div style="background:rgba(16,185,129,0.05); padding:15px; border-radius:10px; border:1px solid #10b98133;">
-            <h4 style="color:#10b981">Assessment Complete</h4>
-            <p>Status: <strong>${status}</strong> | Compliance: <strong>${score}%</strong></p>
-            <button onclick="showSubControlOptions(selectedControlInfo)" style="width:100%; margin-top:10px; padding:8px; background:#10b981; color:white; border:none; border-radius:5px; cursor:pointer;">New Sub-Control</button>
-        </div>
-    `);
-    
-    // API Call: Complete Session
-    if (currentSessionId) {
-        await completeAuditSession(currentSessionId, status, score);
-    }
-    
-    // Update Sidebar UI
-    const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
-    res[currentControlId] = status;
-    localStorage.setItem('audit_results', JSON.stringify(res));
-    renderControlBrowser();
-}
-
-async function finishGuide() {
-    showTyping();
-    const answersText = auditAnswers.map(a => `${a.question}: ${a.answer}`).join('\n');
-    try {
-        // API Call: Recommendations
-        const r = await getAIRecommendations(currentControlId, answersText);
-        hideTyping();
-        appendMsg('ai', `
-            <div style="background:rgba(139,92,246,0.05); padding:15px; border-radius:10px; border:1px solid #8b5cf633;">
-                <h4 style="color:#8b5cf6"><i class="fas fa-lightbulb"></i> AI Recommendations</h4>
-                <div style="font-size:13px; line-height:1.6; margin:10px 0;">${r.answer || r.recommendations || 'Analysis complete.'}</div>
-                <button onclick="showSubControlOptions(selectedControlInfo)" style="width:100%; padding:8px; background:#8b5cf6; color:white; border:none; border-radius:5px; cursor:pointer;">Continue</button>
-            </div>
-        `);
-    } catch (e) { hideTyping(); }
-}
-
-// --- 5. UI Helpers ---
-
-function appendMsg(role, txt) {
-    const cm = document.getElementById('chat-messages');
-    const m = document.createElement('div');
-    m.className = `message ${role}-message`;
-    const title = role === 'ai' ? (currentMode === 'audit' ? 'AI Auditor' : 'AI Guide') : 'User';
-    m.innerHTML = `<div class="message-content"><div class="message-header">${title}</div><div class="message-text">${txt}</div></div>`;
-    cm.appendChild(m);
-    cm.scrollTop = cm.scrollHeight;
-    saveToHistory();
-}
-
-function showSubControlOptions(ctrl) {
-    const btns = ctrl.subControls.map(subId => `
-        <button onclick="initiateSubAudit('${subId}')" style="padding:8px 12px; border:1px solid var(--accent-primary); background:none; color:var(--accent-primary); border-radius:6px; cursor:pointer; font-weight:600;">Control ${subId}</button>
-    `).join('');
-    
-    const cm = document.getElementById('chat-messages');
-    const m = document.createElement('div');
-    m.className = 'message ai-message';
-    m.innerHTML = `<div class="message-content"><div class="message-header">${currentMode === 'audit' ? 'AI Auditor' : 'AI Guide'}</div><div class="message-text">Please select a sub-control for ${currentMode}:<br><div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">${btns}</div></div></div>`;
-    cm.appendChild(m);
-    cm.scrollTop = cm.scrollHeight;
-}
-
-async function initiateSubAudit(subId) {
-    disableAllPreviousButtons();
-    appendMsg('user', `Starting: ${subId}`);
-    showTyping();
-    try {
-        // API Call: Questions
-        const r = await generateAuditQuestions(subId, currentMode);
-        hideTyping();
-        if (r.questions) {
-            currentQuestions = r.questions.map(q => ({ q: q.question || q }));
-            currentQuestionIndex = 0;
-            const user = getCurrentUserLocal();
-            // API Call: Session Start
-            const s = await startAuditSessionAPI(user.id || user.user_id, subId, currentMode);
-            currentSessionId = s.session_id || s.id;
-            showAuditQ();
-        }
-    } catch (e) { hideTyping(); }
-}
-
-function showTyping() {
-    const cm = document.getElementById('chat-messages');
-    const t = document.createElement('div'); t.id = 'typing'; t.className = 'message ai-message';
-    t.innerHTML = '<div class="message-text"><i class="fas fa-ellipsis-h fa-beat"></i> AI is thinking...</div>';
-    cm.appendChild(t); cm.scrollTop = cm.scrollHeight;
-}
-function hideTyping() { document.getElementById('typing')?.remove(); }
-
-function disableAllPreviousButtons() {
-    document.querySelectorAll('.ai-message button').forEach(b => {
-        b.disabled = true; b.style.opacity = '0.5'; b.style.pointerEvents = 'none';
-    });
-}
-
-function renderControlBrowser() {
-    const b = document.getElementById('control-browser');
-    if (!b) return;
-    const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
-    b.innerHTML = eccDomains.map(c => `
-        <div class="control-item" onclick='selectControl(${JSON.stringify(c)}, this)' data-id="${c.id}">
-            <span class="status-dot" style="background:${getDotColor(res[c.id])}"></span>
-            <div class="control-info">
-                <strong>${c.id}</strong>
-                <span>${c.title}</span>
-            </div>
-        </div>
-    `).join('');
-}
-
-function getDotColor(s) {
-    if (s === 'Compliant') return '#10b981';
-    if (s === 'Partial') return '#f59e0b';
-    if (s === 'Non-Compliant') return '#ef4444';
-    return '#475569';
-}
-
-function updateRightPanel(id) {
-    const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
-    const status = res[id] || 'Not Started';
-    const el = document.getElementById('current-control-status');
-    if (el) {
-        el.textContent = status;
-        el.className = `badge badge-${status.replace(' ', '').toLowerCase()}`;
-    }
-}
-
-async function handleUserMessage() {
-    const input = document.getElementById('user-query'), text = input.value.trim();
-    if (!text || !currentControlId) return;
-    appendMsg('user', text); input.value = ''; showTyping();
-    try {
-        // API Call: Process Message
-        const r = await callAIEngine(text, currentControlId, currentMode);
-        hideTyping();
-        appendMsg('ai', r.answer || r.response || 'I processed your request.');
-    } catch (e) { hideTyping(); }
-}
-
-function addClearChatButton() {
-    const header = document.querySelector('.chat-header');
-    if (!header || document.getElementById('clear-btn')) return;
-    const btn = document.createElement('button');
-    btn.id = 'clear-btn'; btn.innerHTML = '<i class="fas fa-trash"></i>';
-    btn.style = "background:none; border:none; color:var(--text-muted); cursor:pointer;";
-    btn.onclick = () => {
-        if(confirm('Clear history?')) {
-            chatHistory[`${currentMode}_${currentControlId}`] = null;
-            document.getElementById('chat-messages').innerHTML = '';
-            showSubControlOptions(selectedControlInfo);
-        }
-    };
-    header.appendChild(btn);
-}
-
-function offerSessionOptions(ctrl) {
-    const cm = document.getElementById('chat-messages');
-    const m = document.createElement('div');
-    m.className = 'message ai-message session-recovery-box';
-    m.innerHTML = `
-        <div class="message-content"><div class="message-text">
-            <p>Restore pending <strong>${currentMode}</strong> session for ${ctrl.id}?</p>
-            <div style="margin-top:10px">
-                <button onclick="resumeSession()" style="background:var(--accent-primary); color:white; border:none; padding:5px 15px; border-radius:4px; cursor:pointer;">Resume</button>
-                <button onclick="resetToSubControls()" style="background:none; border:1px solid #333; color:white; margin-left:10px; padding:5px 15px; border-radius:4px; cursor:pointer;">New</button>
+        <div class="message-content"><div class="message-header">${currentMode === 'audit' ? 'AI Auditor' : 'AI Guide'}</div><div class="message-text">
+            <p style="font-size:11px;color:var(--text-muted)">Question ${currentQuestionIndex+1} of ${currentQuestions.length}</p>
+            <p style="margin:10px 0">${q.q}</p>
+            <div style="display:flex;gap:10px;">
+                <button onclick="answerAudit('yes',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #10b981;color:#10b981;cursor:pointer;background:none">Yes</button>
+                <button onclick="answerAudit('partial',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #f59e0b;color:#f59e0b;cursor:pointer;background:none">Partial</button>
+                <button onclick="answerAudit('no',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #ef4444;color:#ef4444;cursor:pointer;background:none">No</button>
             </div>
         </div></div>`;
     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
 }
 
-function resumeSession() {
-    document.querySelector('.session-recovery-box')?.remove();
-    showAuditQ();
+async function answerAudit(ans, btn) {
+    btn.closest('div').querySelectorAll('button').forEach(b => { 
+        b.disabled = true; b.style.opacity = '0.35';
+    });
+    btn.style.opacity = '1';
+    appendMsg('user', ans.toUpperCase());
+    auditAnswers.push({ question: currentQuestions[currentQuestionIndex].q, answer: ans });
+    currentQuestionIndex++; 
+    if (currentControlId) {
+        const key = `${currentMode}_${currentControlId}`;
+        if (!chatHistory[key]) chatHistory[key] = {};
+        chatHistory[key].index = currentQuestionIndex;
+        chatHistory[key].html = document.getElementById('chat-messages').innerHTML;
+    }
+    setTimeout(showAuditQ, 500);
 }
 
+function appendMsg(role, txt) {
+    const cm = document.getElementById('chat-messages'), m = document.createElement('div');
+    m.className = `message ${role}-message`;
+    const aiTitle = currentMode === 'audit' ? 'AI Auditor' : 'AI Guide';
+    m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? aiTitle : 'User'}</div><div class="message-text">${txt}</div></div>`;
+    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+    if (currentControlId) {
+        const key = `${currentMode}_${currentControlId}`;
+        if (!chatHistory[key]) chatHistory[key] = { index: 0, html: "" };
+        chatHistory[key].html = cm.innerHTML;
+    }
+}
+
+// --- دوال المساعدة العامة ---
+function updateDot(id, status) {
+    const item = document.querySelector(`.control-item[data-id="${id}"]`);
+    if (item) { const dot = item.querySelector('.status-dot'); if (dot) dot.style.background = getDotColor(status); }
+}
+
+function getDotColor(s) {
+    return s === 'Compliant' ? '#10b981' : s === 'Non-Compliant' ? '#ef4444' : s === 'Partial' ? '#f59e0b' : '#475569';
+}
+
+function updateRightPanel(id) {
+    const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
+    const status = res[id] || 'Not Started';
+    const sl = document.getElementById('current-control-status');
+    if (sl) { sl.textContent = status; sl.className = `badge ${status === 'Compliant' ? 'badge-success' : status === 'Non-Compliant' ? 'badge-danger' : 'badge-warning'}`; }
+}
+
+function renderControlBrowser() {
+    const b = document.getElementById('control-browser'); if (!b) return;
+    const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
+    b.innerHTML = '';
+    eccDomains.forEach(c => {
+        const item = document.createElement('div'); 
+        item.className = 'control-item'; item.dataset.id = c.id;
+        item.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><span class="status-dot" style="width:8px;height:8px;border-radius:50%;background:${getDotColor(res[c.id] || '')}"></span><small style="color:var(--accent-primary);font-weight:600">${c.id}</small></div><div style="font-weight:500;font-size:13px;margin-top:3px;padding-left:16px">${c.title}</div>`;
+        item.onclick = () => selectControl(c, item); b.appendChild(item);
+    });
+}
+
+function showSubControlOptions(ctrl) {
+    const cm = document.getElementById('chat-messages');
+    const m = document.createElement('div'); m.className = 'message ai-message';
+    let btns = ctrl.subControls.map(subId => `<button onclick="initiateSubAudit('${subId}')" style="padding:10px 14px; border:1px solid var(--accent-primary); background:rgba(6,182,212,0.05); color:var(--accent-primary); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; margin-bottom:5px;">Control ${subId}</button>`).join('');
+    m.innerHTML = `<div class="message-content"><div class="message-header">${currentMode === 'audit' ? 'AI Auditor' : 'AI Guide'}</div><div class="message-text"><p style="margin-bottom:15px">Select a sub-control to begin:</p><div style="display:flex; gap:10px; flex-wrap:wrap;">${btns}</div></div></div>`;
+    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+}
+
+async function initiateSubAudit(subId) {
+    disableAllPreviousButtons(); appendMsg('user', `Starting: ${subId}`); showTyping();
+    try {
+        const r = await generateAuditQuestions(subId, currentMode); hideTyping();
+        if (r.questions?.length > 0) {
+            currentQuestions = r.questions.map(q => ({ q: q.question, ev: q.expected_evidence || '', cat: subId }));
+            currentQuestionIndex = 0; const u = getCurrentUserLocal();
+            const s = await startAuditSessionAPI(u.id, null, currentMode);
+            if(s?.session_id) currentSessionId = s.session_id;
+            setTimeout(showAuditQ, 400);
+        }
+    } catch (e) { hideTyping(); }
+}
+
+function offerSessionOptions(ctrl) {
+    const cm = document.getElementById('chat-messages');
+    const m = document.createElement('div'); m.className = 'message ai-message session-recovery-box';
+    m.innerHTML = `<div class="message-content"><div class="message-header">Restore</div><div class="message-text"><p>Found a <strong>${currentMode}</strong> session for ${ctrl.id}.</p><button onclick="resumeAudit()" style="background:var(--accent-primary);color:white;padding:8px 15px;border-radius:6px;cursor:pointer;border:none;margin-top:10px">Resume</button><button onclick="resetToSubControls()" style="background:none;color:white;padding:8px 15px;border-radius:6px;cursor:pointer;border:1px solid #333;margin-left:10px">Restart</button></div></div>`;
+    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+}
+
+function resumeAudit() {
+    disableAllPreviousButtons();
+    const box = document.querySelector('.session-recovery-box'); if (box) box.remove();
+    if (currentControlId) chatHistory[`${currentMode}_${currentControlId}`].html = document.getElementById('chat-messages').innerHTML;
+    setTimeout(showAuditQ, 400);
+}
+
+function resetToSubControls() {
+    const box = document.querySelector('.session-recovery-box'); if (box) box.remove();
+    showSubControlOptions(selectedControlInfo);
+}
+
+function addClearChatButton() {
+    const chatHeader = document.querySelector('.chat-header');
+    if (!chatHeader || document.getElementById('clear-chat-btn')) return;
+    const clearBtn = document.createElement('button'); clearBtn.id = 'clear-chat-btn'; clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear';
+    clearBtn.style = "background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;";
+    clearBtn.onclick = clearCurrentChat; chatHeader.appendChild(clearBtn);
+}
+
+function clearCurrentChat() {
+    if (!currentControlId) return;
+    if (confirm(`Clear ${currentMode} for ${currentControlId}?`)) {
+        chatHistory[`${currentMode}_${currentControlId}`] = null; document.getElementById('chat-messages').innerHTML = ''; showSubControlOptions(selectedControlInfo);
+    }
+}
+
+function disableAllPreviousButtons() { document.querySelectorAll('.ai-message button').forEach(btn => { btn.disabled = true; btn.style.opacity = '0.5'; btn.removeAttribute('onclick'); }); }
+
+function showTyping() {
+    const cm = document.getElementById('chat-messages');
+    const ind = document.createElement('div'); ind.id = 'typing-indicator'; ind.className = 'message ai-message';
+    ind.innerHTML = `<div class="message-content"><div class="message-text"><i class="fas fa-ellipsis-h fa-beat"></i> Working...</div></div>`;
+    cm.appendChild(ind); cm.scrollTop = cm.scrollHeight;
+}
+function hideTyping() { const el = document.getElementById('typing-indicator'); if (el) el.remove(); }
+
+async function handleUserMessage() {
+    const input = document.getElementById('user-query'), text = input.value.trim();
+    if (!text || !currentControlId) return;
+    appendMsg('user', text); input.value = ''; showTyping();
+    try { const r = await callAIEngine(text, currentControlId, currentMode); hideTyping(); appendMsg('ai', r.answer || 'No response.'); } catch (e) { hideTyping(); }
+}
 
 
 // // ================================================================
