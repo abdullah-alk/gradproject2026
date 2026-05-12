@@ -85,9 +85,9 @@ function renderControlBrowser() {
     });
 }
 
-// Session Recovery Edition
+// Stable Session Recovery
 async function selectControl(ctrl, el) {
-    // 1. حفظ الحالة الحالية للضابط الذي سنغادره
+    // 1. حفظ الحالة الحالية للضابط "قبل" الانتقال
     if (currentControlId) {
         chatHistory[currentControlId] = {
             html: document.getElementById('chat-messages').innerHTML,
@@ -98,7 +98,6 @@ async function selectControl(ctrl, el) {
         };
     }
 
-    // 2. تحديث الواجهة
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
     currentControlId = ctrl.id;
@@ -106,21 +105,22 @@ async function selectControl(ctrl, el) {
 
     const cm = document.getElementById('chat-messages');
     
-    // 3. التحقق مما إذا كان هناك جلسة سابقة لهذا الضابط
+    // 2. استعادة المحادثة
     if (chatHistory[ctrl.id] && chatHistory[ctrl.id].html) {
         const history = chatHistory[ctrl.id];
         cm.innerHTML = history.html;
         
-        // استعادة البيانات البرمجية
+        // استعادة البيانات الخلفية
         currentQuestionIndex = history.index;
         currentQuestions = history.questions;
         auditAnswers = history.answers;
         currentSessionId = history.sessionId;
 
-        // 4. عرض خيارات الاستمرارية (الخيار الثالث الذي اقترحته)
-        offerSessionOptions(ctrl);
+        // 3. منع تكرار رسالة الاستعادة (إذا كانت موجودة لا تضفها مرة أخرى)
+        if (!document.querySelector('.session-recovery-box')) {
+            offerSessionOptions(ctrl);
+        }
     } else {
-        // جلسة جديدة تماماً
         cm.innerHTML = '';
         currentQuestionIndex = 0;
         currentQuestions = [];
@@ -137,21 +137,19 @@ async function selectControl(ctrl, el) {
 function offerSessionOptions(ctrl) {
     const cm = document.getElementById('chat-messages');
     const m = document.createElement('div');
-    m.className = 'message ai-message session-recovery';
+    // أضفنا class محدد لمنع التكرار
+    m.className = 'message ai-message session-recovery-box'; 
     m.innerHTML = `
         <div class="message-content">
             <div class="message-header">Session Recovery</div>
             <div class="message-text" style="border-left: 3px solid var(--accent-primary); background: rgba(6,182,212,0.05); padding: 15px;">
-                <p style="margin-bottom:12px; font-weight:600;">Welcome back! How would you like to proceed with Control ${ctrl.id}?</p>
+                <p style="margin-bottom:12px; font-weight:600;">Welcome back! Control ${ctrl.id} has an active session. Proceed?</p>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button onclick="resumeAudit()" style="padding:8px 15px; background:var(--accent-primary); color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px;">
-                        <i class="fas fa-play" style="margin-right:5px;"></i> Resume Assessment
+                    <button onclick="resumeAudit()" style="padding:8px 15px; background:var(--accent-primary); color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:700;">
+                        <i class="fas fa-play"></i> Resume
                     </button>
-                    <button onclick="showSubControlOptions(selectedControlInfo)" style="padding:8px 15px; background:rgba(255,255,255,0.1); color:white; border:1px solid var(--border-color); border-radius:6px; cursor:pointer; font-size:12px;">
-                        <i class="fas fa-list" style="margin-right:5px;"></i> Show Sub-controls
-                    </button>
-                    <button onclick="clearCurrentChat()" style="padding:8px 15px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2); border-radius:6px; cursor:pointer; font-size:12px;">
-                        <i class="fas fa-sync" style="margin-right:5px;"></i> Reset & Start Over
+                    <button onclick="resetToSubControls()" style="padding:8px 15px; background:rgba(255,255,255,0.1); color:white; border:1px solid var(--border-color); border-radius:6px; cursor:pointer; font-size:12px;">
+                        <i class="fas fa-list"></i> Sub-controls
                     </button>
                 </div>
             </div>
@@ -161,16 +159,61 @@ function offerSessionOptions(ctrl) {
 }
 
 function resumeAudit() {
-    // إزالة رسالة خيارات الاستعادة لجمالية الشات
-    const recoveryMsg = document.querySelector('.session-recovery');
-    if (recoveryMsg) recoveryMsg.remove();
+    // إزالة رسالة الخيارات تماماً من الـ HTML ومن الذاكرة المحفوظة
+    const box = document.querySelector('.session-recovery-box');
+    if (box) box.remove();
     
-    if (currentQuestions.length > 0) {
-        appendMsg('ai', `Resuming where you left off... (Question ${currentQuestionIndex + 1})`);
-        setTimeout(showAuditQ, 600);
+    // حفظ المحادثة بعد حذف زر الاستعادة لكي لا يظهر مجدداً
+    if (currentControlId) {
+        chatHistory[currentControlId].html = document.getElementById('chat-messages').innerHTML;
+    }
+
+    if (currentQuestions && currentQuestions.length > 0) {
+        // التحقق من الوصول لنهاية الأسئلة
+        if (currentQuestionIndex < currentQuestions.length) {
+            appendMsg('ai', `Resuming assessment... Section: <strong>${currentQuestions[currentQuestionIndex].cat}</strong>`);
+            setTimeout(showAuditQ, 600);
+        } else {
+            appendMsg('ai', "Assessment for this section is complete.");
+            showSubControlOptions(selectedControlInfo);
+        }
     } else {
         showSubControlOptions(selectedControlInfo);
     }
+}
+
+function resetToSubControls() {
+    const box = document.querySelector('.session-recovery-box');
+    if (box) box.remove();
+    showSubControlOptions(selectedControlInfo);
+}
+
+// تعديل بسيط على answerAudit لضمان تحديث الـ Index فوراً
+async function answerAudit(ans, btn) {
+    btn.closest('div').querySelectorAll('button').forEach(b => { b.disabled = true; b.style.opacity = '0.35'; }); 
+    btn.style.opacity = '1';
+    
+    const labels = { yes: 'Yes — Verified', partial: 'Partial — Needs improvement', no: 'No — Gap' };
+    appendMsg('user', labels[ans]);
+    
+    auditAnswers.push({ 
+        question: currentQuestions[currentQuestionIndex].q, 
+        answer: ans, 
+        evidence: currentQuestions[currentQuestionIndex].ev 
+    });
+
+    // زيادة العداد "قبل" الحفظ لضمان الانتقال للسؤال التالي عند الاستعادة
+    currentQuestionIndex++; 
+    
+    if (currentControlId) {
+        chatHistory[currentControlId].index = currentQuestionIndex;
+    }
+
+    if (currentSessionId) {
+        try { await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex-1].q, ans); } catch (e) { }
+    }
+    
+    setTimeout(showAuditQ, 500);
 }
 
 function showSubControlOptions(ctrl) {
