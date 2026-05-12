@@ -1,5 +1,5 @@
-// CyberGuard ECC Chatbot v8.2 - FULL UPDATED EDITION
-// Features: Chat Persistence, Clear Chat, English UI, and Full Control Logic
+// CyberGuard ECC Chatbot v8.5 - Stable Final Version
+// Features: Persistence, Recovery Logic, Button Disabling, and UI fixes.
 
 let currentMode = 'audit', 
     currentControlId = null, 
@@ -10,8 +10,7 @@ let currentMode = 'audit',
     currentSessionId = null, 
     auditAnswers = [];
 
-// Dictionary to store chat history per control during the session
-let chatHistory = {};
+let chatHistory = {}; // Stores state per controlId
 
 const eccDomains = [
     { id: '1-1', title: 'Cybersecurity Strategy', subControls: ['1-1-1', '1-1-2', '1-1-3'] },
@@ -36,47 +35,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('send-btn')?.addEventListener('click', handleUserMessage);
     document.getElementById('user-query')?.addEventListener('keypress', e => { if (e.key === 'Enter') handleUserMessage(); });
 
-    const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
-    Object.entries(res).forEach(([id, s]) => updateDot(id, s));
-
     addClearChatButton();
 });
 
-// --- UI Helper: Clear Chat Button ---
+// --- UI Helpers ---
 function addClearChatButton() {
     const chatHeader = document.querySelector('.chat-header');
     if (document.getElementById('clear-chat-btn')) return;
     const clearBtn = document.createElement('button');
     clearBtn.id = 'clear-chat-btn';
     clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Chat';
-    clearBtn.style = "background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: 0.2s;";
+    clearBtn.style = "background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600;";
     clearBtn.onclick = clearCurrentChat;
     chatHeader.appendChild(clearBtn);
 }
 
 function clearCurrentChat() {
     if (!currentControlId) return;
-    if (confirm(`Are you sure you want to clear chat history for ${currentControlId}?`)) {
+    if (confirm(`Clear history for ${currentControlId}?`)) {
         chatHistory[currentControlId] = null;
         document.getElementById('chat-messages').innerHTML = '';
         showSubControlOptions(selectedControlInfo);
     }
 }
 
-function getDotColor(s) {
-    return s === 'Compliant' ? '#10b981' : s === 'Non-Compliant' ? '#ef4444' : s === 'Partial' ? '#f59e0b' : '#475569';
+function disableAllPreviousButtons() {
+    const cm = document.getElementById('chat-messages');
+    const allButtons = cm.querySelectorAll('.ai-message button');
+    allButtons.forEach(btn => {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+        btn.removeAttribute('onclick'); 
+    });
 }
 
 function renderControlBrowser() {
-    const b = document.getElementById('control-browser'); if (!b) return; b.innerHTML = '';
+    const b = document.getElementById('control-browser'); if (!b) return;
     const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
+    b.innerHTML = '';
     eccDomains.forEach(c => {
         const item = document.createElement('div'); 
         item.className = 'control-item'; 
         item.dataset.id = c.id;
         item.innerHTML = `
             <div style="display:flex;align-items:center;gap:8px">
-                <span class="status-dot" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${getDotColor(res[c.id] || '')}"></span>
+                <span class="status-dot" style="width:8px;height:8px;border-radius:50%;background:${getDotColor(res[c.id] || '')}"></span>
                 <small style="color:var(--accent-primary);font-weight:600">${c.id}</small>
             </div>
             <div style="font-weight:500;font-size:13px;margin-top:3px;padding-left:16px">${c.title}</div>`;
@@ -85,9 +89,8 @@ function renderControlBrowser() {
     });
 }
 
-// Stable Session Recovery
 async function selectControl(ctrl, el) {
-    // 1. حفظ الحالة الحالية للضابط "قبل" الانتقال (فقط إذا كانت هناك محادثة فعلاً)
+    // Save current before switching
     if (currentControlId) {
         chatHistory[currentControlId] = {
             html: document.getElementById('chat-messages').innerHTML,
@@ -105,32 +108,19 @@ async function selectControl(ctrl, el) {
 
     const cm = document.getElementById('chat-messages');
     
-    // 2. استعادة المحادثة
     if (chatHistory[ctrl.id] && chatHistory[ctrl.id].html) {
-        const history = chatHistory[ctrl.id];
-        cm.innerHTML = history.html;
-        
-        // استعادة البيانات الخلفية
-        currentQuestionIndex = history.index;
-        currentQuestions = history.questions;
-        auditAnswers = history.answers;
-        currentSessionId = history.sessionId;
+        const h = chatHistory[ctrl.id];
+        cm.innerHTML = h.html;
+        currentQuestionIndex = h.index;
+        currentQuestions = h.questions;
+        auditAnswers = h.answers;
+        currentSessionId = h.sessionId;
 
-        // 3. التعديل الجوهري: تظهر رسالة الاستعادة فقط إذا كانت هناك أسئلة (أي بدأ التقييم فعلاً)
-        // ولم نصل بعد إلى نهاية الأسئلة
-        const hasActiveQuestions = currentQuestions && currentQuestions.length > 0;
-        const isNotFinished = currentQuestionIndex < currentQuestions.length;
-
-        if (hasActiveQuestions && isNotFinished) {
-            if (!document.querySelector('.session-recovery-box')) {
-                offerSessionOptions(ctrl);
-            }
-        } else if (!hasActiveQuestions) {
-            // إذا كانت المحادثة تحتوي فقط على قائمة الضوابط (بدون أسئلة)، لا نفعل شيئاً إضافياً
-            // لأن القائمة موجودة أصلاً في الـ HTML المستعاد
+        // Only offer recovery if there are questions and it's not finished
+        if (currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
+            if (!document.querySelector('.session-recovery-box')) offerSessionOptions(ctrl);
         }
     } else {
-        // جلسة جديدة كلياً
         cm.innerHTML = '';
         currentQuestionIndex = 0;
         currentQuestions = [];
@@ -144,175 +134,39 @@ async function selectControl(ctrl, el) {
     cm.scrollTop = cm.scrollHeight;
 }
 
-function offerSessionOptions(ctrl) {
-    const cm = document.getElementById('chat-messages');
-    const m = document.createElement('div');
-    // أضفنا class محدد لمنع التكرار
-    m.className = 'message ai-message session-recovery-box'; 
-    m.innerHTML = `
-        <div class="message-content">
-            <div class="message-header">Session Recovery</div>
-            <div class="message-text" style="border-left: 3px solid var(--accent-primary); background: rgba(6,182,212,0.05); padding: 15px;">
-                <p style="margin-bottom:12px; font-weight:600;">Welcome back! Control ${ctrl.id} has an active session. Proceed?</p>
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button onclick="resumeAudit()" style="padding:8px 15px; background:var(--accent-primary); color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:700;">
-                        <i class="fas fa-play"></i> Resume
-                    </button>
-                    <button onclick="resetToSubControls()" style="padding:8px 15px; background:rgba(255,255,255,0.1); color:white; border:1px solid var(--border-color); border-radius:6px; cursor:pointer; font-size:12px;">
-                        <i class="fas fa-list"></i> Sub-controls
-                    </button>
-                </div>
-            </div>
-        </div>`;
-    cm.appendChild(m);
-    cm.scrollTop = cm.scrollHeight;
-}
-
-function resumeAudit() {
-    disableAllPreviousButtons();
-    
-    // 1. إزالة مربع خيارات الاستعادة
-    const box = document.querySelector('.session-recovery-box');
-    if (box) box.remove();
-    
-    // 2. معالجة تكرار السؤال: نبحث عن آخر بلوك سؤال معروض ونعطله (Disabled)
-    // لكي لا يظن المستخدم أنه يحتاج للإجابة عليه مرة أخرى
-    const allMessages = document.querySelectorAll('.ai-message');
-    if (allMessages.length > 0) {
-        const lastMsg = allMessages[allMessages.length - 1];
-        const buttons = lastMsg.querySelectorAll('button');
-        if (buttons.length > 0) {
-            buttons.forEach(b => {
-                b.disabled = true;
-                b.style.opacity = '0.5';
-                b.style.cursor = 'not-allowed';
-            });
-        }
-    }
-
-    // 3. التحقق من العداد والأسئلة
-    if (currentQuestions && currentQuestions.length > 0) {
-        if (currentQuestionIndex < currentQuestions.length) {
-            // إضافة رسالة توضيحية بسيطة
-            appendMsg('ai', `<i class="fas fa-fast-forward"></i> Resuming assessment... Moving to <strong>Question ${currentQuestionIndex + 1}</strong>`);
-            
-            // 4. استدعاء السؤال التالي فعلياً
-            setTimeout(showAuditQ, 800);
-        } else {
-            appendMsg('ai', "Assessment for this section is already complete.");
-            showSubControlOptions(selectedControlInfo);
-        }
-    } else {
-        showSubControlOptions(selectedControlInfo);
-    }
-
-    // 5. تحديث الذاكرة لضمان عدم حفظ أزرار "الاستعادة" المحذوفة
-    if (currentControlId) {
-        chatHistory[currentControlId].html = document.getElementById('chat-messages').innerHTML;
-    }
-}
-
-function resetToSubControls() {
-    disableAllPreviousButtons();
-    
-    const box = document.querySelector('.session-recovery-box');
-    if (box) box.remove();
-    showSubControlOptions(selectedControlInfo);
-}
-
-// تعديل بسيط على answerAudit لضمان تحديث الـ Index فوراً
-async function answerAudit(ans, btn) {
-    // 1. تعطيل الأزرار فور الضغط لمنع الإجابة المتكررة
-    btn.closest('div').querySelectorAll('button').forEach(b => { 
-        b.disabled = true; 
-        b.style.opacity = '0.35'; 
-    }); 
-    btn.style.opacity = '1';
-    
-    const labels = { yes: 'Yes — Verified', partial: 'Partial — Needs improvement', no: 'No — Gap' };
-    appendMsg('user', labels[ans]); // هذه الدالة تضيف رسالة المستخدم للشاشة
-    
-    // 2. تسجيل الإجابة في المصفوفة
-    auditAnswers.push({ 
-        question: currentQuestions[currentQuestionIndex].q, 
-        answer: ans, 
-        evidence: currentQuestions[currentQuestionIndex].ev 
-    });
-
-    // 3. تحديث العداد للانتقال للسؤال التالي
-    currentQuestionIndex++; 
-    
-    // 4. تحديث الذاكرة (Index + HTML) لضمان عدم تكرار السؤال عند العودة
-    if (currentControlId && chatHistory[currentControlId]) {
-        chatHistory[currentControlId].index = currentQuestionIndex;
-        // حفظ شكل الشات الحالي (بأزرار معطلة) لضمان نظافة المحادثة عند الاستعادة
-        chatHistory[currentControlId].html = document.getElementById('chat-messages').innerHTML;
-    }
-
-    // 5. الحفظ في قاعدة البيانات عبر الـ API
-    if (currentSessionId) {
-        // نستخدم index-1 لأننا قمنا بزيادة العداد للتو
-        try { await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex-1].q, ans); } catch (e) { console.error("API Save Error"); }
-    }
-    
-    // 6. الانتقال للسؤال التالي بعد نصف ثانية
-    setTimeout(showAuditQ, 500);
-}
-
 function showSubControlOptions(ctrl) {
     const cm = document.getElementById('chat-messages');
     const m = document.createElement('div');
     m.className = 'message ai-message';
-    
-    let buttonsHtml = ctrl.subControls.map(subId => `
-        <button onclick="initiateSubAudit('${subId}')" style="padding:10px 14px; border:1px solid var(--accent-primary); background:rgba(6,182,212,0.05); color:var(--accent-primary); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; transition:0.2s; margin-bottom:5px;">
+    let btns = ctrl.subControls.map(subId => `
+        <button onclick="initiateSubAudit('${subId}')" style="padding:10px 14px; border:1px solid var(--accent-primary); background:rgba(6,182,212,0.05); color:var(--accent-primary); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; margin-bottom:5px;">
             Control ${subId}
         </button>
     `).join('');
 
-    m.innerHTML = `
-        <div class="message-content">
-            <div class="message-header">AI Compliance Assistant</div>
-            <div class="message-text">
-                <p style="margin-bottom:15px">You have selected Main Control <strong>${ctrl.id}</strong>. Please select the specific sub-control you wish to assess now:</p>
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">${buttonsHtml}</div>
-            </div>
-        </div>`;
+    m.innerHTML = `<div class="message-content"><div class="message-header">AI Assistant</div><div class="message-text">
+        <p style="margin-bottom:15px">Select a sub-control for <strong>${ctrl.id}</strong>:</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">${btns}</div></div></div>`;
     cm.appendChild(m);
     cm.scrollTop = cm.scrollHeight;
-    chatHistory[currentControlId] = cm.innerHTML; // Save state
 }
 
 async function initiateSubAudit(subId) {
     disableAllPreviousButtons();
-    
-    appendMsg('user', `Starting assessment for sub-control: ${subId}`);
+    appendMsg('user', `Starting assessment: ${subId}`);
     showTyping();
-    
     try {
         const r = await generateAuditQuestions(subId, currentMode);
         hideTyping();
-        
         if (r.questions?.length > 0) {
-            currentQuestions = r.questions.map(q => ({
-                q: q.question, 
-                ev: q.expected_evidence || '', 
-                cat: subId 
-            }));
+            currentQuestions = r.questions.map(q => ({ q: q.question, ev: q.expected_evidence || '', cat: subId }));
             currentQuestionIndex = 0;
-            
             const u = getCurrentUserLocal();
-            const s = await startAuditSessionAPI(u.id, currentControlDbId, currentMode);
+            const s = await startAuditSessionAPI(u.id, null, currentMode);
             if(s?.session_id) currentSessionId = s.session_id;
-
             setTimeout(showAuditQ, 400);
-        } else {
-            appendMsg('ai', `<span style="color:#ef4444">Could not generate questions for ${subId}.</span>`);
         }
-    } catch (e) {
-        hideTyping();
-        appendMsg('ai', `<span style="color:#ef4444">AI engine is currently unavailable.</span>`);
-    }
+    } catch (e) { hideTyping(); }
 }
 
 function showAuditQ() {
@@ -320,140 +174,93 @@ function showAuditQ() {
         if (currentMode === 'audit') finishAudit(); else finishGuide();
         return;
     }
-    const q = currentQuestions[currentQuestionIndex], 
-          num = currentQuestionIndex + 1, 
-          total = currentQuestions.length, 
-          pct = Math.round((currentQuestionIndex / total) * 100);
-          
+    const q = currentQuestions[currentQuestionIndex];
     const cm = document.getElementById('chat-messages'), m = document.createElement('div'); 
     m.className = 'message ai-message';
     m.innerHTML = `
-        <div class="message-content">
-            <div class="message-header">AI Auditor</div>
-            <div class="message-text">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-                    <span style="font-size:11px;color:var(--text-muted)">Question ${num} of ${total}</span>
-                    <span style="font-size:11px;background:rgba(6,182,212,0.1);color:var(--accent-primary);padding:2px 10px;border-radius:20px">${q.cat}</span>
-                </div>
-                <div style="width:100%;height:3px;background:rgba(255,255,255,0.07);border-radius:2px;margin-bottom:14px">
-                    <div style="height:100%;width:${pct}%;background:var(--accent-primary);border-radius:2px;transition:width 0.4s"></div>
-                </div>
-                <p style="font-size:14px;line-height:1.7;margin-bottom:${q.ev ? '8px' : '16px'}">${q.q}</p>
-                ${q.ev ? `<p style="font-size:11px;color:#f59e0b;margin-bottom:16px"><i class="fas fa-paperclip" style="margin-right:4px"></i>Required evidence: ${q.ev}</p>` : ''}
-                <div style="display:flex;gap:10px;flex-wrap:wrap">
-                    <button onclick="answerAudit('yes',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #10b981;background:rgba(16,185,129,0.08);color:#10b981;cursor:pointer;font-size:13px;font-weight:600;">Yes</button>
-                    <button onclick="answerAudit('partial',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #f59e0b;background:rgba(245,158,11,0.08);color:#f59e0b;cursor:pointer;font-size:13px;font-weight:600;">Partial</button>
-                    <button onclick="answerAudit('no',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #ef4444;background:rgba(239,68,68,0.08);color:#ef4444;cursor:pointer;font-size:13px;font-weight:600;">No</button>
-                </div>
+        <div class="message-content"><div class="message-header">AI Auditor</div><div class="message-text">
+            <p style="font-size:11px;color:var(--text-muted)">Question ${currentQuestionIndex+1} of ${currentQuestions.length}</p>
+            <p style="margin:10px 0">${q.q}</p>
+            <div style="display:flex;gap:10px;">
+                <button onclick="answerAudit('yes',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #10b981;color:#10b981;cursor:pointer;background:none">Yes</button>
+                <button onclick="answerAudit('partial',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #f59e0b;color:#f59e0b;cursor:pointer;background:none">Partial</button>
+                <button onclick="answerAudit('no',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #ef4444;color:#ef4444;cursor:pointer;background:none">No</button>
             </div>
-        </div>`;
+        </div></div>`;
     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
-    chatHistory[currentControlId] = cm.innerHTML; // Update history
 }
 
 async function answerAudit(ans, btn) {
-    // 1. تعطيل الأزرار فور الضغط لمنع الإجابة المتكررة
     btn.closest('div').querySelectorAll('button').forEach(b => { 
-        b.disabled = true; 
-        b.style.opacity = '0.35'; 
-    }); 
-    btn.style.opacity = '1';
-    
-    const labels = { yes: 'Yes — Verified', partial: 'Partial — Needs improvement', no: 'No — Gap' };
-    appendMsg('user', labels[ans]); // هذه الدالة تضيف رسالة المستخدم للشاشة
-    
-    // 2. تسجيل الإجابة في المصفوفة
-    auditAnswers.push({ 
-        question: currentQuestions[currentQuestionIndex].q, 
-        answer: ans, 
-        evidence: currentQuestions[currentQuestionIndex].ev 
+        b.disabled = true; b.style.opacity = '0.35'; b.style.cursor = 'not-allowed';
     });
-
-    // 3. تحديث العداد للانتقال للسؤال التالي
+    btn.style.opacity = '1';
+    appendMsg('user', ans.toUpperCase());
+    
+    auditAnswers.push({ question: currentQuestions[currentQuestionIndex].q, answer: ans });
     currentQuestionIndex++; 
     
-    // 4. تحديث الذاكرة (Index + HTML) لضمان عدم تكرار السؤال عند العودة
     if (currentControlId && chatHistory[currentControlId]) {
         chatHistory[currentControlId].index = currentQuestionIndex;
-        // حفظ شكل الشات الحالي (بأزرار معطلة) لضمان نظافة المحادثة عند الاستعادة
         chatHistory[currentControlId].html = document.getElementById('chat-messages').innerHTML;
     }
 
-    // 5. الحفظ في قاعدة البيانات عبر الـ API
     if (currentSessionId) {
-        // نستخدم index-1 لأننا قمنا بزيادة العداد للتو
-        try { await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex-1].q, ans); } catch (e) { console.error("API Save Error"); }
+        try { await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex-1].q, ans); } catch (e) {}
     }
-    
-    // 6. الانتقال للسؤال التالي بعد نصف ثانية
     setTimeout(showAuditQ, 500);
 }
 
-async function finishGuide() {
-    appendMsg('ai', `<em style="color:var(--text-muted);font-size:12px">Generating final recommendations...</em>`);
-    showTyping();
-    const answersText = auditAnswers.map((a,i) => `Q${i+1}: "${a.question}" => ${a.answer.toUpperCase()}`).join('\n');
-    try {
-        const r = await getAIRecommendations(currentControlId, answersText);
-        hideTyping();
-        if (r?.answer) {
-            let fmt = r.answer
-                .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#e2e8f0">$1</strong>')
-                .replace(/^#{1,3}\s+(.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#8b5cf6;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(139,92,246,0.2)">$1</div>')
-                .replace(/^(\d+)\.\s+\*\*(.*?)\*\*/gm, '<div style="margin:12px 0 4px;display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(6,182,212,0.15);color:#06b6d4;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">$1</span><strong style="color:#e2e8f0">$2</strong></div>')
-                .replace(/^\s*-\s+\*\*(.*?)\*\*:\s*/gm, '<div style="margin:5px 0 2px;padding-left:16px"><span style="color:#06b6d4;font-weight:600;font-size:12px">▸ $1:</span> ')
-                .replace(/^\s*-\s+/gm, '<div style="margin:3px 0;padding-left:16px;color:var(--text-secondary);font-size:13px">• ')
-                .replace(/\n\n/g, '</div><br>')
-                .replace(/\n/g, '</div>');
-            appendMsg('ai', `
-                <div style="border:1px solid rgba(139,92,246,0.3);border-radius:12px;padding:24px;background:rgba(139,92,246,0.05)">
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(139,92,246,0.2)">
-                        <i class="fas fa-lightbulb" style="color:#8b5cf6;font-size:20px"></i>
-                        <strong style="font-size:16px;color:#8b5cf6">Recommendations — ${currentControlId}</strong>
-                    </div>
-                    <div style="font-size:13.5px;line-height:1.9;color:var(--text-secondary)">${fmt}</div>
-                </div>`);
-            await saveAuditRecommendation({control_id:currentControlDbId, session_id:currentSessionId, gap_description:answersText, recommendation:r.answer, priority:'High'});
-        }
-    } catch(e) { hideTyping(); }
-    setTimeout(() => showSubControlOptions(selectedControlInfo), 3000);
+function offerSessionOptions(ctrl) {
+    const cm = document.getElementById('chat-messages');
+    const m = document.createElement('div');
+    m.className = 'message ai-message session-recovery-box';
+    m.innerHTML = `
+        <div class="message-content"><div class="message-header">Recovery</div><div class="message-text">
+            <p>Active session found for ${ctrl.id}.</p>
+            <button onclick="resumeAudit()" style="background:var(--accent-primary);color:white;padding:8px 15px;border-radius:6px;cursor:pointer;border:none;margin-top:10px">Resume Assessment</button>
+            <button onclick="resetToSubControls()" style="background:none;color:white;padding:8px 15px;border-radius:6px;cursor:pointer;border:1px solid #333;margin-left:10px">Restart</button>
+        </div></div>`;
+    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
 }
 
-// --- Background Logic (Storage & Helpers) ---
-
-async function saveAuditToEvidence(controlId, controlTitle, status, score, answers, sessionId, controlDbId) {
-    try {
-        const transcript = answers.map((a, i) => {
-            const icon = a.answer === 'yes' ? '✅' : a.answer === 'partial' ? '⚠️' : '❌';
-            return `Q${i + 1}: ${a.question}\nAnswer: ${icon} ${a.answer.toUpperCase()}`;
-        }).join('\n\n');
-        const summary = `AUDIT REPORT — Control ${controlId}\nStatus: ${status}\nScore: ${score}%\n\n${transcript}`;
-        await apiRequest('/evidence/save-audit', {
-            method: 'POST',
-            body: JSON.stringify({ control_id: controlDbId, session_id: sessionId, title: `Audit Report — ${controlId}`, description: summary, status: status, score: score, answers: answers, evidence_type: 'audit_session' })
-        });
-    } catch (e) {
-        const sessions = JSON.parse(localStorage.getItem('audit_sessions_log') || '[]');
-        sessions.unshift({ control_id: controlId, status, score, created_at: new Date().toISOString() });
-        localStorage.setItem('audit_sessions_log', JSON.stringify(sessions.slice(0, 50)));
+function resumeAudit() {
+    disableAllPreviousButtons();
+    const box = document.querySelector('.session-recovery-box');
+    if (box) box.remove();
+    
+    if (currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
+        appendMsg('ai', `Resuming at Question ${currentQuestionIndex + 1}...`);
+        setTimeout(showAuditQ, 600);
+    } else {
+        showSubControlOptions(selectedControlInfo);
     }
 }
 
-async function saveProgress(ctrlId, status, score, yes, partial, no, total) {
-    const res = JSON.parse(localStorage.getItem('audit_results') || '{}'); res[ctrlId] = status;
-    localStorage.setItem('audit_results', JSON.stringify(res));
-    const sco = JSON.parse(localStorage.getItem('audit_scores') || '{}'); sco[ctrlId] = score;
-    localStorage.setItem('audit_scores', JSON.stringify(sco));
-    updateDot(ctrlId, status);
-    updateRightPanel(ctrlId);
-    try { await updateControlStatus(ctrlId, status); } catch (e) { }
-    if (currentSessionId) { try { await completeAuditSession(currentSessionId, status, score); } catch (e) { } }
+function resetToSubControls() {
+    const box = document.querySelector('.session-recovery-box');
+    if (box) box.remove();
+    showSubControlOptions(selectedControlInfo);
+}
+
+function appendMsg(role, txt) {
+    const cm = document.getElementById('chat-messages'), m = document.createElement('div');
+    m.className = `message ${role}-message`;
+    m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
+    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+    if (currentControlId) {
+        if (!chatHistory[currentControlId]) chatHistory[currentControlId] = { html: "" };
+        chatHistory[currentControlId].html = cm.innerHTML;
+    }
+}
+
+function getDotColor(s) {
+    return s === 'Compliant' ? '#10b981' : s === 'Non-Compliant' ? '#ef4444' : s === 'Partial' ? '#f59e0b' : '#475569';
 }
 
 function updateRightPanel(id) {
-    const res = JSON.parse(localStorage.getItem('audit_results') || '{}'), 
-          sco = JSON.parse(localStorage.getItem('audit_scores') || '{}');
-    const status = res[id] || 'Not Started', score = sco[id];
+    const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
+    const status = res[id] || 'Not Started';
     const sl = document.getElementById('current-control-status');
     if (sl) {
         sl.textContent = status;
@@ -461,62 +268,549 @@ function updateRightPanel(id) {
     }
 }
 
-function updateDot(id, status) {
-    const item = document.querySelector(`.control-item[data-id="${id}"]`);
-    if (item) {
-        const dot = item.querySelector('.status-dot');
-        if (dot) dot.style.background = getDotColor(status);
-    }
-}
-
 function setMode(m) {
     currentMode = m;
     document.getElementById('audit-mode-btn').classList.toggle('active', m === 'audit');
     document.getElementById('guide-mode-btn').classList.toggle('active', m === 'guide');
-    if (selectedControlInfo) selectControl(selectedControlInfo, document.querySelector(`.control-item[data-id="${currentControlId}"]`));
 }
 
-function appendMsg(role, txt) {
-    const cm = document.getElementById('chat-messages'), m = document.createElement('div');
-    m.className = `message ${role}-message`;
-    m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
-    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
-    if (currentControlId) chatHistory[currentControlId] = cm.innerHTML; // Update history
+function showTyping() {
+    const cm = document.getElementById('chat-messages');
+    const ind = document.createElement('div'); ind.id = 'typing-indicator'; ind.className = 'message ai-message';
+    ind.innerHTML = `<div class="message-content"><div class="message-text"><i class="fas fa-ellipsis-h fa-beat"></i> AI is working...</div></div>`;
+    cm.appendChild(ind); cm.scrollTop = cm.scrollHeight;
 }
-
-function appendMsg(role, txt) {
-    const cm = document.getElementById('chat-messages'), m = document.createElement('div');
-    m.className = `message ${role}-message`;
-    m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
-    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
-    if (currentControlId) chatHistory[currentControlId] = cm.innerHTML; // Update history
-}
-
 function hideTyping() { const el = document.getElementById('typing-indicator'); if (el) el.remove(); }
 
 async function handleUserMessage() {
     const input = document.getElementById('user-query'), text = input.value.trim();
-    if (!text) return; if (!currentControlId) { appendMsg('ai', 'Please select a control first.'); return; }
+    if (!text || !currentControlId) return;
     appendMsg('user', text); input.value = ''; showTyping();
     try {
         const r = await callAIEngine(text, currentControlId, currentMode);
-        hideTyping(); appendMsg('ai', r.answer || 'No specific guidance available.');
-    } catch (e) { hideTyping(); appendMsg('ai', 'Error connecting to AI engine.'); }
+        hideTyping(); appendMsg('ai', r.answer || 'No response.');
+    } catch (e) { hideTyping(); }
 }
 
-function disableAllPreviousButtons() {
-    const cm = document.getElementById('chat-messages');
-    // نبحث عن جميع الأزرار داخل رسائل الـ AI فقط
-    const allButtons = cm.querySelectorAll('.ai-message button');
+// // CyberGuard ECC Chatbot v8.2 - FULL UPDATED EDITION
+// // Features: Chat Persistence, Clear Chat, English UI, and Full Control Logic
+
+// let currentMode = 'audit', 
+//     currentControlId = null, 
+//     currentControlDbId = null, 
+//     currentQuestions = [], 
+//     currentQuestionIndex = 0, 
+//     selectedControlInfo = null, 
+//     currentSessionId = null, 
+//     auditAnswers = [];
+
+// // Dictionary to store chat history per control during the session
+// let chatHistory = {};
+
+// const eccDomains = [
+//     { id: '1-1', title: 'Cybersecurity Strategy', subControls: ['1-1-1', '1-1-2', '1-1-3'] },
+//     { id: '1-2', title: 'Cybersecurity Management', subControls: ['1-2-1', '1-2-2', '1-2-3'] },
+//     { id: '1-3', title: 'Cybersecurity Policies and Procedures', subControls: ['1-3-1', '1-3-2', '1-3-3', '1-3-4'] },
+//     { id: '1-4', title: 'Cybersecurity Roles and Responsibilities', subControls: ['1-4-1', '1-4-2'] },
+//     { id: '1-5', title: 'Cybersecurity Risk Management', subControls: ['1-5-1', '1-5-2', '1-5-3-1', '1-5-3-2', '1-5-3-3', '1-5-3-4', '1-5-4'] },
+//     { id: '1-6', title: 'Cybersecurity in IT Project Management', subControls: ['1-6-1', '1-6-2-1', '1-6-2-2', '1-6-3-1', '1-6-3-2', '1-6-3-3', '1-6-3-4', '1-6-3-5', '1-6-4'] },
+//     { id: '1-7', title: 'Compliance with Standards & Laws', subControls: ['1-7-1', '1-7-2'] },
+//     { id: '1-8', title: 'Periodical Review and Audit', subControls: ['1-8-1', '1-8-2', '1-8-3'] },
+//     { id: '1-9', title: 'Cybersecurity in Human Resources', subControls: ['1-9-1', '1-9-2', '1-9-3-1', '1-9-3-2', '1-9-4-1', '1-9-4-2', '1-9-5', '1-9-6'] },
+//     { id: '1-10', title: 'Awareness and Training Program', subControls: ['1-10-1', '1-10-2', '1-10-3-1', '1-10-3-2', '1-10-3-3', '1-10-3-4', '1-10-4-1', '1-10-4-2', '1-10-4-3', '1-10-5'] }
+// ];
+
+// document.addEventListener('DOMContentLoaded', async () => {
+//     if (!checkAuth()) return;
+//     loadUserToSidebar();
+//     renderControlBrowser();
     
-    allButtons.forEach(btn => {
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
-        btn.style.cursor = 'not-allowed';
-        // إزالة خاصية onclick لضمان عدم التفاعل نهائياً
-        btn.removeAttribute('onclick'); 
-    });
-}
+//     document.getElementById('audit-mode-btn').addEventListener('click', () => setMode('audit'));
+//     document.getElementById('guide-mode-btn').addEventListener('click', () => setMode('guide'));
+//     document.getElementById('send-btn')?.addEventListener('click', handleUserMessage);
+//     document.getElementById('user-query')?.addEventListener('keypress', e => { if (e.key === 'Enter') handleUserMessage(); });
+
+//     const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
+//     Object.entries(res).forEach(([id, s]) => updateDot(id, s));
+
+//     addClearChatButton();
+// });
+
+// // --- UI Helper: Clear Chat Button ---
+// function addClearChatButton() {
+//     const chatHeader = document.querySelector('.chat-header');
+//     if (document.getElementById('clear-chat-btn')) return;
+//     const clearBtn = document.createElement('button');
+//     clearBtn.id = 'clear-chat-btn';
+//     clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Chat';
+//     clearBtn.style = "background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: 0.2s;";
+//     clearBtn.onclick = clearCurrentChat;
+//     chatHeader.appendChild(clearBtn);
+// }
+
+// function clearCurrentChat() {
+//     if (!currentControlId) return;
+//     if (confirm(`Are you sure you want to clear chat history for ${currentControlId}?`)) {
+//         chatHistory[currentControlId] = null;
+//         document.getElementById('chat-messages').innerHTML = '';
+//         showSubControlOptions(selectedControlInfo);
+//     }
+// }
+
+// function getDotColor(s) {
+//     return s === 'Compliant' ? '#10b981' : s === 'Non-Compliant' ? '#ef4444' : s === 'Partial' ? '#f59e0b' : '#475569';
+// }
+
+// function renderControlBrowser() {
+//     const b = document.getElementById('control-browser'); if (!b) return; b.innerHTML = '';
+//     const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
+//     eccDomains.forEach(c => {
+//         const item = document.createElement('div'); 
+//         item.className = 'control-item'; 
+//         item.dataset.id = c.id;
+//         item.innerHTML = `
+//             <div style="display:flex;align-items:center;gap:8px">
+//                 <span class="status-dot" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${getDotColor(res[c.id] || '')}"></span>
+//                 <small style="color:var(--accent-primary);font-weight:600">${c.id}</small>
+//             </div>
+//             <div style="font-weight:500;font-size:13px;margin-top:3px;padding-left:16px">${c.title}</div>`;
+//         item.onclick = () => selectControl(c, item);
+//         b.appendChild(item);
+//     });
+// }
+
+// // Stable Session Recovery
+// async function selectControl(ctrl, el) {
+//     // 1. حفظ الحالة الحالية للضابط "قبل" الانتقال (فقط إذا كانت هناك محادثة فعلاً)
+//     if (currentControlId) {
+//         chatHistory[currentControlId] = {
+//             html: document.getElementById('chat-messages').innerHTML,
+//             index: currentQuestionIndex,
+//             questions: currentQuestions,
+//             answers: auditAnswers,
+//             sessionId: currentSessionId
+//         };
+//     }
+
+//     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
+//     el.classList.add('selected');
+//     currentControlId = ctrl.id;
+//     selectedControlInfo = ctrl;
+
+//     const cm = document.getElementById('chat-messages');
+    
+//     // 2. استعادة المحادثة
+//     if (chatHistory[ctrl.id] && chatHistory[ctrl.id].html) {
+//         const history = chatHistory[ctrl.id];
+//         cm.innerHTML = history.html;
+        
+//         // استعادة البيانات الخلفية
+//         currentQuestionIndex = history.index;
+//         currentQuestions = history.questions;
+//         auditAnswers = history.answers;
+//         currentSessionId = history.sessionId;
+
+//         // 3. التعديل الجوهري: تظهر رسالة الاستعادة فقط إذا كانت هناك أسئلة (أي بدأ التقييم فعلاً)
+//         // ولم نصل بعد إلى نهاية الأسئلة
+//         const hasActiveQuestions = currentQuestions && currentQuestions.length > 0;
+//         const isNotFinished = currentQuestionIndex < currentQuestions.length;
+
+//         if (hasActiveQuestions && isNotFinished) {
+//             if (!document.querySelector('.session-recovery-box')) {
+//                 offerSessionOptions(ctrl);
+//             }
+//         } else if (!hasActiveQuestions) {
+//             // إذا كانت المحادثة تحتوي فقط على قائمة الضوابط (بدون أسئلة)، لا نفعل شيئاً إضافياً
+//             // لأن القائمة موجودة أصلاً في الـ HTML المستعاد
+//         }
+//     } else {
+//         // جلسة جديدة كلياً
+//         cm.innerHTML = '';
+//         currentQuestionIndex = 0;
+//         currentQuestions = [];
+//         auditAnswers = [];
+//         showSubControlOptions(ctrl);
+//     }
+
+//     document.getElementById('current-control-id').textContent = ctrl.id;
+//     document.getElementById('current-control-name').textContent = ctrl.title;
+//     updateRightPanel(ctrl.id);
+//     cm.scrollTop = cm.scrollHeight;
+// }
+
+// function offerSessionOptions(ctrl) {
+//     const cm = document.getElementById('chat-messages');
+//     const m = document.createElement('div');
+//     // أضفنا class محدد لمنع التكرار
+//     m.className = 'message ai-message session-recovery-box'; 
+//     m.innerHTML = `
+//         <div class="message-content">
+//             <div class="message-header">Session Recovery</div>
+//             <div class="message-text" style="border-left: 3px solid var(--accent-primary); background: rgba(6,182,212,0.05); padding: 15px;">
+//                 <p style="margin-bottom:12px; font-weight:600;">Welcome back! Control ${ctrl.id} has an active session. Proceed?</p>
+//                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
+//                     <button onclick="resumeAudit()" style="padding:8px 15px; background:var(--accent-primary); color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:700;">
+//                         <i class="fas fa-play"></i> Resume
+//                     </button>
+//                     <button onclick="resetToSubControls()" style="padding:8px 15px; background:rgba(255,255,255,0.1); color:white; border:1px solid var(--border-color); border-radius:6px; cursor:pointer; font-size:12px;">
+//                         <i class="fas fa-list"></i> Sub-controls
+//                     </button>
+//                 </div>
+//             </div>
+//         </div>`;
+//     cm.appendChild(m);
+//     cm.scrollTop = cm.scrollHeight;
+// }
+
+// function resumeAudit() {
+//     disableAllPreviousButtons();
+    
+//     // 1. إزالة مربع خيارات الاستعادة
+//     const box = document.querySelector('.session-recovery-box');
+//     if (box) box.remove();
+    
+//     // 2. معالجة تكرار السؤال: نبحث عن آخر بلوك سؤال معروض ونعطله (Disabled)
+//     // لكي لا يظن المستخدم أنه يحتاج للإجابة عليه مرة أخرى
+//     const allMessages = document.querySelectorAll('.ai-message');
+//     if (allMessages.length > 0) {
+//         const lastMsg = allMessages[allMessages.length - 1];
+//         const buttons = lastMsg.querySelectorAll('button');
+//         if (buttons.length > 0) {
+//             buttons.forEach(b => {
+//                 b.disabled = true;
+//                 b.style.opacity = '0.5';
+//                 b.style.cursor = 'not-allowed';
+//             });
+//         }
+//     }
+
+//     // 3. التحقق من العداد والأسئلة
+//     if (currentQuestions && currentQuestions.length > 0) {
+//         if (currentQuestionIndex < currentQuestions.length) {
+//             // إضافة رسالة توضيحية بسيطة
+//             appendMsg('ai', `<i class="fas fa-fast-forward"></i> Resuming assessment... Moving to <strong>Question ${currentQuestionIndex + 1}</strong>`);
+            
+//             // 4. استدعاء السؤال التالي فعلياً
+//             setTimeout(showAuditQ, 800);
+//         } else {
+//             appendMsg('ai', "Assessment for this section is already complete.");
+//             showSubControlOptions(selectedControlInfo);
+//         }
+//     } else {
+//         showSubControlOptions(selectedControlInfo);
+//     }
+
+//     // 5. تحديث الذاكرة لضمان عدم حفظ أزرار "الاستعادة" المحذوفة
+//     if (currentControlId) {
+//         chatHistory[currentControlId].html = document.getElementById('chat-messages').innerHTML;
+//     }
+// }
+
+// function resetToSubControls() {
+//     disableAllPreviousButtons();
+    
+//     const box = document.querySelector('.session-recovery-box');
+//     if (box) box.remove();
+//     showSubControlOptions(selectedControlInfo);
+// }
+
+// // تعديل بسيط على answerAudit لضمان تحديث الـ Index فوراً
+// async function answerAudit(ans, btn) {
+//     // 1. تعطيل الأزرار فور الضغط لمنع الإجابة المتكررة
+//     btn.closest('div').querySelectorAll('button').forEach(b => { 
+//         b.disabled = true; 
+//         b.style.opacity = '0.35'; 
+//     }); 
+//     btn.style.opacity = '1';
+    
+//     const labels = { yes: 'Yes — Verified', partial: 'Partial — Needs improvement', no: 'No — Gap' };
+//     appendMsg('user', labels[ans]); // هذه الدالة تضيف رسالة المستخدم للشاشة
+    
+//     // 2. تسجيل الإجابة في المصفوفة
+//     auditAnswers.push({ 
+//         question: currentQuestions[currentQuestionIndex].q, 
+//         answer: ans, 
+//         evidence: currentQuestions[currentQuestionIndex].ev 
+//     });
+
+//     // 3. تحديث العداد للانتقال للسؤال التالي
+//     currentQuestionIndex++; 
+    
+//     // 4. تحديث الذاكرة (Index + HTML) لضمان عدم تكرار السؤال عند العودة
+//     if (currentControlId && chatHistory[currentControlId]) {
+//         chatHistory[currentControlId].index = currentQuestionIndex;
+//         // حفظ شكل الشات الحالي (بأزرار معطلة) لضمان نظافة المحادثة عند الاستعادة
+//         chatHistory[currentControlId].html = document.getElementById('chat-messages').innerHTML;
+//     }
+
+//     // 5. الحفظ في قاعدة البيانات عبر الـ API
+//     if (currentSessionId) {
+//         // نستخدم index-1 لأننا قمنا بزيادة العداد للتو
+//         try { await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex-1].q, ans); } catch (e) { console.error("API Save Error"); }
+//     }
+    
+//     // 6. الانتقال للسؤال التالي بعد نصف ثانية
+//     setTimeout(showAuditQ, 500);
+// }
+
+// function showSubControlOptions(ctrl) {
+//     const cm = document.getElementById('chat-messages');
+//     const m = document.createElement('div');
+//     m.className = 'message ai-message';
+    
+//     let buttonsHtml = ctrl.subControls.map(subId => `
+//         <button onclick="initiateSubAudit('${subId}')" style="padding:10px 14px; border:1px solid var(--accent-primary); background:rgba(6,182,212,0.05); color:var(--accent-primary); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; transition:0.2s; margin-bottom:5px;">
+//             Control ${subId}
+//         </button>
+//     `).join('');
+
+//     m.innerHTML = `
+//         <div class="message-content">
+//             <div class="message-header">AI Compliance Assistant</div>
+//             <div class="message-text">
+//                 <p style="margin-bottom:15px">You have selected Main Control <strong>${ctrl.id}</strong>. Please select the specific sub-control you wish to assess now:</p>
+//                 <div style="display:flex; gap:10px; flex-wrap:wrap;">${buttonsHtml}</div>
+//             </div>
+//         </div>`;
+//     cm.appendChild(m);
+//     cm.scrollTop = cm.scrollHeight;
+//     chatHistory[currentControlId] = cm.innerHTML; // Save state
+// }
+
+// async function initiateSubAudit(subId) {
+//     disableAllPreviousButtons();
+    
+//     appendMsg('user', `Starting assessment for sub-control: ${subId}`);
+//     showTyping();
+    
+//     try {
+//         const r = await generateAuditQuestions(subId, currentMode);
+//         hideTyping();
+        
+//         if (r.questions?.length > 0) {
+//             currentQuestions = r.questions.map(q => ({
+//                 q: q.question, 
+//                 ev: q.expected_evidence || '', 
+//                 cat: subId 
+//             }));
+//             currentQuestionIndex = 0;
+            
+//             const u = getCurrentUserLocal();
+//             const s = await startAuditSessionAPI(u.id, currentControlDbId, currentMode);
+//             if(s?.session_id) currentSessionId = s.session_id;
+
+//             setTimeout(showAuditQ, 400);
+//         } else {
+//             appendMsg('ai', `<span style="color:#ef4444">Could not generate questions for ${subId}.</span>`);
+//         }
+//     } catch (e) {
+//         hideTyping();
+//         appendMsg('ai', `<span style="color:#ef4444">AI engine is currently unavailable.</span>`);
+//     }
+// }
+
+// function showAuditQ() {
+//     if (currentQuestionIndex >= currentQuestions.length) {
+//         if (currentMode === 'audit') finishAudit(); else finishGuide();
+//         return;
+//     }
+//     const q = currentQuestions[currentQuestionIndex], 
+//           num = currentQuestionIndex + 1, 
+//           total = currentQuestions.length, 
+//           pct = Math.round((currentQuestionIndex / total) * 100);
+          
+//     const cm = document.getElementById('chat-messages'), m = document.createElement('div'); 
+//     m.className = 'message ai-message';
+//     m.innerHTML = `
+//         <div class="message-content">
+//             <div class="message-header">AI Auditor</div>
+//             <div class="message-text">
+//                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+//                     <span style="font-size:11px;color:var(--text-muted)">Question ${num} of ${total}</span>
+//                     <span style="font-size:11px;background:rgba(6,182,212,0.1);color:var(--accent-primary);padding:2px 10px;border-radius:20px">${q.cat}</span>
+//                 </div>
+//                 <div style="width:100%;height:3px;background:rgba(255,255,255,0.07);border-radius:2px;margin-bottom:14px">
+//                     <div style="height:100%;width:${pct}%;background:var(--accent-primary);border-radius:2px;transition:width 0.4s"></div>
+//                 </div>
+//                 <p style="font-size:14px;line-height:1.7;margin-bottom:${q.ev ? '8px' : '16px'}">${q.q}</p>
+//                 ${q.ev ? `<p style="font-size:11px;color:#f59e0b;margin-bottom:16px"><i class="fas fa-paperclip" style="margin-right:4px"></i>Required evidence: ${q.ev}</p>` : ''}
+//                 <div style="display:flex;gap:10px;flex-wrap:wrap">
+//                     <button onclick="answerAudit('yes',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #10b981;background:rgba(16,185,129,0.08);color:#10b981;cursor:pointer;font-size:13px;font-weight:600;">Yes</button>
+//                     <button onclick="answerAudit('partial',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #f59e0b;background:rgba(245,158,11,0.08);color:#f59e0b;cursor:pointer;font-size:13px;font-weight:600;">Partial</button>
+//                     <button onclick="answerAudit('no',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #ef4444;background:rgba(239,68,68,0.08);color:#ef4444;cursor:pointer;font-size:13px;font-weight:600;">No</button>
+//                 </div>
+//             </div>
+//         </div>`;
+//     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+//     chatHistory[currentControlId] = cm.innerHTML; // Update history
+// }
+
+// async function answerAudit(ans, btn) {
+//     // 1. تعطيل الأزرار فور الضغط لمنع الإجابة المتكررة
+//     btn.closest('div').querySelectorAll('button').forEach(b => { 
+//         b.disabled = true; 
+//         b.style.opacity = '0.35'; 
+//     }); 
+//     btn.style.opacity = '1';
+    
+//     const labels = { yes: 'Yes — Verified', partial: 'Partial — Needs improvement', no: 'No — Gap' };
+//     appendMsg('user', labels[ans]); // هذه الدالة تضيف رسالة المستخدم للشاشة
+    
+//     // 2. تسجيل الإجابة في المصفوفة
+//     auditAnswers.push({ 
+//         question: currentQuestions[currentQuestionIndex].q, 
+//         answer: ans, 
+//         evidence: currentQuestions[currentQuestionIndex].ev 
+//     });
+
+//     // 3. تحديث العداد للانتقال للسؤال التالي
+//     currentQuestionIndex++; 
+    
+//     // 4. تحديث الذاكرة (Index + HTML) لضمان عدم تكرار السؤال عند العودة
+//     if (currentControlId && chatHistory[currentControlId]) {
+//         chatHistory[currentControlId].index = currentQuestionIndex;
+//         // حفظ شكل الشات الحالي (بأزرار معطلة) لضمان نظافة المحادثة عند الاستعادة
+//         chatHistory[currentControlId].html = document.getElementById('chat-messages').innerHTML;
+//     }
+
+//     // 5. الحفظ في قاعدة البيانات عبر الـ API
+//     if (currentSessionId) {
+//         // نستخدم index-1 لأننا قمنا بزيادة العداد للتو
+//         try { await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex-1].q, ans); } catch (e) { console.error("API Save Error"); }
+//     }
+    
+//     // 6. الانتقال للسؤال التالي بعد نصف ثانية
+//     setTimeout(showAuditQ, 500);
+// }
+
+// async function finishGuide() {
+//     appendMsg('ai', `<em style="color:var(--text-muted);font-size:12px">Generating final recommendations...</em>`);
+//     showTyping();
+//     const answersText = auditAnswers.map((a,i) => `Q${i+1}: "${a.question}" => ${a.answer.toUpperCase()}`).join('\n');
+//     try {
+//         const r = await getAIRecommendations(currentControlId, answersText);
+//         hideTyping();
+//         if (r?.answer) {
+//             let fmt = r.answer
+//                 .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#e2e8f0">$1</strong>')
+//                 .replace(/^#{1,3}\s+(.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#8b5cf6;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(139,92,246,0.2)">$1</div>')
+//                 .replace(/^(\d+)\.\s+\*\*(.*?)\*\*/gm, '<div style="margin:12px 0 4px;display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(6,182,212,0.15);color:#06b6d4;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">$1</span><strong style="color:#e2e8f0">$2</strong></div>')
+//                 .replace(/^\s*-\s+\*\*(.*?)\*\*:\s*/gm, '<div style="margin:5px 0 2px;padding-left:16px"><span style="color:#06b6d4;font-weight:600;font-size:12px">▸ $1:</span> ')
+//                 .replace(/^\s*-\s+/gm, '<div style="margin:3px 0;padding-left:16px;color:var(--text-secondary);font-size:13px">• ')
+//                 .replace(/\n\n/g, '</div><br>')
+//                 .replace(/\n/g, '</div>');
+//             appendMsg('ai', `
+//                 <div style="border:1px solid rgba(139,92,246,0.3);border-radius:12px;padding:24px;background:rgba(139,92,246,0.05)">
+//                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(139,92,246,0.2)">
+//                         <i class="fas fa-lightbulb" style="color:#8b5cf6;font-size:20px"></i>
+//                         <strong style="font-size:16px;color:#8b5cf6">Recommendations — ${currentControlId}</strong>
+//                     </div>
+//                     <div style="font-size:13.5px;line-height:1.9;color:var(--text-secondary)">${fmt}</div>
+//                 </div>`);
+//             await saveAuditRecommendation({control_id:currentControlDbId, session_id:currentSessionId, gap_description:answersText, recommendation:r.answer, priority:'High'});
+//         }
+//     } catch(e) { hideTyping(); }
+//     setTimeout(() => showSubControlOptions(selectedControlInfo), 3000);
+// }
+
+// // --- Background Logic (Storage & Helpers) ---
+
+// async function saveAuditToEvidence(controlId, controlTitle, status, score, answers, sessionId, controlDbId) {
+//     try {
+//         const transcript = answers.map((a, i) => {
+//             const icon = a.answer === 'yes' ? '✅' : a.answer === 'partial' ? '⚠️' : '❌';
+//             return `Q${i + 1}: ${a.question}\nAnswer: ${icon} ${a.answer.toUpperCase()}`;
+//         }).join('\n\n');
+//         const summary = `AUDIT REPORT — Control ${controlId}\nStatus: ${status}\nScore: ${score}%\n\n${transcript}`;
+//         await apiRequest('/evidence/save-audit', {
+//             method: 'POST',
+//             body: JSON.stringify({ control_id: controlDbId, session_id: sessionId, title: `Audit Report — ${controlId}`, description: summary, status: status, score: score, answers: answers, evidence_type: 'audit_session' })
+//         });
+//     } catch (e) {
+//         const sessions = JSON.parse(localStorage.getItem('audit_sessions_log') || '[]');
+//         sessions.unshift({ control_id: controlId, status, score, created_at: new Date().toISOString() });
+//         localStorage.setItem('audit_sessions_log', JSON.stringify(sessions.slice(0, 50)));
+//     }
+// }
+
+// async function saveProgress(ctrlId, status, score, yes, partial, no, total) {
+//     const res = JSON.parse(localStorage.getItem('audit_results') || '{}'); res[ctrlId] = status;
+//     localStorage.setItem('audit_results', JSON.stringify(res));
+//     const sco = JSON.parse(localStorage.getItem('audit_scores') || '{}'); sco[ctrlId] = score;
+//     localStorage.setItem('audit_scores', JSON.stringify(sco));
+//     updateDot(ctrlId, status);
+//     updateRightPanel(ctrlId);
+//     try { await updateControlStatus(ctrlId, status); } catch (e) { }
+//     if (currentSessionId) { try { await completeAuditSession(currentSessionId, status, score); } catch (e) { } }
+// }
+
+// function updateRightPanel(id) {
+//     const res = JSON.parse(localStorage.getItem('audit_results') || '{}'), 
+//           sco = JSON.parse(localStorage.getItem('audit_scores') || '{}');
+//     const status = res[id] || 'Not Started', score = sco[id];
+//     const sl = document.getElementById('current-control-status');
+//     if (sl) {
+//         sl.textContent = status;
+//         sl.className = `badge ${status === 'Compliant' ? 'badge-success' : status === 'Non-Compliant' ? 'badge-danger' : 'badge-warning'}`;
+//     }
+// }
+
+// function updateDot(id, status) {
+//     const item = document.querySelector(`.control-item[data-id="${id}"]`);
+//     if (item) {
+//         const dot = item.querySelector('.status-dot');
+//         if (dot) dot.style.background = getDotColor(status);
+//     }
+// }
+
+// function setMode(m) {
+//     currentMode = m;
+//     document.getElementById('audit-mode-btn').classList.toggle('active', m === 'audit');
+//     document.getElementById('guide-mode-btn').classList.toggle('active', m === 'guide');
+//     if (selectedControlInfo) selectControl(selectedControlInfo, document.querySelector(`.control-item[data-id="${currentControlId}"]`));
+// }
+
+// function appendMsg(role, txt) {
+//     const cm = document.getElementById('chat-messages'), m = document.createElement('div');
+//     m.className = `message ${role}-message`;
+//     m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
+//     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+//     if (currentControlId) chatHistory[currentControlId] = cm.innerHTML; // Update history
+// }
+
+// function appendMsg(role, txt) {
+//     const cm = document.getElementById('chat-messages'), m = document.createElement('div');
+//     m.className = `message ${role}-message`;
+//     m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
+//     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+//     if (currentControlId) chatHistory[currentControlId] = cm.innerHTML; // Update history
+// }
+
+// function hideTyping() { const el = document.getElementById('typing-indicator'); if (el) el.remove(); }
+
+// async function handleUserMessage() {
+//     const input = document.getElementById('user-query'), text = input.value.trim();
+//     if (!text) return; if (!currentControlId) { appendMsg('ai', 'Please select a control first.'); return; }
+//     appendMsg('user', text); input.value = ''; showTyping();
+//     try {
+//         const r = await callAIEngine(text, currentControlId, currentMode);
+//         hideTyping(); appendMsg('ai', r.answer || 'No specific guidance available.');
+//     } catch (e) { hideTyping(); appendMsg('ai', 'Error connecting to AI engine.'); }
+// }
+
+// function disableAllPreviousButtons() {
+//     const cm = document.getElementById('chat-messages');
+//     // نبحث عن جميع الأزرار داخل رسائل الـ AI فقط
+//     const allButtons = cm.querySelectorAll('.ai-message button');
+    
+//     allButtons.forEach(btn => {
+//         btn.disabled = true;
+//         btn.style.opacity = '0.5';
+//         btn.style.cursor = 'not-allowed';
+//         // إزالة خاصية onclick لضمان عدم التفاعل نهائياً
+//         btn.removeAttribute('onclick'); 
+//     });
+// }
 
 // // CyberGuard ECC Chatbot v8 - FULL UPDATED EDITION (With New Controls 1-6 to 1-10)
 // // Integration: Hierarchical Flow + Evidence Saving + API Sync + Advanced Recommendations
