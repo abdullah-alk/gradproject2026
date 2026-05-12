@@ -87,12 +87,13 @@ function renderControlBrowser() {
 
 // Stable Session Recovery
 async function selectControl(ctrl, el) {
-    // 1. إنشاء مفتاح فريد يجمع بين المود والضابط
-    const historyKey = `${currentMode}_${currentControlId}`;
+    // 1. تحديد المفتاح الحالي والمفتاح الجديد
+    const oldKey = currentControlId ? `${currentMode}_${currentControlId}` : null;
+    const currentKey = `${currentMode}_${ctrl.id}`;
 
-    // 2. حفظ الحالة الحالية للمود والضابط السابق قبل الانتقال
-    if (currentControlId) {
-        chatHistory[historyKey] = {
+    // 2. حفظ حالة الضابط السابق قبل الانتقال
+    if (oldKey) {
+        chatHistory[oldKey] = {
             html: document.getElementById('chat-messages').innerHTML,
             index: currentQuestionIndex,
             questions: currentQuestions,
@@ -101,6 +102,7 @@ async function selectControl(ctrl, el) {
         };
     }
 
+    // 3. تحديث الواجهة (Sidebar)
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
     currentControlId = ctrl.id;
@@ -108,18 +110,17 @@ async function selectControl(ctrl, el) {
 
     const cm = document.getElementById('chat-messages');
     
-    // 3. محاولة استعادة الجلسة بناءً على المود الحالي والضابط الحالي
-    const currentKey = `${currentMode}_${ctrl.id}`;
-    
+    // 4. استعادة المحادثة أو البدء من جديد
     if (chatHistory[currentKey] && chatHistory[currentKey].html) {
+        // استعادة جلسة موجودة
         const history = chatHistory[currentKey];
         cm.innerHTML = history.html;
-        
         currentQuestionIndex = history.index;
         currentQuestions = history.questions;
         auditAnswers = history.answers;
         currentSessionId = history.sessionId;
 
+        // عرض خيار الاستعادة فقط إذا كان هناك تقييم "غير مكتمل"
         const hasActiveQuestions = currentQuestions && currentQuestions.length > 0;
         const isNotFinished = currentQuestionIndex < currentQuestions.length;
 
@@ -129,14 +130,17 @@ async function selectControl(ctrl, el) {
             }
         }
     } else {
-        // إذا لم توجد جلسة سابقة لهذا "المود" بالتحديد
-        cm.innerHTML = '';
+        // جلسة جديدة تماماً لهذا المود وهذا الضابط
+        cm.innerHTML = ''; 
         currentQuestionIndex = 0;
         currentQuestions = [];
         auditAnswers = [];
+        
+        // إظهار قائمة الضوابط الفرعية فوراً لكي لا يصبح الشات فارغاً
         showSubControlOptions(ctrl);
     }
 
+    // 5. تحديث اللوحة الجانبية اليمنى
     document.getElementById('current-control-id').textContent = ctrl.id;
     document.getElementById('current-control-name').textContent = ctrl.title;
     updateRightPanel(ctrl.id);
