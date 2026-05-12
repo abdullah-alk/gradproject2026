@@ -159,25 +159,54 @@ async function selectControl(ctrl, el) {
     cm.scrollTop = cm.scrollHeight;
 }
 
+// function showAuditQ() {
+//     if (currentQuestionIndex >= currentQuestions.length) {
+//         if (currentMode === 'audit') finishAudit(); else finishGuide();
+//         return;
+//     }
+//     const q = currentQuestions[currentQuestionIndex];
+//     const cm = document.getElementById('chat-messages'), m = document.createElement('div'); 
+//     m.className = 'message ai-message';
+//     m.innerHTML = `
+//         <div class="message-content"><div class="message-header">${currentMode === 'audit' ? 'AI Auditor' : 'AI Guide'}</div><div class="message-text">
+//             <p style="font-size:11px;color:var(--text-muted)">Question ${currentQuestionIndex+1} of ${currentQuestions.length}</p>
+//             <p style="margin:10px 0">${q.q}</p>
+//             <div style="display:flex;gap:10px;">
+//                 <button onclick="answerAudit('yes',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #10b981;color:#10b981;cursor:pointer;background:none">Yes</button>
+//                 <button onclick="answerAudit('partial',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #f59e0b;color:#f59e0b;cursor:pointer;background:none">Partial</button>
+//                 <button onclick="answerAudit('no',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #ef4444;color:#ef4444;cursor:pointer;background:none">No</button>
+//             </div>
+//         </div></div>`;
+//     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+// }
 function showAuditQ() {
-    if (currentQuestionIndex >= currentQuestions.length) {
-        if (currentMode === 'audit') finishAudit(); else finishGuide();
-        return;
-    }
-    const q = currentQuestions[currentQuestionIndex];
-    const cm = document.getElementById('chat-messages'), m = document.createElement('div'); 
-    m.className = 'message ai-message';
-    m.innerHTML = `
-        <div class="message-content"><div class="message-header">${currentMode === 'audit' ? 'AI Auditor' : 'AI Guide'}</div><div class="message-text">
-            <p style="font-size:11px;color:var(--text-muted)">Question ${currentQuestionIndex+1} of ${currentQuestions.length}</p>
-            <p style="margin:10px 0">${q.q}</p>
-            <div style="display:flex;gap:10px;">
-                <button onclick="answerAudit('yes',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #10b981;color:#10b981;cursor:pointer;background:none">Yes</button>
-                <button onclick="answerAudit('partial',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #f59e0b;color:#f59e0b;cursor:pointer;background:none">Partial</button>
-                <button onclick="answerAudit('no',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #ef4444;color:#ef4444;cursor:pointer;background:none">No</button>
-            </div>
-        </div></div>`;
-    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+    if (currentQuestionIndex >= currentQuestions.length) {
+        if (currentMode === 'audit') finishAudit(); else finishGuide();
+        return;
+    }
+    const q = currentQuestions[currentQuestionIndex];
+    const cm = document.getElementById('chat-messages');
+    const m = document.createElement('div'); 
+    m.className = 'message ai-message';
+    
+    // تصميم الصندوق ليكون متناسقاً مع حجم السؤال
+    m.innerHTML = `
+        <div class="message-content" style="max-width: 85%; width: fit-content; border: 1px solid rgba(255,255,255,0.1); background: #1a2332; border-radius: 12px; padding: 15px;">
+            <div class="message-header" style="color: var(--accent-primary); font-weight: bold; margin-bottom: 8px; font-size: 12px;">
+                ${currentMode === 'audit' ? 'AI AUDITOR' : 'AI GUIDE'}
+            </div>
+            <div class="message-text">
+                <p style="font-size: 11px; color: #8892b0; margin-bottom: 10px;">Question ${currentQuestionIndex + 1} of ${currentQuestions.length}</p>
+                <p style="margin: 0 0 20px 0; line-height: 1.5; font-size: 14px; font-weight: 500;">${q.q}</p>
+                <div style="display: flex; gap: 12px; justify-content: flex-start; margin-top: 15px;">
+                    <button onclick="answerAudit('yes', this)" style="padding: 8px 20px; border-radius: 6px; border: 1.5px solid #10b981; color: #10b981; cursor: pointer; background: rgba(16, 185, 129, 0.1); font-weight: 600; transition: 0.3s;">Yes</button>
+                    <button onclick="answerAudit('partial', this)" style="padding: 8px 20px; border-radius: 6px; border: 1.5px solid #f59e0b; color: #f59e0b; cursor: pointer; background: rgba(245, 158, 11, 0.1); font-weight: 600; transition: 0.3s;">Partial</button>
+                    <button onclick="answerAudit('no', this)" style="padding: 8px 20px; border-radius: 6px; border: 1.5px solid #ef4444; color: #ef4444; cursor: pointer; background: rgba(239, 68, 68, 0.1); font-weight: 600; transition: 0.3s;">No</button>
+                </div>
+            </div>
+        </div>`;
+    cm.appendChild(m); 
+    cm.scrollTop = cm.scrollHeight;
 }
 
 async function answerAudit(ans, btn) {
