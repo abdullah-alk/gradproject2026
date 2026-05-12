@@ -14,7 +14,6 @@ langchain-huggingface
 chromadb
 transformers
 sentence-transformers
-mistralai
 python-dotenv
 bcrypt
 langchain_groq
