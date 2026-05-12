@@ -104,8 +104,26 @@ async function saveProgress(ctrlId, status, score) {
 }
 
 // --- بقية الكود الأساسي (مع التأكد من المفاتيح المركبة) ---
+// function setMode(m) {
+//     if (currentMode === m) return;
+//     if (currentControlId) {
+//         chatHistory[`${currentMode}_${currentControlId}`] = {
+//             html: document.getElementById('chat-messages').innerHTML,
+//             index: currentQuestionIndex,
+//             questions: [...currentQuestions],
+//             answers: [...auditAnswers],
+//             sessionId: currentSessionId
+//         };
+//     }
+//     currentMode = m;
+//     document.getElementById('audit-mode-btn')?.classList.toggle('active', m === 'audit');
+//     document.getElementById('guide-mode-btn')?.classList.toggle('active', m === 'guide');
+//     if (selectedControlInfo) selectControl(selectedControlInfo, document.querySelector(`.control-item[data-id="${currentControlId}"]`));
+// }
 function setMode(m) {
     if (currentMode === m) return;
+
+    // 1. حفظ حالة المود الحالي قبل الخروج منه
     if (currentControlId) {
         chatHistory[`${currentMode}_${currentControlId}`] = {
             html: document.getElementById('chat-messages').innerHTML,
@@ -115,13 +133,62 @@ function setMode(m) {
             sessionId: currentSessionId
         };
     }
+
+    // 2. تغيير المود وتحديث الأزرار
     currentMode = m;
     document.getElementById('audit-mode-btn')?.classList.toggle('active', m === 'audit');
     document.getElementById('guide-mode-btn')?.classList.toggle('active', m === 'guide');
-    if (selectedControlInfo) selectControl(selectedControlInfo, document.querySelector(`.control-item[data-id="${currentControlId}"]`));
-}
 
+    // 3. تصفير المصفوفات النشطة لضمان عدم التداخل
+    currentQuestions = [];
+    auditAnswers = [];
+    currentQuestionIndex = 0;
+
+    // 4. إعادة تحميل واجهة الشات بناءً على المود الجديد لنفس الضابط
+    if (selectedControlInfo) {
+        // نمرر null مكان الـ element لأننا نريد فقط تحديث البيانات داخلياً
+        selectControl(selectedControlInfo, document.querySelector(`.control-item[data-id="${currentControlId}"]`));
+    }
+}
+// async function selectControl(ctrl, el) {
+//     if (currentControlId) {
+//         chatHistory[`${currentMode}_${currentControlId}`] = {
+//             html: document.getElementById('chat-messages').innerHTML,
+//             index: currentQuestionIndex,
+//             questions: [...currentQuestions],
+//             answers: [...auditAnswers],
+//             sessionId: currentSessionId
+//         };
+//     }
+//     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
+//     if (el) el.classList.add('selected');
+//     currentControlId = ctrl.id;
+//     selectedControlInfo = ctrl;
+//     const currentKey = `${currentMode}_${ctrl.id}`;
+//     const cm = document.getElementById('chat-messages');
+    
+//     if (chatHistory[currentKey] && chatHistory[currentKey].html) {
+//         const h = chatHistory[currentKey];
+//         cm.innerHTML = h.html;
+//         currentQuestionIndex = h.index;
+//         currentQuestions = h.questions;
+//         auditAnswers = h.answers;
+//         currentSessionId = h.sessionId;
+//         if (currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
+//             if (!document.querySelector('.session-recovery-box')) offerSessionOptions(ctrl);
+//         }
+//     } else {
+//         cm.innerHTML = '';
+//         currentQuestionIndex = 0; currentQuestions = []; auditAnswers = [];
+//         showSubControlOptions(ctrl);
+//     }
+//     document.getElementById('current-control-id').textContent = ctrl.id;
+//     document.getElementById('current-control-name').textContent = ctrl.title;
+//     updateRightPanel(ctrl.id);
+//     cm.scrollTop = cm.scrollHeight;
+// }
 async function selectControl(ctrl, el) {
+    // حفظ الحالة الحالية للضابط القديم/المود القديم
     if (currentControlId) {
         chatHistory[`${currentMode}_${currentControlId}`] = {
             html: document.getElementById('chat-messages').innerHTML,
@@ -131,13 +198,20 @@ async function selectControl(ctrl, el) {
             sessionId: currentSessionId
         };
     }
+
+    // تحديث التحديد في القائمة الجانبية
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
     if (el) el.classList.add('selected');
+
     currentControlId = ctrl.id;
     selectedControlInfo = ctrl;
+    
     const currentKey = `${currentMode}_${ctrl.id}`;
     const cm = document.getElementById('chat-messages');
     
+    // مسح الشاشة قبل أي عملية تحميل
+    cm.innerHTML = ''; 
+
     if (chatHistory[currentKey] && chatHistory[currentKey].html) {
         const h = chatHistory[currentKey];
         cm.innerHTML = h.html;
@@ -145,14 +219,15 @@ async function selectControl(ctrl, el) {
         currentQuestions = h.questions;
         auditAnswers = h.answers;
         currentSessionId = h.sessionId;
-        if (currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
-            if (!document.querySelector('.session-recovery-box')) offerSessionOptions(ctrl);
-        }
+        // ... بقية المنطق الخاص بـ recovery box
     } else {
-        cm.innerHTML = '';
-        currentQuestionIndex = 0; currentQuestions = []; auditAnswers = [];
+        // إعادة التصفير للمود الجديد
+        currentQuestionIndex = 0; 
+        currentQuestions = []; 
+        auditAnswers = [];
         showSubControlOptions(ctrl);
     }
+    
     document.getElementById('current-control-id').textContent = ctrl.id;
     document.getElementById('current-control-name').textContent = ctrl.title;
     updateRightPanel(ctrl.id);
