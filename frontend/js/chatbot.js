@@ -169,37 +169,26 @@ function offerSessionOptions(ctrl) {
 }
 
 function resumeAudit() {
-    // 1. تعطيل كافة الأزرار السابقة في الشات فوراً
     disableAllPreviousButtons();
     
-    // 2. إزالة مربع خيارات الاستعادة من الواجهة
+    // 1. إزالة مربع خيارات الاستعادة
     const box = document.querySelector('.session-recovery-box');
     if (box) box.remove();
     
-    // 3. تحديث الذاكرة المحفوظة بعد إزالة الأزرار لضمان عدم عودتها عند التنقل
-    const historyKey = `${currentMode}_${currentControlId}`;
-    if (currentControlId && chatHistory[historyKey]) {
-        chatHistory[historyKey].html = document.getElementById('chat-messages').innerHTML;
-    }
-
-    // 4. منطق الاستكمال بناءً على حالة الأسئلة
-    if (currentQuestions && currentQuestions.length > 0) {
-        if (currentQuestionIndex < currentQuestions.length) {
-            // إظهار رسالة تأكيدية بالإنجليزية
-            appendMsg('ai', `<i class="fas fa-fast-forward" style="margin-right:8px"></i> Resuming assessment... Moving to <strong>Question ${currentQuestionIndex + 1}</strong>`);
-            
-            // طلب عرض السؤال التالي فعلياً
-            setTimeout(showAuditQ, 600);
-        } else {
-            // في حال كان التقييم مكتملاً
-            appendMsg('ai', "Assessment for this section is already complete.");
-            setTimeout(() => showSubControlOptions(selectedControlInfo), 1000);
+    // 2. معالجة تكرار السؤال: نبحث عن آخر بلوك سؤال معروض ونعطله (Disabled)
+    // لكي لا يظن المستخدم أنه يحتاج للإجابة عليه مرة أخرى
+    const allMessages = document.querySelectorAll('.ai-message');
+    if (allMessages.length > 0) {
+        const lastMsg = allMessages[allMessages.length - 1];
+        const buttons = lastMsg.querySelectorAll('button');
+        if (buttons.length > 0) {
+            buttons.forEach(b => {
+                b.disabled = true;
+                b.style.opacity = '0.5';
+                b.style.cursor = 'not-allowed';
+            });
         }
-    } else {
-        // في حال عدم وجود أسئلة (حالة احتياطية)
-        showSubControlOptions(selectedControlInfo);
     }
-}
 
     // 3. التحقق من العداد والأسئلة
     if (currentQuestions && currentQuestions.length > 0) {
@@ -233,49 +222,40 @@ function resetToSubControls() {
 
 // تعديل بسيط على answerAudit لضمان تحديث الـ Index فوراً
 async function answerAudit(ans, btn) {
-    // 1. تعطيل جميع الأزرار في البلوك الحالي فوراً لمنع التلاعب
-    const parentDiv = btn.closest('div');
-    parentDiv.querySelectorAll('button').forEach(b => { 
+    // 1. تعطيل الأزرار فور الضغط لمنع الإجابة المتكررة
+    btn.closest('div').querySelectorAll('button').forEach(b => { 
         b.disabled = true; 
-        b.style.opacity = '0.35';
-        b.style.cursor = 'not-allowed';
+        b.style.opacity = '0.35'; 
     }); 
-    btn.style.opacity = '1'; // تمييز الزر الذي تم ضغطه
+    btn.style.opacity = '1';
     
-    // 2. إظهار رد المستخدم في الشات
     const labels = { yes: 'Yes — Verified', partial: 'Partial — Needs improvement', no: 'No — Gap' };
-    appendMsg('user', labels[ans]);
+    appendMsg('user', labels[ans]); // هذه الدالة تضيف رسالة المستخدم للشاشة
     
-    // 3. تسجيل الإجابة في المصفوفة المؤقتة
+    // 2. تسجيل الإجابة في المصفوفة
     auditAnswers.push({ 
         question: currentQuestions[currentQuestionIndex].q, 
         answer: ans, 
         evidence: currentQuestions[currentQuestionIndex].ev 
     });
 
-    // 4. زيادة العداد للسؤال التالي
+    // 3. تحديث العداد للانتقال للسؤال التالي
     currentQuestionIndex++; 
     
-    // 5. تحديث ذاكرة الجلسة (الربط بين المود والضابط)
-    const historyKey = `${currentMode}_${currentControlId}`;
-    if (currentControlId && chatHistory[historyKey]) {
-        chatHistory[historyKey].index = currentQuestionIndex;
-        chatHistory[historyKey].answers = [...auditAnswers]; // حفظ نسخة من الإجابات
-        // حفظ شكل الشات بعد تعطيل الأزرار لضمان استعادته بشكل صحيح
-        chatHistory[historyKey].html = document.getElementById('chat-messages').innerHTML;
+    // 4. تحديث الذاكرة (Index + HTML) لضمان عدم تكرار السؤال عند العودة
+    if (currentControlId && chatHistory[currentControlId]) {
+        chatHistory[currentControlId].index = currentQuestionIndex;
+        // حفظ شكل الشات الحالي (بأزرار معطلة) لضمان نظافة المحادثة عند الاستعادة
+        chatHistory[currentControlId].html = document.getElementById('chat-messages').innerHTML;
     }
 
-    // 6. الحفظ في قاعدة البيانات عبر الـ API
+    // 5. الحفظ في قاعدة البيانات عبر الـ API
     if (currentSessionId) {
-        try { 
-            // نستخدم index-1 لأننا قمنا بزيادة العداد بالأعلى
-            await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex-1].q, ans); 
-        } catch (e) { 
-            console.error("Failed to save answer to API"); 
-        }
+        // نستخدم index-1 لأننا قمنا بزيادة العداد للتو
+        try { await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex-1].q, ans); } catch (e) { console.error("API Save Error"); }
     }
     
-    // 7. الانتقال للسؤال التالي بعد مهلة قصيرة
+    // 6. الانتقال للسؤال التالي بعد نصف ثانية
     setTimeout(showAuditQ, 500);
 }
 
@@ -372,44 +352,41 @@ function showAuditQ() {
 }
 
 async function answerAudit(ans, btn) {
-    btn.closest('div').querySelectorAll('button').forEach(b => { b.disabled = true; b.style.opacity = '0.35'; }); 
+    // 1. تعطيل الأزرار فور الضغط لمنع الإجابة المتكررة
+    btn.closest('div').querySelectorAll('button').forEach(b => { 
+        b.disabled = true; 
+        b.style.opacity = '0.35'; 
+    }); 
     btn.style.opacity = '1';
+    
     const labels = { yes: 'Yes — Verified', partial: 'Partial — Needs improvement', no: 'No — Gap' };
-    appendMsg('user', labels[ans]);
+    appendMsg('user', labels[ans]); // هذه الدالة تضيف رسالة المستخدم للشاشة
     
-    auditAnswers.push({ question: currentQuestions[currentQuestionIndex].q, answer: ans, evidence: currentQuestions[currentQuestionIndex].ev });
-    
-    if (currentSessionId) {
-        try { await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex].q, ans); } catch (e) { }
-    }
+    // 2. تسجيل الإجابة في المصفوفة
+    auditAnswers.push({ 
+        question: currentQuestions[currentQuestionIndex].q, 
+        answer: ans, 
+        evidence: currentQuestions[currentQuestionIndex].ev 
+    });
+
+    // 3. تحديث العداد للانتقال للسؤال التالي
     currentQuestionIndex++; 
+    
+    // 4. تحديث الذاكرة (Index + HTML) لضمان عدم تكرار السؤال عند العودة
+    if (currentControlId && chatHistory[currentControlId]) {
+        chatHistory[currentControlId].index = currentQuestionIndex;
+        // حفظ شكل الشات الحالي (بأزرار معطلة) لضمان نظافة المحادثة عند الاستعادة
+        chatHistory[currentControlId].html = document.getElementById('chat-messages').innerHTML;
+    }
+
+    // 5. الحفظ في قاعدة البيانات عبر الـ API
+    if (currentSessionId) {
+        // نستخدم index-1 لأننا قمنا بزيادة العداد للتو
+        try { await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex-1].q, ans); } catch (e) { console.error("API Save Error"); }
+    }
+    
+    // 6. الانتقال للسؤال التالي بعد نصف ثانية
     setTimeout(showAuditQ, 500);
-}
-
-async function finishAudit() {
-    const total = auditAnswers.length, 
-          yes = auditAnswers.filter(a => a.answer === 'yes').length, 
-          partial = auditAnswers.filter(a => a.answer === 'partial').length, 
-          no = auditAnswers.filter(a => a.answer === 'no').length;
-    
-    const score = total > 0 ? Math.round(((yes + partial * 0.5) / total) * 100) : 0;
-    const status = score >= 80 ? 'Compliant' : score >= 40 ? 'Partial' : 'Non-Compliant';
-    const color = getDotColor(status);
-
-    appendMsg('ai', `
-        <div style="border:1px solid ${color}30; border-radius:12px; padding:20px; background:${color}08; margin-top:10px">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <strong>${auditAnswers[0]?.cat || currentControlId} Assessment Complete</strong>
-                <span style="font-size:20px; font-weight:800; color:${color}">${score}%</span>
-            </div>
-            <p style="font-size:12px; color:var(--text-muted); margin-top:5px">Section results saved. You can now assess another sub-control.</p>
-        </div>
-    `);
-
-    await saveProgress(currentControlId, status, score, yes, partial, no, total);
-    await saveAuditToEvidence(currentControlId, selectedControlInfo?.title || currentControlId, status, score, auditAnswers, currentSessionId, currentControlDbId);
-    
-    setTimeout(() => showSubControlOptions(selectedControlInfo), 2500);
 }
 
 async function finishGuide() {
@@ -493,67 +470,26 @@ function updateDot(id, status) {
 }
 
 function setMode(m) {
-    // حفظ حالة الضابط الحالي في المود القديم قبل التبديل
-    if (currentControlId) {
-        const oldKey = `${currentMode}_${currentControlId}`;
-        chatHistory[oldKey] = {
-            html: document.getElementById('chat-messages').innerHTML,
-            index: currentQuestionIndex,
-            questions: currentQuestions,
-            answers: auditAnswers,
-            sessionId: currentSessionId
-        };
-    }
-
     currentMode = m;
-    
-    // تحديث شكل الأزرار
     document.getElementById('audit-mode-btn').classList.toggle('active', m === 'audit');
     document.getElementById('guide-mode-btn').classList.toggle('active', m === 'guide');
-    
-    // إذا كان هناك ضابط مختار، قم بإعادة تحميل بياناته بناءً على المود الجديد
-    if (selectedControlInfo) {
-        const controlItem = document.querySelector(`.control-item[data-id="${currentControlId}"]`);
-        selectControl(selectedControlInfo, controlItem);
-    }
+    if (selectedControlInfo) selectControl(selectedControlInfo, document.querySelector(`.control-item[data-id="${currentControlId}"]`));
 }
 
 function appendMsg(role, txt) {
     const cm = document.getElementById('chat-messages'), m = document.createElement('div');
     m.className = `message ${role}-message`;
-    m.innerHTML = `<div class="message-content">
-        <div class="message-header">${role === 'ai' ? (currentMode === 'audit' ? 'AI Auditor' : 'AI Guide') : 'User'}</div>
-        <div class="message-text">${txt}</div>
-    </div>`;
-    
-    cm.appendChild(m); 
-    cm.scrollTop = cm.scrollHeight;
-
-    // التحديث هنا: استخدام المفتاح المركب (المود + الضابط) لضمان فصل الجلسات
-    if (currentControlId) {
-        const historyKey = `${currentMode}_${currentControlId}`;
-        
-        // إذا لم تكن الجلسة موجودة في الذاكرة بعد، نقوم بتهيئتها
-        if (!chatHistory[historyKey]) {
-            chatHistory[historyKey] = {
-                html: "",
-                index: 0,
-                questions: [],
-                answers: [],
-                sessionId: currentSessionId
-            };
-        }
-        
-        // حفظ المحتوى الحالي في المفتاح الخاص بالمود الحالي
-        chatHistory[historyKey].html = cm.innerHTML;
-    }
+    m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
+    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+    if (currentControlId) chatHistory[currentControlId] = cm.innerHTML; // Update history
 }
 
-function showTyping() {
-    const cm = document.getElementById('chat-messages');
-    const ind = document.createElement('div'); ind.id = 'typing-indicator'; ind.className = 'message ai-message';
-    ind.innerHTML = `<div class="message-content"><div class="message-text"><i class="fas fa-ellipsis-h fa-beat"></i> AI is working...</div></div>`;
-    cm.appendChild(ind); cm.scrollTop = cm.scrollHeight;
+function appendMsg(role, txt) {
+    const cm = document.getElementById('chat-messages'), m = document.createElement('div');
+    m.className = `message ${role}-message`;
+    m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
+    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+    if (currentControlId) chatHistory[currentControlId] = cm.innerHTML; // Update history
 }
 
 function hideTyping() { const el = document.getElementById('typing-indicator'); if (el) el.remove(); }
