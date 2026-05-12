@@ -87,7 +87,7 @@ function renderControlBrowser() {
 
 // Stable Session Recovery
 async function selectControl(ctrl, el) {
-    // 1. حفظ الحالة الحالية للضابط "قبل" الانتقال
+    // 1. حفظ الحالة الحالية للضابط "قبل" الانتقال (فقط إذا كانت هناك محادثة فعلاً)
     if (currentControlId) {
         chatHistory[currentControlId] = {
             html: document.getElementById('chat-messages').innerHTML,
@@ -116,11 +116,21 @@ async function selectControl(ctrl, el) {
         auditAnswers = history.answers;
         currentSessionId = history.sessionId;
 
-        // 3. منع تكرار رسالة الاستعادة (إذا كانت موجودة لا تضفها مرة أخرى)
-        if (!document.querySelector('.session-recovery-box')) {
-            offerSessionOptions(ctrl);
+        // 3. التعديل الجوهري: تظهر رسالة الاستعادة فقط إذا كانت هناك أسئلة (أي بدأ التقييم فعلاً)
+        // ولم نصل بعد إلى نهاية الأسئلة
+        const hasActiveQuestions = currentQuestions && currentQuestions.length > 0;
+        const isNotFinished = currentQuestionIndex < currentQuestions.length;
+
+        if (hasActiveQuestions && isNotFinished) {
+            if (!document.querySelector('.session-recovery-box')) {
+                offerSessionOptions(ctrl);
+            }
+        } else if (!hasActiveQuestions) {
+            // إذا كانت المحادثة تحتوي فقط على قائمة الضوابط (بدون أسئلة)، لا نفعل شيئاً إضافياً
+            // لأن القائمة موجودة أصلاً في الـ HTML المستعاد
         }
     } else {
+        // جلسة جديدة كلياً
         cm.innerHTML = '';
         currentQuestionIndex = 0;
         currentQuestions = [];
@@ -133,7 +143,6 @@ async function selectControl(ctrl, el) {
     updateRightPanel(ctrl.id);
     cm.scrollTop = cm.scrollHeight;
 }
-
 function offerSessionOptions(ctrl) {
     const cm = document.getElementById('chat-messages');
     const m = document.createElement('div');
