@@ -1,5 +1,6 @@
-// CyberGuard ECC Chatbot v8.5 - Stable Final Version
-// Features: Persistence, Recovery Logic, Button Disabling, and UI fixes.
+// ================================================================
+// CyberGuard ECC Chatbot - Stable Version 8.6 (Final Integrated)
+// ================================================================
 
 let currentMode = 'audit', 
     currentControlId = null, 
@@ -10,7 +11,8 @@ let currentMode = 'audit',
     currentSessionId = null, 
     auditAnswers = [];
 
-let chatHistory = {}; // Stores state per controlId
+// ذاكرة الجلسة: تستخدم مفاتيح مركبة مثل (audit_1-1) أو (guide_1-1)
+let chatHistory = {};
 
 const eccDomains = [
     { id: '1-1', title: 'Cybersecurity Strategy', subControls: ['1-1-1', '1-1-2', '1-1-3'] },
@@ -30,39 +32,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadUserToSidebar();
     renderControlBrowser();
     
-    document.getElementById('audit-mode-btn').addEventListener('click', () => setMode('audit'));
-    document.getElementById('guide-mode-btn').addEventListener('click', () => setMode('guide'));
+    document.getElementById('audit-mode-btn')?.addEventListener('click', () => setMode('audit'));
+    document.getElementById('guide-mode-btn')?.addEventListener('click', () => setMode('guide'));
     document.getElementById('send-btn')?.addEventListener('click', handleUserMessage);
     document.getElementById('user-query')?.addEventListener('keypress', e => { if (e.key === 'Enter') handleUserMessage(); });
 
     addClearChatButton();
 });
 
-// --- UI Helpers ---
+// --- وظائف الواجهة والتحكم ---
+
 function addClearChatButton() {
     const chatHeader = document.querySelector('.chat-header');
-    if (document.getElementById('clear-chat-btn')) return;
+    if (!chatHeader || document.getElementById('clear-chat-btn')) return;
     const clearBtn = document.createElement('button');
     clearBtn.id = 'clear-chat-btn';
-    clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Chat';
-    clearBtn.style = "background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600;";
+    clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear';
+    clearBtn.style = "background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;";
     clearBtn.onclick = clearCurrentChat;
     chatHeader.appendChild(clearBtn);
 }
 
 function clearCurrentChat() {
     if (!currentControlId) return;
-    if (confirm(`Clear history for ${currentControlId}?`)) {
-        chatHistory[currentControlId] = null;
+    if (confirm(`Clear history for ${currentMode.toUpperCase()} on ${currentControlId}?`)) {
+        const key = `${currentMode}_${currentControlId}`;
+        chatHistory[key] = null;
         document.getElementById('chat-messages').innerHTML = '';
         showSubControlOptions(selectedControlInfo);
     }
 }
 
 function disableAllPreviousButtons() {
-    const cm = document.getElementById('chat-messages');
-    const allButtons = cm.querySelectorAll('.ai-message button');
-    allButtons.forEach(btn => {
+    document.querySelectorAll('.ai-message button').forEach(btn => {
         btn.disabled = true;
         btn.style.opacity = '0.5';
         btn.style.cursor = 'not-allowed';
@@ -89,10 +91,13 @@ function renderControlBrowser() {
     });
 }
 
+// --- إدارة الجلسات والأسئلة ---
+
 async function selectControl(ctrl, el) {
-    // Save current before switching
+    // 1. حفظ الحالة الحالية للمود والضابط السابق قبل الانتقال
     if (currentControlId) {
-        chatHistory[currentControlId] = {
+        const oldKey = `${currentMode}_${currentControlId}`;
+        chatHistory[oldKey] = {
             html: document.getElementById('chat-messages').innerHTML,
             index: currentQuestionIndex,
             questions: currentQuestions,
@@ -101,23 +106,25 @@ async function selectControl(ctrl, el) {
         };
     }
 
+    // 2. تحديث الواجهة
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
-    el.classList.add('selected');
+    if (el) el.classList.add('selected');
     currentControlId = ctrl.id;
     selectedControlInfo = ctrl;
 
     const cm = document.getElementById('chat-messages');
+    const currentKey = `${currentMode}_${ctrl.id}`;
     
-    if (chatHistory[ctrl.id] && chatHistory[ctrl.id].html) {
-        const h = chatHistory[ctrl.id];
+    // 3. استعادة المحادثة بناءً على المود الحالي والضابط
+    if (chatHistory[currentKey] && chatHistory[currentKey].html) {
+        const h = chatHistory[currentKey];
         cm.innerHTML = h.html;
         currentQuestionIndex = h.index;
         currentQuestions = h.questions;
         auditAnswers = h.answers;
         currentSessionId = h.sessionId;
 
-        // Only offer recovery if there are questions and it's not finished
-        if (currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
+        if (currentQuestions && currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
             if (!document.querySelector('.session-recovery-box')) offerSessionOptions(ctrl);
         }
     } else {
@@ -144,8 +151,8 @@ function showSubControlOptions(ctrl) {
         </button>
     `).join('');
 
-    m.innerHTML = `<div class="message-content"><div class="message-header">AI Assistant</div><div class="message-text">
-        <p style="margin-bottom:15px">Select a sub-control for <strong>${ctrl.id}</strong>:</p>
+    m.innerHTML = `<div class="message-content"><div class="message-header">${currentMode === 'audit' ? 'AI Auditor' : 'AI Guide'}</div><div class="message-text">
+        <p style="margin-bottom:15px">Select a sub-control to begin:</p>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">${btns}</div></div></div>`;
     cm.appendChild(m);
     cm.scrollTop = cm.scrollHeight;
@@ -153,7 +160,7 @@ function showSubControlOptions(ctrl) {
 
 async function initiateSubAudit(subId) {
     disableAllPreviousButtons();
-    appendMsg('user', `Starting assessment: ${subId}`);
+    appendMsg('user', `Starting: ${subId}`);
     showTyping();
     try {
         const r = await generateAuditQuestions(subId, currentMode);
@@ -178,7 +185,7 @@ function showAuditQ() {
     const cm = document.getElementById('chat-messages'), m = document.createElement('div'); 
     m.className = 'message ai-message';
     m.innerHTML = `
-        <div class="message-content"><div class="message-header">AI Auditor</div><div class="message-text">
+        <div class="message-content"><div class="message-header">${currentMode === 'audit' ? 'AI Auditor' : 'AI Guide'}</div><div class="message-text">
             <p style="font-size:11px;color:var(--text-muted)">Question ${currentQuestionIndex+1} of ${currentQuestions.length}</p>
             <p style="margin:10px 0">${q.q}</p>
             <div style="display:flex;gap:10px;">
@@ -195,14 +202,19 @@ async function answerAudit(ans, btn) {
         b.disabled = true; b.style.opacity = '0.35'; b.style.cursor = 'not-allowed';
     });
     btn.style.opacity = '1';
-    appendMsg('user', ans.toUpperCase());
+    
+    const labels = { yes: 'Yes — Verified', partial: 'Partial — Needs improvement', no: 'No — Gap' };
+    appendMsg('user', labels[ans]);
     
     auditAnswers.push({ question: currentQuestions[currentQuestionIndex].q, answer: ans });
     currentQuestionIndex++; 
     
-    if (currentControlId && chatHistory[currentControlId]) {
-        chatHistory[currentControlId].index = currentQuestionIndex;
-        chatHistory[currentControlId].html = document.getElementById('chat-messages').innerHTML;
+    // تحديث الذاكرة فوراً بالمفتاح المركب
+    if (currentControlId) {
+        const key = `${currentMode}_${currentControlId}`;
+        if (!chatHistory[key]) chatHistory[key] = {};
+        chatHistory[key].index = currentQuestionIndex;
+        chatHistory[key].html = document.getElementById('chat-messages').innerHTML;
     }
 
     if (currentSessionId) {
@@ -211,15 +223,17 @@ async function answerAudit(ans, btn) {
     setTimeout(showAuditQ, 500);
 }
 
+// --- الاستعادة والتحكم بالتدفق ---
+
 function offerSessionOptions(ctrl) {
     const cm = document.getElementById('chat-messages');
     const m = document.createElement('div');
     m.className = 'message ai-message session-recovery-box';
     m.innerHTML = `
-        <div class="message-content"><div class="message-header">Recovery</div><div class="message-text">
-            <p>Active session found for ${ctrl.id}.</p>
-            <button onclick="resumeAudit()" style="background:var(--accent-primary);color:white;padding:8px 15px;border-radius:6px;cursor:pointer;border:none;margin-top:10px">Resume Assessment</button>
-            <button onclick="resetToSubControls()" style="background:none;color:white;padding:8px 15px;border-radius:6px;cursor:pointer;border:1px solid #333;margin-left:10px">Restart</button>
+        <div class="message-content"><div class="message-header">Session Found</div><div class="message-text">
+            <p>You have an active session for <strong>${ctrl.id}</strong> in ${currentMode} mode.</p>
+            <button onclick="resumeAudit()" style="background:var(--accent-primary);color:white;padding:8px 15px;border-radius:6px;cursor:pointer;border:none;margin-top:10px">Resume</button>
+            <button onclick="resetToSubControls()" style="background:none;color:white;padding:8px 15px;border-radius:6px;cursor:pointer;border:1px solid #333;margin-left:10px">Start New</button>
         </div></div>`;
     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
 }
@@ -229,8 +243,14 @@ function resumeAudit() {
     const box = document.querySelector('.session-recovery-box');
     if (box) box.remove();
     
-    if (currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
-        appendMsg('ai', `Resuming at Question ${currentQuestionIndex + 1}...`);
+    // تحديث السجل بعد حذف صندوق الاستعادة
+    if (currentControlId) {
+        const key = `${currentMode}_${currentControlId}`;
+        chatHistory[key].html = document.getElementById('chat-messages').innerHTML;
+    }
+
+    if (currentQuestions && currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
+        appendMsg('ai', `<i class="fas fa-fast-forward"></i> Resuming at Question ${currentQuestionIndex + 1}...`);
         setTimeout(showAuditQ, 600);
     } else {
         showSubControlOptions(selectedControlInfo);
@@ -238,6 +258,7 @@ function resumeAudit() {
 }
 
 function resetToSubControls() {
+    disableAllPreviousButtons();
     const box = document.querySelector('.session-recovery-box');
     if (box) box.remove();
     showSubControlOptions(selectedControlInfo);
@@ -246,13 +267,19 @@ function resetToSubControls() {
 function appendMsg(role, txt) {
     const cm = document.getElementById('chat-messages'), m = document.createElement('div');
     m.className = `message ${role}-message`;
-    m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
+    const aiTitle = currentMode === 'audit' ? 'AI Auditor' : 'AI Guide';
+    
+    m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? aiTitle : 'User'}</div><div class="message-text">${txt}</div></div>`;
     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+    
     if (currentControlId) {
-        if (!chatHistory[currentControlId]) chatHistory[currentControlId] = { html: "" };
-        chatHistory[currentControlId].html = cm.innerHTML;
+        const key = `${currentMode}_${currentControlId}`;
+        if (!chatHistory[key]) chatHistory[key] = { index: 0, questions: [], answers: [], html: "" };
+        chatHistory[key].html = cm.innerHTML;
     }
 }
+
+// --- وظائف مساعدة ونظام ---
 
 function getDotColor(s) {
     return s === 'Compliant' ? '#10b981' : s === 'Non-Compliant' ? '#ef4444' : s === 'Partial' ? '#f59e0b' : '#475569';
@@ -269,9 +296,27 @@ function updateRightPanel(id) {
 }
 
 function setMode(m) {
+    // حفظ الحالة للضابط الحالي قبل التبديل
+    if (currentControlId) {
+        const oldKey = `${currentMode}_${currentControlId}`;
+        chatHistory[oldKey] = {
+            html: document.getElementById('chat-messages').innerHTML,
+            index: currentQuestionIndex,
+            questions: currentQuestions,
+            answers: auditAnswers,
+            sessionId: currentSessionId
+        };
+    }
+
     currentMode = m;
-    document.getElementById('audit-mode-btn').classList.toggle('active', m === 'audit');
-    document.getElementById('guide-mode-btn').classList.toggle('active', m === 'guide');
+    document.getElementById('audit-mode-btn')?.classList.toggle('active', m === 'audit');
+    document.getElementById('guide-mode-btn')?.classList.toggle('active', m === 'guide');
+    
+    // إعادة تحميل بيانات الضابط في المود الجديد
+    if (selectedControlInfo) {
+        const item = document.querySelector(`.control-item[data-id="${currentControlId}"]`);
+        selectControl(selectedControlInfo, item);
+    }
 }
 
 function showTyping() {
@@ -280,6 +325,7 @@ function showTyping() {
     ind.innerHTML = `<div class="message-content"><div class="message-text"><i class="fas fa-ellipsis-h fa-beat"></i> AI is working...</div></div>`;
     cm.appendChild(ind); cm.scrollTop = cm.scrollHeight;
 }
+
 function hideTyping() { const el = document.getElementById('typing-indicator'); if (el) el.remove(); }
 
 async function handleUserMessage() {
@@ -288,9 +334,313 @@ async function handleUserMessage() {
     appendMsg('user', text); input.value = ''; showTyping();
     try {
         const r = await callAIEngine(text, currentControlId, currentMode);
-        hideTyping(); appendMsg('ai', r.answer || 'No response.');
+        hideTyping(); 
+        appendMsg('ai', r.answer || 'I am sorry, I couldn\'t process that request.');
     } catch (e) { hideTyping(); }
 }
+
+
+
+// // CyberGuard ECC Chatbot v8.5 - Stable Final Version
+// // Features: Persistence, Recovery Logic, Button Disabling, and UI fixes.
+
+// let currentMode = 'audit', 
+//     currentControlId = null, 
+//     currentControlDbId = null, 
+//     currentQuestions = [], 
+//     currentQuestionIndex = 0, 
+//     selectedControlInfo = null, 
+//     currentSessionId = null, 
+//     auditAnswers = [];
+
+// let chatHistory = {}; // Stores state per controlId
+
+// const eccDomains = [
+//     { id: '1-1', title: 'Cybersecurity Strategy', subControls: ['1-1-1', '1-1-2', '1-1-3'] },
+//     { id: '1-2', title: 'Cybersecurity Management', subControls: ['1-2-1', '1-2-2', '1-2-3'] },
+//     { id: '1-3', title: 'Cybersecurity Policies and Procedures', subControls: ['1-3-1', '1-3-2', '1-3-3', '1-3-4'] },
+//     { id: '1-4', title: 'Cybersecurity Roles and Responsibilities', subControls: ['1-4-1', '1-4-2'] },
+//     { id: '1-5', title: 'Cybersecurity Risk Management', subControls: ['1-5-1', '1-5-2', '1-5-3-1', '1-5-3-2', '1-5-3-3', '1-5-3-4', '1-5-4'] },
+//     { id: '1-6', title: 'Cybersecurity in IT Project Management', subControls: ['1-6-1', '1-6-2-1', '1-6-2-2', '1-6-3-1', '1-6-3-2', '1-6-3-3', '1-6-3-4', '1-6-3-5', '1-6-4'] },
+//     { id: '1-7', title: 'Compliance with Standards & Laws', subControls: ['1-7-1', '1-7-2'] },
+//     { id: '1-8', title: 'Periodical Review and Audit', subControls: ['1-8-1', '1-8-2', '1-8-3'] },
+//     { id: '1-9', title: 'Cybersecurity in Human Resources', subControls: ['1-9-1', '1-9-2', '1-9-3-1', '1-9-3-2', '1-9-4-1', '1-9-4-2', '1-9-5', '1-9-6'] },
+//     { id: '1-10', title: 'Awareness and Training Program', subControls: ['1-10-1', '1-10-2', '1-10-3-1', '1-10-3-2', '1-10-3-3', '1-10-3-4', '1-10-4-1', '1-10-4-2', '1-10-4-3', '1-10-5'] }
+// ];
+
+// document.addEventListener('DOMContentLoaded', async () => {
+//     if (!checkAuth()) return;
+//     loadUserToSidebar();
+//     renderControlBrowser();
+    
+//     document.getElementById('audit-mode-btn').addEventListener('click', () => setMode('audit'));
+//     document.getElementById('guide-mode-btn').addEventListener('click', () => setMode('guide'));
+//     document.getElementById('send-btn')?.addEventListener('click', handleUserMessage);
+//     document.getElementById('user-query')?.addEventListener('keypress', e => { if (e.key === 'Enter') handleUserMessage(); });
+
+//     addClearChatButton();
+// });
+
+// // --- UI Helpers ---
+// function addClearChatButton() {
+//     const chatHeader = document.querySelector('.chat-header');
+//     if (document.getElementById('clear-chat-btn')) return;
+//     const clearBtn = document.createElement('button');
+//     clearBtn.id = 'clear-chat-btn';
+//     clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Chat';
+//     clearBtn.style = "background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600;";
+//     clearBtn.onclick = clearCurrentChat;
+//     chatHeader.appendChild(clearBtn);
+// }
+
+// function clearCurrentChat() {
+//     if (!currentControlId) return;
+//     if (confirm(`Clear history for ${currentControlId}?`)) {
+//         chatHistory[currentControlId] = null;
+//         document.getElementById('chat-messages').innerHTML = '';
+//         showSubControlOptions(selectedControlInfo);
+//     }
+// }
+
+// function disableAllPreviousButtons() {
+//     const cm = document.getElementById('chat-messages');
+//     const allButtons = cm.querySelectorAll('.ai-message button');
+//     allButtons.forEach(btn => {
+//         btn.disabled = true;
+//         btn.style.opacity = '0.5';
+//         btn.style.cursor = 'not-allowed';
+//         btn.removeAttribute('onclick'); 
+//     });
+// }
+
+// function renderControlBrowser() {
+//     const b = document.getElementById('control-browser'); if (!b) return;
+//     const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
+//     b.innerHTML = '';
+//     eccDomains.forEach(c => {
+//         const item = document.createElement('div'); 
+//         item.className = 'control-item'; 
+//         item.dataset.id = c.id;
+//         item.innerHTML = `
+//             <div style="display:flex;align-items:center;gap:8px">
+//                 <span class="status-dot" style="width:8px;height:8px;border-radius:50%;background:${getDotColor(res[c.id] || '')}"></span>
+//                 <small style="color:var(--accent-primary);font-weight:600">${c.id}</small>
+//             </div>
+//             <div style="font-weight:500;font-size:13px;margin-top:3px;padding-left:16px">${c.title}</div>`;
+//         item.onclick = () => selectControl(c, item);
+//         b.appendChild(item);
+//     });
+// }
+
+// async function selectControl(ctrl, el) {
+//     // Save current before switching
+//     if (currentControlId) {
+//         chatHistory[currentControlId] = {
+//             html: document.getElementById('chat-messages').innerHTML,
+//             index: currentQuestionIndex,
+//             questions: currentQuestions,
+//             answers: auditAnswers,
+//             sessionId: currentSessionId
+//         };
+//     }
+
+//     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
+//     el.classList.add('selected');
+//     currentControlId = ctrl.id;
+//     selectedControlInfo = ctrl;
+
+//     const cm = document.getElementById('chat-messages');
+    
+//     if (chatHistory[ctrl.id] && chatHistory[ctrl.id].html) {
+//         const h = chatHistory[ctrl.id];
+//         cm.innerHTML = h.html;
+//         currentQuestionIndex = h.index;
+//         currentQuestions = h.questions;
+//         auditAnswers = h.answers;
+//         currentSessionId = h.sessionId;
+
+//         // Only offer recovery if there are questions and it's not finished
+//         if (currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
+//             if (!document.querySelector('.session-recovery-box')) offerSessionOptions(ctrl);
+//         }
+//     } else {
+//         cm.innerHTML = '';
+//         currentQuestionIndex = 0;
+//         currentQuestions = [];
+//         auditAnswers = [];
+//         showSubControlOptions(ctrl);
+//     }
+
+//     document.getElementById('current-control-id').textContent = ctrl.id;
+//     document.getElementById('current-control-name').textContent = ctrl.title;
+//     updateRightPanel(ctrl.id);
+//     cm.scrollTop = cm.scrollHeight;
+// }
+
+// function showSubControlOptions(ctrl) {
+//     const cm = document.getElementById('chat-messages');
+//     const m = document.createElement('div');
+//     m.className = 'message ai-message';
+//     let btns = ctrl.subControls.map(subId => `
+//         <button onclick="initiateSubAudit('${subId}')" style="padding:10px 14px; border:1px solid var(--accent-primary); background:rgba(6,182,212,0.05); color:var(--accent-primary); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; margin-bottom:5px;">
+//             Control ${subId}
+//         </button>
+//     `).join('');
+
+//     m.innerHTML = `<div class="message-content"><div class="message-header">AI Assistant</div><div class="message-text">
+//         <p style="margin-bottom:15px">Select a sub-control for <strong>${ctrl.id}</strong>:</p>
+//         <div style="display:flex; gap:10px; flex-wrap:wrap;">${btns}</div></div></div>`;
+//     cm.appendChild(m);
+//     cm.scrollTop = cm.scrollHeight;
+// }
+
+// async function initiateSubAudit(subId) {
+//     disableAllPreviousButtons();
+//     appendMsg('user', `Starting assessment: ${subId}`);
+//     showTyping();
+//     try {
+//         const r = await generateAuditQuestions(subId, currentMode);
+//         hideTyping();
+//         if (r.questions?.length > 0) {
+//             currentQuestions = r.questions.map(q => ({ q: q.question, ev: q.expected_evidence || '', cat: subId }));
+//             currentQuestionIndex = 0;
+//             const u = getCurrentUserLocal();
+//             const s = await startAuditSessionAPI(u.id, null, currentMode);
+//             if(s?.session_id) currentSessionId = s.session_id;
+//             setTimeout(showAuditQ, 400);
+//         }
+//     } catch (e) { hideTyping(); }
+// }
+
+// function showAuditQ() {
+//     if (currentQuestionIndex >= currentQuestions.length) {
+//         if (currentMode === 'audit') finishAudit(); else finishGuide();
+//         return;
+//     }
+//     const q = currentQuestions[currentQuestionIndex];
+//     const cm = document.getElementById('chat-messages'), m = document.createElement('div'); 
+//     m.className = 'message ai-message';
+//     m.innerHTML = `
+//         <div class="message-content"><div class="message-header">AI Auditor</div><div class="message-text">
+//             <p style="font-size:11px;color:var(--text-muted)">Question ${currentQuestionIndex+1} of ${currentQuestions.length}</p>
+//             <p style="margin:10px 0">${q.q}</p>
+//             <div style="display:flex;gap:10px;">
+//                 <button onclick="answerAudit('yes',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #10b981;color:#10b981;cursor:pointer;background:none">Yes</button>
+//                 <button onclick="answerAudit('partial',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #f59e0b;color:#f59e0b;cursor:pointer;background:none">Partial</button>
+//                 <button onclick="answerAudit('no',this)" style="padding:8px 18px;border-radius:6px;border:1.5px solid #ef4444;color:#ef4444;cursor:pointer;background:none">No</button>
+//             </div>
+//         </div></div>`;
+//     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+// }
+
+// async function answerAudit(ans, btn) {
+//     btn.closest('div').querySelectorAll('button').forEach(b => { 
+//         b.disabled = true; b.style.opacity = '0.35'; b.style.cursor = 'not-allowed';
+//     });
+//     btn.style.opacity = '1';
+//     appendMsg('user', ans.toUpperCase());
+    
+//     auditAnswers.push({ question: currentQuestions[currentQuestionIndex].q, answer: ans });
+//     currentQuestionIndex++; 
+    
+//     if (currentControlId && chatHistory[currentControlId]) {
+//         chatHistory[currentControlId].index = currentQuestionIndex;
+//         chatHistory[currentControlId].html = document.getElementById('chat-messages').innerHTML;
+//     }
+
+//     if (currentSessionId) {
+//         try { await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex-1].q, ans); } catch (e) {}
+//     }
+//     setTimeout(showAuditQ, 500);
+// }
+
+// function offerSessionOptions(ctrl) {
+//     const cm = document.getElementById('chat-messages');
+//     const m = document.createElement('div');
+//     m.className = 'message ai-message session-recovery-box';
+//     m.innerHTML = `
+//         <div class="message-content"><div class="message-header">Recovery</div><div class="message-text">
+//             <p>Active session found for ${ctrl.id}.</p>
+//             <button onclick="resumeAudit()" style="background:var(--accent-primary);color:white;padding:8px 15px;border-radius:6px;cursor:pointer;border:none;margin-top:10px">Resume Assessment</button>
+//             <button onclick="resetToSubControls()" style="background:none;color:white;padding:8px 15px;border-radius:6px;cursor:pointer;border:1px solid #333;margin-left:10px">Restart</button>
+//         </div></div>`;
+//     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+// }
+
+// function resumeAudit() {
+//     disableAllPreviousButtons();
+//     const box = document.querySelector('.session-recovery-box');
+//     if (box) box.remove();
+    
+//     if (currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
+//         appendMsg('ai', `Resuming at Question ${currentQuestionIndex + 1}...`);
+//         setTimeout(showAuditQ, 600);
+//     } else {
+//         showSubControlOptions(selectedControlInfo);
+//     }
+// }
+
+// function resetToSubControls() {
+//     const box = document.querySelector('.session-recovery-box');
+//     if (box) box.remove();
+//     showSubControlOptions(selectedControlInfo);
+// }
+
+// function appendMsg(role, txt) {
+//     const cm = document.getElementById('chat-messages'), m = document.createElement('div');
+//     m.className = `message ${role}-message`;
+//     m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
+//     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+//     if (currentControlId) {
+//         if (!chatHistory[currentControlId]) chatHistory[currentControlId] = { html: "" };
+//         chatHistory[currentControlId].html = cm.innerHTML;
+//     }
+// }
+
+// function getDotColor(s) {
+//     return s === 'Compliant' ? '#10b981' : s === 'Non-Compliant' ? '#ef4444' : s === 'Partial' ? '#f59e0b' : '#475569';
+// }
+
+// function updateRightPanel(id) {
+//     const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
+//     const status = res[id] || 'Not Started';
+//     const sl = document.getElementById('current-control-status');
+//     if (sl) {
+//         sl.textContent = status;
+//         sl.className = `badge ${status === 'Compliant' ? 'badge-success' : status === 'Non-Compliant' ? 'badge-danger' : 'badge-warning'}`;
+//     }
+// }
+
+// function setMode(m) {
+//     currentMode = m;
+//     document.getElementById('audit-mode-btn').classList.toggle('active', m === 'audit');
+//     document.getElementById('guide-mode-btn').classList.toggle('active', m === 'guide');
+// }
+
+// function showTyping() {
+//     const cm = document.getElementById('chat-messages');
+//     const ind = document.createElement('div'); ind.id = 'typing-indicator'; ind.className = 'message ai-message';
+//     ind.innerHTML = `<div class="message-content"><div class="message-text"><i class="fas fa-ellipsis-h fa-beat"></i> AI is working...</div></div>`;
+//     cm.appendChild(ind); cm.scrollTop = cm.scrollHeight;
+// }
+// function hideTyping() { const el = document.getElementById('typing-indicator'); if (el) el.remove(); }
+
+// async function handleUserMessage() {
+//     const input = document.getElementById('user-query'), text = input.value.trim();
+//     if (!text || !currentControlId) return;
+//     appendMsg('user', text); input.value = ''; showTyping();
+//     try {
+//         const r = await callAIEngine(text, currentControlId, currentMode);
+//         hideTyping(); appendMsg('ai', r.answer || 'No response.');
+//     } catch (e) { hideTyping(); }
+// }
+
+
+
+// ###############################################
+
+
+
 
 // // CyberGuard ECC Chatbot v8.2 - FULL UPDATED EDITION
 // // Features: Chat Persistence, Clear Chat, English UI, and Full Control Logic
