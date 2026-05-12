@@ -168,6 +168,8 @@ function offerSessionOptions(ctrl) {
 }
 
 function resumeAudit() {
+    disableAllPreviousButtons();
+    
     // 1. إزالة مربع خيارات الاستعادة
     const box = document.querySelector('.session-recovery-box');
     if (box) box.remove();
@@ -210,6 +212,8 @@ function resumeAudit() {
 }
 
 function resetToSubControls() {
+    disableAllPreviousButtons();
+    
     const box = document.querySelector('.session-recovery-box');
     if (box) box.remove();
     showSubControlOptions(selectedControlInfo);
@@ -217,6 +221,13 @@ function resetToSubControls() {
 
 // تعديل بسيط على answerAudit لضمان تحديث الـ Index فوراً
 async function answerAudit(ans, btn) {
+    // تعطيل جميع الأزرار في "هذا البلوك" فقط فور الضغط
+    btn.closest('div').querySelectorAll('button').forEach(b => { 
+        b.disabled = true; 
+        b.style.opacity = '0.35';
+        b.style.cursor = 'not-allowed';
+    });
+    
     btn.closest('div').querySelectorAll('button').forEach(b => { b.disabled = true; b.style.opacity = '0.35'; }); 
     btn.style.opacity = '1';
     
@@ -268,6 +279,8 @@ function showSubControlOptions(ctrl) {
 }
 
 async function initiateSubAudit(subId) {
+    disableAllPreviousButtons();
+    
     appendMsg('user', `Starting assessment for sub-control: ${subId}`);
     showTyping();
     
@@ -488,7 +501,19 @@ async function handleUserMessage() {
     } catch (e) { hideTyping(); appendMsg('ai', 'Error connecting to AI engine.'); }
 }
 
-
+function disableAllPreviousButtons() {
+    const cm = document.getElementById('chat-messages');
+    // نبحث عن جميع الأزرار داخل رسائل الـ AI فقط
+    const allButtons = cm.querySelectorAll('.ai-message button');
+    
+    allButtons.forEach(btn => {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+        // إزالة خاصية onclick لضمان عدم التفاعل نهائياً
+        btn.removeAttribute('onclick'); 
+    });
+}
 
 // // CyberGuard ECC Chatbot v8 - FULL UPDATED EDITION (With New Controls 1-6 to 1-10)
 // // Integration: Hierarchical Flow + Evidence Saving + API Sync + Advanced Recommendations
