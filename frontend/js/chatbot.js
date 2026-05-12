@@ -87,9 +87,12 @@ function renderControlBrowser() {
 
 // Stable Session Recovery
 async function selectControl(ctrl, el) {
-    // 1. حفظ الحالة الحالية للضابط "قبل" الانتقال (فقط إذا كانت هناك محادثة فعلاً)
+    // 1. إنشاء مفتاح فريد يجمع بين المود والضابط
+    const historyKey = `${currentMode}_${currentControlId}`;
+
+    // 2. حفظ الحالة الحالية للمود والضابط السابق قبل الانتقال
     if (currentControlId) {
-        chatHistory[currentControlId] = {
+        chatHistory[historyKey] = {
             html: document.getElementById('chat-messages').innerHTML,
             index: currentQuestionIndex,
             questions: currentQuestions,
@@ -105,19 +108,18 @@ async function selectControl(ctrl, el) {
 
     const cm = document.getElementById('chat-messages');
     
-    // 2. استعادة المحادثة
-    if (chatHistory[ctrl.id] && chatHistory[ctrl.id].html) {
-        const history = chatHistory[ctrl.id];
+    // 3. محاولة استعادة الجلسة بناءً على المود الحالي والضابط الحالي
+    const currentKey = `${currentMode}_${ctrl.id}`;
+    
+    if (chatHistory[currentKey] && chatHistory[currentKey].html) {
+        const history = chatHistory[currentKey];
         cm.innerHTML = history.html;
         
-        // استعادة البيانات الخلفية
         currentQuestionIndex = history.index;
         currentQuestions = history.questions;
         auditAnswers = history.answers;
         currentSessionId = history.sessionId;
 
-        // 3. التعديل الجوهري: تظهر رسالة الاستعادة فقط إذا كانت هناك أسئلة (أي بدأ التقييم فعلاً)
-        // ولم نصل بعد إلى نهاية الأسئلة
         const hasActiveQuestions = currentQuestions && currentQuestions.length > 0;
         const isNotFinished = currentQuestionIndex < currentQuestions.length;
 
@@ -125,12 +127,9 @@ async function selectControl(ctrl, el) {
             if (!document.querySelector('.session-recovery-box')) {
                 offerSessionOptions(ctrl);
             }
-        } else if (!hasActiveQuestions) {
-            // إذا كانت المحادثة تحتوي فقط على قائمة الضوابط (بدون أسئلة)، لا نفعل شيئاً إضافياً
-            // لأن القائمة موجودة أصلاً في الـ HTML المستعاد
         }
     } else {
-        // جلسة جديدة كلياً
+        // إذا لم توجد جلسة سابقة لهذا "المود" بالتحديد
         cm.innerHTML = '';
         currentQuestionIndex = 0;
         currentQuestions = [];
@@ -143,6 +142,7 @@ async function selectControl(ctrl, el) {
     updateRightPanel(ctrl.id);
     cm.scrollTop = cm.scrollHeight;
 }
+
 function offerSessionOptions(ctrl) {
     const cm = document.getElementById('chat-messages');
     const m = document.createElement('div');
@@ -168,26 +168,37 @@ function offerSessionOptions(ctrl) {
 }
 
 function resumeAudit() {
+    // 1. تعطيل كافة الأزرار السابقة في الشات فوراً
     disableAllPreviousButtons();
     
-    // 1. إزالة مربع خيارات الاستعادة
+    // 2. إزالة مربع خيارات الاستعادة من الواجهة
     const box = document.querySelector('.session-recovery-box');
     if (box) box.remove();
     
-    // 2. معالجة تكرار السؤال: نبحث عن آخر بلوك سؤال معروض ونعطله (Disabled)
-    // لكي لا يظن المستخدم أنه يحتاج للإجابة عليه مرة أخرى
-    const allMessages = document.querySelectorAll('.ai-message');
-    if (allMessages.length > 0) {
-        const lastMsg = allMessages[allMessages.length - 1];
-        const buttons = lastMsg.querySelectorAll('button');
-        if (buttons.length > 0) {
-            buttons.forEach(b => {
-                b.disabled = true;
-                b.style.opacity = '0.5';
-                b.style.cursor = 'not-allowed';
-            });
-        }
+    // 3. تحديث الذاكرة المحفوظة بعد إزالة الأزرار لضمان عدم عودتها عند التنقل
+    const historyKey = `${currentMode}_${currentControlId}`;
+    if (currentControlId && chatHistory[historyKey]) {
+        chatHistory[historyKey].html = document.getElementById('chat-messages').innerHTML;
     }
+
+    // 4. منطق الاستكمال بناءً على حالة الأسئلة
+    if (currentQuestions && currentQuestions.length > 0) {
+        if (currentQuestionIndex < currentQuestions.length) {
+            // إظهار رسالة تأكيدية بالإنجليزية
+            appendMsg('ai', `<i class="fas fa-fast-forward" style="margin-right:8px"></i> Resuming assessment... Moving to <strong>Question ${currentQuestionIndex + 1}</strong>`);
+            
+            // طلب عرض السؤال التالي فعلياً
+            setTimeout(showAuditQ, 600);
+        } else {
+            // في حال كان التقييم مكتملاً
+            appendMsg('ai', "Assessment for this section is already complete.");
+            setTimeout(() => showSubControlOptions(selectedControlInfo), 1000);
+        }
+    } else {
+        // في حال عدم وجود أسئلة (حالة احتياطية)
+        showSubControlOptions(selectedControlInfo);
+    }
+}
 
     // 3. التحقق من العداد والأسئلة
     if (currentQuestions && currentQuestions.length > 0) {
@@ -221,36 +232,49 @@ function resetToSubControls() {
 
 // تعديل بسيط على answerAudit لضمان تحديث الـ Index فوراً
 async function answerAudit(ans, btn) {
-    // تعطيل جميع الأزرار في "هذا البلوك" فقط فور الضغط
-    btn.closest('div').querySelectorAll('button').forEach(b => { 
+    // 1. تعطيل جميع الأزرار في البلوك الحالي فوراً لمنع التلاعب
+    const parentDiv = btn.closest('div');
+    parentDiv.querySelectorAll('button').forEach(b => { 
         b.disabled = true; 
         b.style.opacity = '0.35';
         b.style.cursor = 'not-allowed';
-    });
+    }); 
+    btn.style.opacity = '1'; // تمييز الزر الذي تم ضغطه
     
-    btn.closest('div').querySelectorAll('button').forEach(b => { b.disabled = true; b.style.opacity = '0.35'; }); 
-    btn.style.opacity = '1';
-    
+    // 2. إظهار رد المستخدم في الشات
     const labels = { yes: 'Yes — Verified', partial: 'Partial — Needs improvement', no: 'No — Gap' };
     appendMsg('user', labels[ans]);
     
+    // 3. تسجيل الإجابة في المصفوفة المؤقتة
     auditAnswers.push({ 
         question: currentQuestions[currentQuestionIndex].q, 
         answer: ans, 
         evidence: currentQuestions[currentQuestionIndex].ev 
     });
 
-    // زيادة العداد "قبل" الحفظ لضمان الانتقال للسؤال التالي عند الاستعادة
+    // 4. زيادة العداد للسؤال التالي
     currentQuestionIndex++; 
     
-    if (currentControlId) {
-        chatHistory[currentControlId].index = currentQuestionIndex;
+    // 5. تحديث ذاكرة الجلسة (الربط بين المود والضابط)
+    const historyKey = `${currentMode}_${currentControlId}`;
+    if (currentControlId && chatHistory[historyKey]) {
+        chatHistory[historyKey].index = currentQuestionIndex;
+        chatHistory[historyKey].answers = [...auditAnswers]; // حفظ نسخة من الإجابات
+        // حفظ شكل الشات بعد تعطيل الأزرار لضمان استعادته بشكل صحيح
+        chatHistory[historyKey].html = document.getElementById('chat-messages').innerHTML;
     }
 
+    // 6. الحفظ في قاعدة البيانات عبر الـ API
     if (currentSessionId) {
-        try { await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex-1].q, ans); } catch (e) { }
+        try { 
+            // نستخدم index-1 لأننا قمنا بزيادة العداد بالأعلى
+            await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex-1].q, ans); 
+        } catch (e) { 
+            console.error("Failed to save answer to API"); 
+        }
     }
     
+    // 7. الانتقال للسؤال التالي بعد مهلة قصيرة
     setTimeout(showAuditQ, 500);
 }
 
@@ -468,18 +492,60 @@ function updateDot(id, status) {
 }
 
 function setMode(m) {
+    // حفظ حالة الضابط الحالي في المود القديم قبل التبديل
+    if (currentControlId) {
+        const oldKey = `${currentMode}_${currentControlId}`;
+        chatHistory[oldKey] = {
+            html: document.getElementById('chat-messages').innerHTML,
+            index: currentQuestionIndex,
+            questions: currentQuestions,
+            answers: auditAnswers,
+            sessionId: currentSessionId
+        };
+    }
+
     currentMode = m;
+    
+    // تحديث شكل الأزرار
     document.getElementById('audit-mode-btn').classList.toggle('active', m === 'audit');
     document.getElementById('guide-mode-btn').classList.toggle('active', m === 'guide');
-    if (selectedControlInfo) selectControl(selectedControlInfo, document.querySelector(`.control-item[data-id="${currentControlId}"]`));
+    
+    // إذا كان هناك ضابط مختار، قم بإعادة تحميل بياناته بناءً على المود الجديد
+    if (selectedControlInfo) {
+        const controlItem = document.querySelector(`.control-item[data-id="${currentControlId}"]`);
+        selectControl(selectedControlInfo, controlItem);
+    }
 }
 
 function appendMsg(role, txt) {
     const cm = document.getElementById('chat-messages'), m = document.createElement('div');
     m.className = `message ${role}-message`;
-    m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
-    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
-    if (currentControlId) chatHistory[currentControlId] = cm.innerHTML; // Update history
+    m.innerHTML = `<div class="message-content">
+        <div class="message-header">${role === 'ai' ? (currentMode === 'audit' ? 'AI Auditor' : 'AI Guide') : 'User'}</div>
+        <div class="message-text">${txt}</div>
+    </div>`;
+    
+    cm.appendChild(m); 
+    cm.scrollTop = cm.scrollHeight;
+
+    // التحديث هنا: استخدام المفتاح المركب (المود + الضابط) لضمان فصل الجلسات
+    if (currentControlId) {
+        const historyKey = `${currentMode}_${currentControlId}`;
+        
+        // إذا لم تكن الجلسة موجودة في الذاكرة بعد، نقوم بتهيئتها
+        if (!chatHistory[historyKey]) {
+            chatHistory[historyKey] = {
+                html: "",
+                index: 0,
+                questions: [],
+                answers: [],
+                sessionId: currentSessionId
+            };
+        }
+        
+        // حفظ المحتوى الحالي في المفتاح الخاص بالمود الحالي
+        chatHistory[historyKey].html = cm.innerHTML;
+    }
 }
 
 function showTyping() {
