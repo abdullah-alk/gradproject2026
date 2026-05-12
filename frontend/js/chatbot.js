@@ -87,70 +87,63 @@ function renderControlBrowser() {
 
 // Stable Session Recovery
 async function selectControl(ctrl, el) {
-    try {
-        // 1. حفظ حالة الضابط السابق "فقط" إذا كان هناك ضابط مختار فعلياً
-        if (currentControlId) {
-            const oldKey = `${currentMode}_${currentControlId}`;
-            chatHistory[oldKey] = {
-                html: document.getElementById('chat-messages').innerHTML,
-                index: currentQuestionIndex,
-                questions: currentQuestions,
-                answers: auditAnswers,
-                sessionId: currentSessionId
-            };
-        }
+    // 1. حفظ الحالة الحالية للضابط "قبل" الانتقال (فقط إذا كانت هناك محادثة فعلاً)
+    if (currentControlId) {
+        chatHistory[currentControlId] = {
+            html: document.getElementById('chat-messages').innerHTML,
+            index: currentQuestionIndex,
+            questions: currentQuestions,
+            answers: auditAnswers,
+            sessionId: currentSessionId
+        };
+    }
 
-        // 2. تحديث العناصر البصرية في القائمة الجانبية
-        document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
-        if (el) el.classList.add('selected');
+    document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    currentControlId = ctrl.id;
+    selectedControlInfo = ctrl;
+
+    const cm = document.getElementById('chat-messages');
+    
+    // 2. استعادة المحادثة
+    if (chatHistory[ctrl.id] && chatHistory[ctrl.id].html) {
+        const history = chatHistory[ctrl.id];
+        cm.innerHTML = history.html;
         
-        // 3. تعيين الضابط الجديد
-        currentControlId = ctrl.id;
-        selectedControlInfo = ctrl;
+        // استعادة البيانات الخلفية
+        currentQuestionIndex = history.index;
+        currentQuestions = history.questions;
+        auditAnswers = history.answers;
+        currentSessionId = history.sessionId;
 
-        const cm = document.getElementById('chat-messages');
-        const currentKey = `${currentMode}_${ctrl.id}`;
-        
-        // 4. استعادة المحادثة بناءً على المود والضابط الجديد
-        if (chatHistory[currentKey] && chatHistory[currentKey].html) {
-            const history = chatHistory[currentKey];
-            cm.innerHTML = history.html;
-            
-            currentQuestionIndex = history.index;
-            currentQuestions = history.questions;
-            auditAnswers = history.answers;
-            currentSessionId = history.sessionId;
+        // 3. التعديل الجوهري: تظهر رسالة الاستعادة فقط إذا كانت هناك أسئلة (أي بدأ التقييم فعلاً)
+        // ولم نصل بعد إلى نهاية الأسئلة
+        const hasActiveQuestions = currentQuestions && currentQuestions.length > 0;
+        const isNotFinished = currentQuestionIndex < currentQuestions.length;
 
-            // عرض خيار الاستعادة إذا كان هناك تقييم لم ينتهِ
-            if (currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
-                if (!document.querySelector('.session-recovery-box')) {
-                    offerSessionOptions(ctrl);
-                }
+        if (hasActiveQuestions && isNotFinished) {
+            if (!document.querySelector('.session-recovery-box')) {
+                offerSessionOptions(ctrl);
             }
-        } else {
-            // جلسة جديدة تماماً
-            cm.innerHTML = '';
-            currentQuestionIndex = 0;
-            currentQuestions = [];
-            auditAnswers = [];
-            showSubControlOptions(ctrl);
+        } else if (!hasActiveQuestions) {
+            // إذا كانت المحادثة تحتوي فقط على قائمة الضوابط (بدون أسئلة)، لا نفعل شيئاً إضافياً
+            // لأن القائمة موجودة أصلاً في الـ HTML المستعاد
         }
-
-        // 5. تحديث اللوحة الجانبية اليمنى
-        if (document.getElementById('current-control-id')) {
-            document.getElementById('current-control-id').textContent = ctrl.id;
-            document.getElementById('current-control-name').textContent = ctrl.title;
-            updateRightPanel(ctrl.id);
-        }
-        
-        cm.scrollTop = cm.scrollHeight;
-
-    } catch (error) {
-        console.error("Error in selectControl:", error);
-        // في حال حدوث خطأ، تأكد من إظهار الضوابط الفرعية على الأقل
+    } else {
+        // جلسة جديدة كلياً
+        cm.innerHTML = '';
+        currentQuestionIndex = 0;
+        currentQuestions = [];
+        auditAnswers = [];
         showSubControlOptions(ctrl);
     }
+
+    document.getElementById('current-control-id').textContent = ctrl.id;
+    document.getElementById('current-control-name').textContent = ctrl.title;
+    updateRightPanel(ctrl.id);
+    cm.scrollTop = cm.scrollHeight;
 }
+
 function offerSessionOptions(ctrl) {
     const cm = document.getElementById('chat-messages');
     const m = document.createElement('div');
