@@ -85,40 +85,91 @@ function renderControlBrowser() {
     });
 }
 
+// Session Recovery Edition
 async function selectControl(ctrl, el) {
-    // Save current chat before switching
+    // 1. حفظ الحالة الحالية للضابط الذي سنغادره
     if (currentControlId) {
-        chatHistory[currentControlId] = document.getElementById('chat-messages').innerHTML;
+        chatHistory[currentControlId] = {
+            html: document.getElementById('chat-messages').innerHTML,
+            index: currentQuestionIndex,
+            questions: currentQuestions,
+            answers: auditAnswers,
+            sessionId: currentSessionId
+        };
     }
 
+    // 2. تحديث الواجهة
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
-    
     currentControlId = ctrl.id;
     selectedControlInfo = ctrl;
-    auditAnswers = [];
-    currentQuestions = [];
-    currentQuestionIndex = 0;
 
-    try { 
-        const cs = await getAllControls(); 
-        const m = cs.find(c => c.control_id === ctrl.id); 
-        if (m) currentControlDbId = m.id; 
-    } catch (e) { console.error("Control DB sync error"); }
+    const cm = document.getElementById('chat-messages');
+    
+    // 3. التحقق مما إذا كان هناك جلسة سابقة لهذا الضابط
+    if (chatHistory[ctrl.id] && chatHistory[ctrl.id].html) {
+        const history = chatHistory[ctrl.id];
+        cm.innerHTML = history.html;
+        
+        // استعادة البيانات البرمجية
+        currentQuestionIndex = history.index;
+        currentQuestions = history.questions;
+        auditAnswers = history.answers;
+        currentSessionId = history.sessionId;
+
+        // 4. عرض خيارات الاستمرارية (الخيار الثالث الذي اقترحته)
+        offerSessionOptions(ctrl);
+    } else {
+        // جلسة جديدة تماماً
+        cm.innerHTML = '';
+        currentQuestionIndex = 0;
+        currentQuestions = [];
+        auditAnswers = [];
+        showSubControlOptions(ctrl);
+    }
 
     document.getElementById('current-control-id').textContent = ctrl.id;
     document.getElementById('current-control-name').textContent = ctrl.title;
-    document.getElementById('current-control-requirement').textContent = `ECC-2023 compliance assessment for ${ctrl.title}`;
-    
     updateRightPanel(ctrl.id);
-    
+    cm.scrollTop = cm.scrollHeight;
+}
+
+function offerSessionOptions(ctrl) {
     const cm = document.getElementById('chat-messages');
-    if (chatHistory[ctrl.id]) {
-        cm.innerHTML = chatHistory[ctrl.id];
-        cm.scrollTop = cm.scrollHeight;
+    const m = document.createElement('div');
+    m.className = 'message ai-message session-recovery';
+    m.innerHTML = `
+        <div class="message-content">
+            <div class="message-header">Session Recovery</div>
+            <div class="message-text" style="border-left: 3px solid var(--accent-primary); background: rgba(6,182,212,0.05); padding: 15px;">
+                <p style="margin-bottom:12px; font-weight:600;">Welcome back! How would you like to proceed with Control ${ctrl.id}?</p>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button onclick="resumeAudit()" style="padding:8px 15px; background:var(--accent-primary); color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px;">
+                        <i class="fas fa-play" style="margin-right:5px;"></i> Resume Assessment
+                    </button>
+                    <button onclick="showSubControlOptions(selectedControlInfo)" style="padding:8px 15px; background:rgba(255,255,255,0.1); color:white; border:1px solid var(--border-color); border-radius:6px; cursor:pointer; font-size:12px;">
+                        <i class="fas fa-list" style="margin-right:5px;"></i> Show Sub-controls
+                    </button>
+                    <button onclick="clearCurrentChat()" style="padding:8px 15px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2); border-radius:6px; cursor:pointer; font-size:12px;">
+                        <i class="fas fa-sync" style="margin-right:5px;"></i> Reset & Start Over
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    cm.appendChild(m);
+    cm.scrollTop = cm.scrollHeight;
+}
+
+function resumeAudit() {
+    // إزالة رسالة خيارات الاستعادة لجمالية الشات
+    const recoveryMsg = document.querySelector('.session-recovery');
+    if (recoveryMsg) recoveryMsg.remove();
+    
+    if (currentQuestions.length > 0) {
+        appendMsg('ai', `Resuming where you left off... (Question ${currentQuestionIndex + 1})`);
+        setTimeout(showAuditQ, 600);
     } else {
-        cm.innerHTML = '';
-        showSubControlOptions(ctrl);
+        showSubControlOptions(selectedControlInfo);
     }
 }
 
