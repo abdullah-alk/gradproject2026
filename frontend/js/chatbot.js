@@ -168,26 +168,44 @@ function offerSessionOptions(ctrl) {
 }
 
 function resumeAudit() {
-    // إزالة رسالة الخيارات تماماً من الـ HTML ومن الذاكرة المحفوظة
+    // 1. إزالة مربع خيارات الاستعادة
     const box = document.querySelector('.session-recovery-box');
     if (box) box.remove();
     
-    // حفظ المحادثة بعد حذف زر الاستعادة لكي لا يظهر مجدداً
-    if (currentControlId) {
-        chatHistory[currentControlId].html = document.getElementById('chat-messages').innerHTML;
+    // 2. معالجة تكرار السؤال: نبحث عن آخر بلوك سؤال معروض ونعطله (Disabled)
+    // لكي لا يظن المستخدم أنه يحتاج للإجابة عليه مرة أخرى
+    const allMessages = document.querySelectorAll('.ai-message');
+    if (allMessages.length > 0) {
+        const lastMsg = allMessages[allMessages.length - 1];
+        const buttons = lastMsg.querySelectorAll('button');
+        if (buttons.length > 0) {
+            buttons.forEach(b => {
+                b.disabled = true;
+                b.style.opacity = '0.5';
+                b.style.cursor = 'not-allowed';
+            });
+        }
     }
 
+    // 3. التحقق من العداد والأسئلة
     if (currentQuestions && currentQuestions.length > 0) {
-        // التحقق من الوصول لنهاية الأسئلة
         if (currentQuestionIndex < currentQuestions.length) {
-            appendMsg('ai', `Resuming assessment... Section: <strong>${currentQuestions[currentQuestionIndex].cat}</strong>`);
-            setTimeout(showAuditQ, 600);
+            // إضافة رسالة توضيحية بسيطة
+            appendMsg('ai', `<i class="fas fa-fast-forward"></i> Resuming assessment... Moving to <strong>Question ${currentQuestionIndex + 1}</strong>`);
+            
+            // 4. استدعاء السؤال التالي فعلياً
+            setTimeout(showAuditQ, 800);
         } else {
-            appendMsg('ai', "Assessment for this section is complete.");
+            appendMsg('ai', "Assessment for this section is already complete.");
             showSubControlOptions(selectedControlInfo);
         }
     } else {
         showSubControlOptions(selectedControlInfo);
+    }
+
+    // 5. تحديث الذاكرة لضمان عدم حفظ أزرار "الاستعادة" المحذوفة
+    if (currentControlId) {
+        chatHistory[currentControlId].html = document.getElementById('chat-messages').innerHTML;
     }
 }
 
