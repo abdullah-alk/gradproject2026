@@ -189,7 +189,7 @@ async function deleteScheduledAudit(sessionId) {
     if (!confirm('Delete this scheduled audit?')) return;
     showLoader();
     try {
-        await deleteScheduledAuditAPI(sessionId);
+        await deleteScheduledAudit(sessionId);
         showToast('success', 'Deleted', 'Scheduled audit removed.');
         await loadScheduledAudits();
     } catch (e) {
