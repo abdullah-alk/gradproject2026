@@ -548,6 +548,11 @@ tbody td {
     to { transform: rotate(360deg); }
 }
 
+.scheduler-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:24px;
+}
 /* === Responsive === */
 @media (max-width: 768px) {
     .sidebar {
