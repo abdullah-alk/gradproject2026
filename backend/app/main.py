@@ -1113,6 +1113,28 @@ async def schedule_audit_endpoint(data: dict = Body(...), current_user: dict = D
         cur.close()
         conn.close() 
 
+@app.delete("/api/scheduler/schedule/{session_id}")
+async def delete_scheduled_audit(session_id: int, current_user: dict = Depends(get_current_user)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "DELETE FROM audit_sessions WHERE id = %s AND user_id = %s AND status = 'scheduled'",
+            (session_id, current_user["id"])
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Audit not found")
+        conn.commit()
+        return {"message": "Audit deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
 
 
 @app.post("/api/scheduler/auto")
