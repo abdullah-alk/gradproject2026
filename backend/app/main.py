@@ -755,19 +755,20 @@ async def get_stats(current_user: dict = Depends(get_current_user)):
         cur.execute(
             """
             SELECT
-                COUNT(DISTINCT control_id) as audited_cnt,
-                COALESCE(AVG(score), 0) as avg_score,
-                SUM(CASE WHEN score >= 80 THEN 1 ELSE 0 END) as compliant_cnt,
-                SUM(CASE WHEN score >= 40 AND score < 80 THEN 1 ELSE 0 END) as partial_cnt,
-                SUM(CASE WHEN score < 40 THEN 1 ELSE 0 END) as noncompliant_cnt
+                COUNT(DISTINCT ec.control_id) as audited_cnt,
+                COALESCE(AVG(cs.score), 0) as avg_score,
+                SUM(CASE WHEN cs.score >= 80 THEN 1 ELSE 0 END) as compliant_cnt,
+                SUM(CASE WHEN cs.score >= 40 AND cs.score < 80 THEN 1 ELSE 0 END) as partial_cnt,
+                SUM(CASE WHEN cs.score < 40 THEN 1 ELSE 0 END) as noncompliant_cnt
             FROM (
                 SELECT control_id, MAX(score) as score
                 FROM compliance_scores
                 WHERE user_id = %s
                 GROUP BY control_id
-            ) latest
+            ) cs
+            JOIN ecc_controls ec ON cs.control_id = ec.id
             """,
-           (user_id,)
+            (user_id,)
         )
         sc = cur.fetchone()
         avg_score = float(sc["avg_score"] or 0)
@@ -829,7 +830,7 @@ async def get_domain_scores(current_user: dict = Depends(get_current_user)):
                    ROUND(AVG(cs.score), 1) as score
             FROM compliance_scores cs
             JOIN ecc_controls ec ON cs.control_id = ec.id
-            WHERE cs.user_id = %s AND ec.level = 1
+            WHERE cs.user_id = %s
             GROUP BY ec.domain
             ORDER BY ec.domain
         """, (user_id,))
@@ -847,13 +848,13 @@ async def get_category_scores(current_user: dict = Depends(get_current_user)):
     cur = conn.cursor()
     try:
         cur.execute("""
-            SELECT ec.domain as category,
+            SELECT ec.control_id as category,
                    ROUND(AVG(cs.score), 1) as score
             FROM compliance_scores cs
             JOIN ecc_controls ec ON cs.control_id = ec.id
-            WHERE cs.user_id = %s AND ec.level = 1
-            GROUP BY ec.domain
-            ORDER BY ec.domain
+            WHERE cs.user_id = %s
+            GROUP BY ec.control_id
+            ORDER BY ec.control_id
         """, (user_id,))
         rows = cur.fetchall()
         return [{"category": r["category"], "score": float(r["score"] or 0)} for r in rows]
@@ -1365,7 +1366,7 @@ async def get_alerts(current_user: dict = Depends(get_current_user)):
             SELECT ec.control_id, ec.title, ec.domain, MAX(cs.calculated_at) as last_audit
             FROM compliance_scores cs
             JOIN ecc_controls ec ON cs.control_id = ec.id
-            WHERE cs.user_id = %s AND cs.score < 40 AND ec.level = 1
+            WHERE cs.user_id = %s AND cs.score < 40
             GROUP BY ec.control_id, ec.title, ec.domain
             ORDER BY last_audit DESC LIMIT 5
             """,
