@@ -173,14 +173,31 @@ async function loadScheduledAudits() {
                         </div>
                     </div>
                 </div>
-                <span style="background:rgba(16,185,129,0.1);color:#10b981;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;">Scheduled</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="background:rgba(16,185,129,0.1);color:#10b981;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;">Scheduled</span>
+                 <button onclick="deleteScheduledAudit(${a.id})" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px;">
+                 <i class="fas fa-trash"></i>
+               </button>
+           </div>
             </div>
         `).join('');
     } catch (e) {
         console.error('Load audits error:', e);
     }
 }
-
+async function deleteScheduledAudit(sessionId) {
+    if (!confirm('Delete this scheduled audit?')) return;
+    showLoader();
+    try {
+        await deleteScheduledAuditAPI(sessionId);
+        showToast('success', 'Deleted', 'Scheduled audit removed.');
+        await loadScheduledAudits();
+    } catch (e) {
+        showToast('error', 'Failed', 'Could not delete audit.');
+    } finally {
+        hideLoader();
+    }
+}
 window.addEventListener('beforeunload', () => {
     if (countdownInterval) clearInterval(countdownInterval);
 });
