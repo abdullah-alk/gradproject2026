@@ -630,7 +630,7 @@ async def start_audit_session(data: dict = Body(...)):
         session = cur.fetchone()
         conn.commit()
         print(f"[🎯] Audit session started: {session['id']} (control_id={control_id_raw}, mode={mode})")
-        return {"session_id": session["id"], "message": "Session started"}
+        return {"session_id": session["id"], "message": "Session started", "control_db_id": control_db_id}
     except Exception as e:
         conn.rollback()
         print(f"[❌] Start Session Error: {e}")
