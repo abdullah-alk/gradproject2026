@@ -147,6 +147,26 @@ function showToast(type, title, msg) {
     }, 4000);
 }
 
+function showConfirmModal(message, onConfirm) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = `
+        <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:28px;width:340px;text-align:center;">
+            <div style="width:48px;height:48px;background:rgba(239,68,68,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                <i class="fas fa-trash" style="color:#ef4444;font-size:18px;"></i>
+            </div>
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;">Confirm Delete</h3>
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:24px;">${message}</p>
+            <div style="display:flex;gap:12px;">
+                <button id="confirm-cancel" style="flex:1;padding:10px;border:1px solid var(--border-color);background:transparent;color:var(--text-secondary);border-radius:8px;cursor:pointer;font-size:13px;">Cancel</button>
+                <button id="confirm-ok" style="flex:1;padding:10px;border:none;background:#ef4444;color:white;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Delete</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    document.getElementById('confirm-cancel').onclick = () => modal.remove();
+    document.getElementById('confirm-ok').onclick = () => { modal.remove(); onConfirm(); };
+}
+
 async function loadScheduledAudits() {
     try {
         const audits = await getScheduledAudits();
@@ -185,18 +205,19 @@ async function loadScheduledAudits() {
         console.error('Load audits error:', e);
     }
 }
-async function deleteScheduledAudit(sessionId) {
-    showToast('info', 'Confirm', 'Deleting scheduled audit...');
-    showLoader();
-    try {
-        await deleteScheduledAudit(sessionId);
-        showToast('success', 'Deleted', 'Scheduled audit removed.');
-        await loadScheduledAudits();
-    } catch (e) {
-        showToast('error', 'Failed', 'Could not delete audit.');
-    } finally {
-        hideLoader();
-    }
+async function handleDeleteAudit(sessionId) {
+    showConfirmModal('Are you sure you want to delete this scheduled audit?', async () => {
+        showLoader();
+        try {
+            await deleteScheduledAudit(sessionId);
+            showToast('success', 'Deleted', 'Scheduled audit removed.');
+            await loadScheduledAudits();
+        } catch (e) {
+            showToast('error', 'Failed', 'Could not delete audit.');
+        } finally {
+            hideLoader();
+        }
+    });
 }
 window.addEventListener('beforeunload', () => {
     if (countdownInterval) clearInterval(countdownInterval);
