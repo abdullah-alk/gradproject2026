@@ -96,11 +96,26 @@ async function finishGuide() {
 
 // --- حفظ التقدم ---
 async function saveProgress(ctrlId, status, score) {
-    const res = JSON.parse(localStorage.getItem('audit_results') || '{}'); res[ctrlId] = status;
-    localStorage.setItem('audit_results', JSON.stringify(res));
-    updateDot(ctrlId, status);
-    updateRightPanel(ctrlId);
-    if (currentSessionId) { try { await completeAuditSession(currentSessionId, status, score); } catch (e) { } }
+    const res = JSON.parse(localStorage.getItem('audit_results') || '{}'); res[ctrlId] = status;
+    localStorage.setItem('audit_results', JSON.stringify(res));
+    updateDot(ctrlId, status);
+    updateRightPanel(ctrlId);
+    if (currentSessionId) { try { await completeAuditSession(currentSessionId, status, score); } catch (e) { } }
+    try {
+        const u = getCurrentUserLocal();
+        const yes = auditAnswers.filter(a => a.answer === 'yes').length;
+        const partial = auditAnswers.filter(a => a.answer === 'partial').length;
+        const no = auditAnswers.filter(a => a.answer === 'no').length;
+        await saveComplianceScore({
+            user_id: u.id,
+            control_id: currentSessionId,
+            score: score,
+            total_questions: auditAnswers.length,
+            answered_yes: yes,
+            answered_partial: partial,
+            answered_no: no
+        });
+    } catch(e) { console.error('Score save error:', e); }
 }
 
 // --- بقية الكود الأساسي (مع التأكد من المفاتيح المركبة) ---
@@ -283,7 +298,7 @@ async function initiateSubAudit(subId) {
         if (r.questions?.length > 0) {
             currentQuestions = r.questions.map(q => ({ q: q.question, ev: q.expected_evidence || '', cat: subId }));
             currentQuestionIndex = 0; const u = getCurrentUserLocal();
-            const s = await startAuditSessionAPI(u.id, null, currentMode);
+            const s = await startAuditSessionAPI(u.id, subId, currentMode);
             if(s?.session_id) currentSessionId = s.session_id;
             setTimeout(showAuditQ, 400);
         }
