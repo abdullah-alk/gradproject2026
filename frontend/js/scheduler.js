@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadUserToSidebar();
     await loadSchedulerData();
     document.getElementById('schedule-manual-audit-btn')?.addEventListener('click', handleScheduleManualAudit);
-    document.getElementById('enable-auto-scheduling')?.addEventListener('change', e => toggleAutoScheduling(e.target.checked));
 });
 
 async function loadSchedulerData() {
