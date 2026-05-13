@@ -108,7 +108,7 @@ async function saveProgress(ctrlId, status, score) {
         const no = auditAnswers.filter(a => a.answer === 'no').length;
         await saveComplianceScore({
             user_id: u.id,
-            control_id: currentSessionId,
+            control_id: currentControlDbId,
             score: score,
             total_questions: auditAnswers.length,
             answered_yes: yes,
@@ -299,7 +299,8 @@ async function initiateSubAudit(subId) {
             currentQuestions = r.questions.map(q => ({ q: q.question, ev: q.expected_evidence || '', cat: subId }));
             currentQuestionIndex = 0; const u = getCurrentUserLocal();
             const s = await startAuditSessionAPI(u.id, subId, currentMode);
-            if(s?.session_id) currentSessionId = s.session_id;
+            if(s?.session_id) currentSessionId = s.session_id;
+            if(s?.control_db_id) currentControlDbId = s.control_db_id;
             setTimeout(showAuditQ, 400);
         }
     } catch (e) { hideTyping(); }
