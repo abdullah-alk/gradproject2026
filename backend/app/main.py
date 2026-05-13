@@ -608,12 +608,16 @@ async def start_audit_session(data: dict = Body(...)):
     cur = conn.cursor()
     try:
         user_id = data.get("user_id")
-        control_id = data.get("control_id")
+        control_id_raw = data.get("control_id")
         mode = data.get("mode", "audit")
-
         next_audit = datetime.now() + timedelta(days=30)
-        
-
+        # تحويل control_id من نص إلى integer
+        control_db_id = None
+        if control_id_raw:
+            cur.execute("SELECT id FROM ecc_controls WHERE control_id = %s", (control_id_raw,))
+            row = cur.fetchone()
+            if row:
+                control_db_id = row["id"]
         cur.execute(
             """
             INSERT INTO audit_sessions
@@ -621,11 +625,11 @@ async def start_audit_session(data: dict = Body(...)):
             VALUES (%s, %s, %s, 'in_progress', NOW(), %s, NOW())
             RETURNING id
             """,
-            (user_id, control_id, mode, next_audit),
+            (user_id, control_db_id, mode, next_audit),
         )
         session = cur.fetchone()
         conn.commit()
-        print(f"[🎯] Audit session started: {session['id']} (control_id={control_id}, mode={mode})")
+        print(f"[🎯] Audit session started: {session['id']} (control_id={control_id_raw}, mode={mode})")
         return {"session_id": session["id"], "message": "Session started"}
     except Exception as e:
         conn.rollback()
