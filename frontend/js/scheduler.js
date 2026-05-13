@@ -186,7 +186,7 @@ async function loadScheduledAudits() {
     }
 }
 async function deleteScheduledAudit(sessionId) {
-    if (!confirm('Delete this scheduled audit?')) return;
+    showToast('info', 'Confirm', 'Deleting scheduled audit...');
     showLoader();
     try {
         await deleteScheduledAudit(sessionId);
