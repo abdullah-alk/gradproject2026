@@ -1932,28 +1932,6 @@ function renderControlBrowser() {
 //     showSubControlOptions(ctrl);
 // }
 
-// function showSubControlOptions(ctrl) {
-//     const cm = document.getElementById('chat-messages');
-//     const m = document.createElement('div');
-//     m.className = 'message ai-message';
-    
-//     let buttonsHtml = ctrl.subControls.map(subId => `
-//         <button onclick="initiateSubAudit('${subId}')" style="padding:10px 14px; border:1px solid var(--accent-primary); background:rgba(6,182,212,0.05); color:var(--accent-primary); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; transition:0.2s; margin-bottom:5px;">
-//             Control ${subId}
-//         </button>
-//     `).join('');
-
-//     m.innerHTML = `
-//         <div class="message-content">
-//             <div class="message-header">AI Compliance Assistant</div>
-//             <div class="message-text">
-//                 <p style="margin-bottom:15px">لقد اخترت الضابط الرئيسي <strong>${ctrl.id}</strong>. يرجى اختيار الضابط الفرعي المطلوب تقييمه الآن للبدء:</p>
-//                 <div style="display:flex; gap:10px; flex-wrap:wrap;">${buttonsHtml}</div>
-//             </div>
-//         </div>`;
-//     cm.appendChild(m);
-//     cm.scrollTop = cm.scrollHeight;
-// }
 async function selectControl(ctrl, el) {
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
@@ -1989,6 +1967,30 @@ async function selectControl(ctrl, el) {
     showSubControlOptions(ctrl);
 }
 
+function showSubControlOptions(ctrl) {
+    const cm = document.getElementById('chat-messages');
+    const m = document.createElement('div');
+    m.className = 'message ai-message';
+    
+    let buttonsHtml = ctrl.subControls.map(subId => `
+        <button onclick="initiateSubAudit('${subId}')" style="padding:10px 14px; border:1px solid var(--accent-primary); background:rgba(6,182,212,0.05); color:var(--accent-primary); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; transition:0.2s; margin-bottom:5px;">
+            Control ${subId}
+        </button>
+    `).join('');
+
+    m.innerHTML = `
+        <div class="message-content">
+            <div class="message-header">AI Compliance Assistant</div>
+            <div class="message-text">
+                <p style="margin-bottom:15px">لقد اخترت الضابط الرئيسي <strong>${ctrl.id}</strong>. يرجى اختيار الضابط الفرعي المطلوب تقييمه الآن للبدء:</p>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">${buttonsHtml}</div>
+            </div>
+        </div>`;
+    cm.appendChild(m);
+    cm.scrollTop = cm.scrollHeight;
+}
+
+
 // async function initiateSubAudit(subId) {
 //     appendMsg('user', `بدء تقييم الضابط الفرعي: ${subId}`);
 //     showTyping();
@@ -2017,41 +2019,6 @@ async function selectControl(ctrl, el) {
 //         hideTyping();
 //         appendMsg('ai', `<span style="color:#ef4444">AI engine is currently unavailable.</span>`);
 //     }
-// }
-
-// function showAuditQ() {
-//     if (currentQuestionIndex >= currentQuestions.length) {
-//         if (currentMode === 'audit') finishAudit(); else finishGuide();
-//         return;
-//     }
-//     const q = currentQuestions[currentQuestionIndex], 
-//           num = currentQuestionIndex + 1, 
-//           total = currentQuestions.length, 
-//           pct = Math.round((currentQuestionIndex / total) * 100);
-          
-//     const cm = document.getElementById('chat-messages'), m = document.createElement('div'); 
-//     m.className = 'message ai-message';
-//     m.innerHTML = `
-//         <div class="message-content">
-//             <div class="message-header">AI Auditor</div>
-//             <div class="message-text">
-//                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-//                     <span style="font-size:11px;color:var(--text-muted)">Question ${num} of ${total}</span>
-//                     <span style="font-size:11px;background:rgba(6,182,212,0.1);color:var(--accent-primary);padding:2px 10px;border-radius:20px">${q.cat}</span>
-//                 </div>
-//                 <div style="width:100%;height:3px;background:rgba(255,255,255,0.07);border-radius:2px;margin-bottom:14px">
-//                     <div style="height:100%;width:${pct}%;background:var(--accent-primary);border-radius:2px;transition:width 0.4s"></div>
-//                 </div>
-//                 <p style="font-size:14px;line-height:1.7;margin-bottom:${q.ev ? '8px' : '16px'}">${q.q}</p>
-//                 ${q.ev ? `<p style="font-size:11px;color:#f59e0b;margin-bottom:16px"><i class="fas fa-paperclip" style="margin-right:4px"></i>Required evidence: ${q.ev}</p>` : ''}
-//                 <div style="display:flex;gap:10px;flex-wrap:wrap">
-//                     <button onclick="answerAudit('yes',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #10b981;background:rgba(16,185,129,0.08);color:#10b981;cursor:pointer;font-size:13px;font-weight:600;">Yes</button>
-//                     <button onclick="answerAudit('partial',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #f59e0b;background:rgba(245,158,11,0.08);color:#f59e0b;cursor:pointer;font-size:13px;font-weight:600;">Partial</button>
-//                     <button onclick="answerAudit('no',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #ef4444;background:rgba(239,68,68,0.08);color:#ef4444;cursor:pointer;font-size:13px;font-weight:600;">No</button>
-//                 </div>
-//             </div>
-//         </div>`;
-//     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
 // }
 
 async function initiateSubAudit(subId) {
@@ -2088,6 +2055,43 @@ async function initiateSubAudit(subId) {
         appendMsg('ai', `<span style="color:#ef4444">AI engine is currently unavailable.</span>`);
     }
 }
+
+function showAuditQ() {
+    if (currentQuestionIndex >= currentQuestions.length) {
+        if (currentMode === 'audit') finishAudit(); else finishGuide();
+        return;
+    }
+    const q = currentQuestions[currentQuestionIndex], 
+          num = currentQuestionIndex + 1, 
+          total = currentQuestions.length, 
+          pct = Math.round((currentQuestionIndex / total) * 100);
+          
+    const cm = document.getElementById('chat-messages'), m = document.createElement('div'); 
+    m.className = 'message ai-message';
+    m.innerHTML = `
+        <div class="message-content">
+            <div class="message-header">AI Auditor</div>
+            <div class="message-text">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <span style="font-size:11px;color:var(--text-muted)">Question ${num} of ${total}</span>
+                    <span style="font-size:11px;background:rgba(6,182,212,0.1);color:var(--accent-primary);padding:2px 10px;border-radius:20px">${q.cat}</span>
+                </div>
+                <div style="width:100%;height:3px;background:rgba(255,255,255,0.07);border-radius:2px;margin-bottom:14px">
+                    <div style="height:100%;width:${pct}%;background:var(--accent-primary);border-radius:2px;transition:width 0.4s"></div>
+                </div>
+                <p style="font-size:14px;line-height:1.7;margin-bottom:${q.ev ? '8px' : '16px'}">${q.q}</p>
+                ${q.ev ? `<p style="font-size:11px;color:#f59e0b;margin-bottom:16px"><i class="fas fa-paperclip" style="margin-right:4px"></i>Required evidence: ${q.ev}</p>` : ''}
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button onclick="answerAudit('yes',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #10b981;background:rgba(16,185,129,0.08);color:#10b981;cursor:pointer;font-size:13px;font-weight:600;">Yes</button>
+                    <button onclick="answerAudit('partial',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #f59e0b;background:rgba(245,158,11,0.08);color:#f59e0b;cursor:pointer;font-size:13px;font-weight:600;">Partial</button>
+                    <button onclick="answerAudit('no',this)" style="padding:10px 22px;border-radius:8px;border:1.5px solid #ef4444;background:rgba(239,68,68,0.08);color:#ef4444;cursor:pointer;font-size:13px;font-weight:600;">No</button>
+                </div>
+            </div>
+        </div>`;
+    cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+}
+
+
 
 async function answerAudit(ans, btn) {
     btn.closest('div').querySelectorAll('button').forEach(b => { b.disabled = true; b.style.opacity = '0.35'; }); 
