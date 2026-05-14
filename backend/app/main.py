@@ -1366,7 +1366,7 @@ async def get_alerts(current_user: dict = Depends(get_current_user)):
             SELECT ec.control_id, ec.title, ec.domain, MAX(cs.calculated_at) as last_audit
             FROM compliance_scores cs
             LEFT JOIN ecc_controls ec ON cs.control_id = ec.id
-            WHERE cs.user_id = %s AND cs.score < 40
+            WHERE cs.user_id = %s AND cs.score < 40 AND cs.control_id IS NOT NULL
             GROUP BY ec.control_id, ec.title, ec.domain
             ORDER BY last_audit DESC LIMIT 5
             """,
@@ -1443,7 +1443,7 @@ async def get_dashboard_gaps(current_user: dict = Depends(get_current_user)):
             FROM gaps_recommendations gr
             JOIN audit_sessions s ON gr.session_id = s.id
             LEFT JOIN ecc_controls ec ON gr.control_id = ec.id
-            WHERE s.user_id = %s
+            WHERE s.user_id = %s AND gr.control_id IS NOT NULL
             ORDER BY gr.created_at DESC LIMIT 5
         """, (user_id,))
         return [dict(r) for r in cur.fetchall()]
