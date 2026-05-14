@@ -345,6 +345,7 @@ async function saveProgress(ctrlId, status, score, yes, partial, no, total) {
     
     try { await updateControlStatus(ctrlId, status); } catch (e) { }
      if (currentSessionId) { try { await completeAuditSession(currentSessionId, status, score); } catch (e) { } }
+    console.log('[DEBUG] saveComplianceScore:', { user_id: getCurrentUserLocal().id, control_id: currentControlDbId, score });
     try {
         const u = getCurrentUserLocal();
         await saveComplianceScore({
