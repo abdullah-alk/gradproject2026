@@ -251,7 +251,30 @@
                         <i class="fas fa-save" style="margin-right:6px"></i> Save Changes
                     </button>
                 </div>
-
+                <!-- Change Email -->
+                <div class="profile-card">
+                    <div class="section-header">
+                        <div class="section-icon" style="background:rgba(6,182,212,.12);color:#06b6d4">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div>
+                            <h3 style="font-size:15px;font-weight:700">Change Email</h3>
+                            <p style="font-size:12px;color:var(--text-muted)">Update your email address</p>
+                        </div>
+                    </div>
+                    <div id="email-msg" class="msg"></div>
+                    <div class="form-group">
+                        <label class="form-label">New Email Address</label>
+                        <input type="email" id="new-email" class="form-input" placeholder="e.g. ahmed@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" id="email-pwd" class="form-input" placeholder="Enter current password to confirm">
+                    </div>
+                    <button onclick="updateEmail()" class="btn btn-primary" style="width:100%;padding:12px;background:linear-gradient(135deg,#06b6d4,#0891b2)">
+                        <i class="fas fa-envelope" style="margin-right:6px"></i> Update Email
+                    </button>
+                </div>
                 <!-- Change Password -->
                 <div class="profile-card" style="grid-column:1/-1">
                     <div class="section-header">
@@ -337,6 +360,26 @@ async function updateName() {
     }
 }
 
+async function updateEmail() {
+    const email = document.getElementById('new-email').value.trim();
+    const pwd = document.getElementById('email-pwd').value;
+    if (!email || !pwd) { showMsg('email-msg', 'error', 'Please fill all fields.'); return; }
+    if (!email.includes('@')) { showMsg('email-msg', 'error', 'Invalid email address.'); return; }
+    try {
+        const res = await apiRequest('/profile/update', { method: 'POST', body: JSON.stringify({ email: email, current_password: pwd }) });
+        const user = getCurrentUserLocal();
+        user.email = email;
+        localStorage.setItem('userInfo', JSON.stringify(user));
+        localStorage.setItem('user', JSON.stringify(user));
+        document.getElementById('info-email').textContent = email;
+        document.getElementById('new-email').value = '';
+        document.getElementById('email-pwd').value = '';
+        showMsg('email-msg', 'success', 'Email updated successfully!');
+    } catch(e) {
+        showMsg('email-msg', 'error', e.message || 'Failed to update email.');
+    }
+}
+    
 async function updatePassword() {
     const cur = document.getElementById('current-pwd').value;
     const nw = document.getElementById('new-pwd').value;
