@@ -251,31 +251,50 @@
                         <i class="fas fa-save" style="margin-right:6px"></i> Save Changes
                     </button>
                 </div>
-                <!-- Change Email -->
-                <div class="profile-card">
-                    <div class="section-header">
-                        <div class="section-icon" style="background:rgba(6,182,212,.12);color:#06b6d4">
-                            <i class="fas fa-envelope"></i>
-                        </div>
-                        <div>
-                            <h3 style="font-size:15px;font-weight:700">Change Email</h3>
-                            <p style="font-size:12px;color:var(--text-muted)">Update your email address</p>
-                        </div>
+            <!-- Change Email -->
+            <div class="profile-card">
+                <div class="section-header">
+                    <div class="section-icon" style="background:rgba(6,182,212,.12);color:#06b6d4">
+                        <i class="fas fa-envelope"></i>
                     </div>
-                    <div id="email-msg" class="msg"></div>
+                    <div>
+                        <h3 style="font-size:15px;font-weight:700">Change Email</h3>
+                        <p style="font-size:12px;color:var(--text-muted)">Verify your new email with OTP</p>
+                    </div>
+                </div>
+                <div id="email-msg" class="msg"></div>
+                <div id="email-step-1">
                     <div class="form-group">
                         <label class="form-label">New Email Address</label>
                         <input type="email" id="new-email" class="form-input" placeholder="e.g. ahmed@company.com">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Current Password</label>
-                        <input type="password" id="email-pwd" class="form-input" placeholder="Enter current password to confirm">
+                        <input type="password" id="email-pwd" class="form-input" placeholder="Enter current password">
                     </div>
-                    <button onclick="updateEmail()" class="btn btn-primary" style="width:100%;padding:12px;background:linear-gradient(135deg,#06b6d4,#0891b2)">
-                        <i class="fas fa-envelope" style="margin-right:6px"></i> Update Email
+                    <button onclick="sendEmailOTP()" class="btn btn-primary" style="width:100%;padding:12px;background:linear-gradient(135deg,#06b6d4,#0891b2)">
+                        <i class="fas fa-paper-plane" style="margin-right:6px"></i> Send Verification Code
                     </button>
                 </div>
-                <!-- Change Password -->
+                <div id="email-step-2" style="display:none">
+                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">
+                        <i class="fas fa-envelope-open" style="color:#06b6d4;margin-right:6px"></i>
+                        OTP sent to <strong id="email-otp-target"></strong>
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label">Verification Code</label>
+                        <input type="text" id="email-otp" class="form-input" placeholder="Enter 6-digit code" maxlength="6">
+                    </div>
+                    <div style="display:flex;gap:10px">
+                        <button onclick="confirmEmailChange()" class="btn btn-primary" style="flex:1;padding:12px;background:linear-gradient(135deg,#10b981,#059669)">
+                            <i class="fas fa-check" style="margin-right:6px"></i> Confirm
+                        </button>
+                        <button onclick="resetEmailForm()" style="padding:12px 16px;border:1px solid var(--border-color);background:transparent;color:var(--text-muted);border-radius:8px;cursor:pointer">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+    </div>                <!-- Change Password -->
                 <div class="profile-card" style="grid-column:1/-1">
                     <div class="section-header">
                         <div class="section-icon" style="background:rgba(239,68,68,.12);color:#ef4444">
@@ -360,24 +379,45 @@ async function updateName() {
     }
 }
 
-async function updateEmail() {
+async function sendEmailOTP() {
     const email = document.getElementById('new-email').value.trim();
     const pwd = document.getElementById('email-pwd').value;
     if (!email || !pwd) { showMsg('email-msg', 'error', 'Please fill all fields.'); return; }
-    if (!email.includes('@')) { showMsg('email-msg', 'error', 'Invalid email address.'); return; }
     try {
-        const res = await apiRequest('/profile/update', { method: 'POST', body: JSON.stringify({ email: email, current_password: pwd }) });
+        await apiRequest('/profile/change-email', { method: 'POST', body: JSON.stringify({ new_email: email, current_password: pwd }) });
+        document.getElementById('email-otp-target').textContent = email;
+        document.getElementById('email-step-1').style.display = 'none';
+        document.getElementById('email-step-2').style.display = 'block';
+        showMsg('email-msg', 'success', 'OTP sent! Check your email.');
+    } catch(e) {
+        showMsg('email-msg', 'error', e.message || 'Failed to send OTP.');
+    }
+}
+
+async function confirmEmailChange() {
+    const email = document.getElementById('new-email').value.trim();
+    const otp = document.getElementById('email-otp').value.trim();
+    if (!otp) { showMsg('email-msg', 'error', 'Please enter the OTP.'); return; }
+    try {
+        await apiRequest('/profile/confirm-email-change', { method: 'POST', body: JSON.stringify({ new_email: email, otp: otp }) });
         const user = getCurrentUserLocal();
         user.email = email;
         localStorage.setItem('userInfo', JSON.stringify(user));
         localStorage.setItem('user', JSON.stringify(user));
         document.getElementById('info-email').textContent = email;
-        document.getElementById('new-email').value = '';
-        document.getElementById('email-pwd').value = '';
+        resetEmailForm();
         showMsg('email-msg', 'success', 'Email updated successfully!');
     } catch(e) {
-        showMsg('email-msg', 'error', e.message || 'Failed to update email.');
+        showMsg('email-msg', 'error', e.message || 'Invalid OTP.');
     }
+}
+
+function resetEmailForm() {
+    document.getElementById('email-step-1').style.display = 'block';
+    document.getElementById('email-step-2').style.display = 'none';
+    document.getElementById('new-email').value = '';
+    document.getElementById('email-pwd').value = '';
+    document.getElementById('email-otp').value = '';
 }
     
 async function updatePassword() {
