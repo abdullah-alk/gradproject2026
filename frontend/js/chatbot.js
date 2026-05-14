@@ -344,7 +344,19 @@ async function saveProgress(ctrlId, status, score, yes, partial, no, total) {
     updateRightPanel(ctrlId);
     
     try { await updateControlStatus(ctrlId, status); } catch (e) { }
-    if (currentSessionId) { try { await completeAuditSession(currentSessionId, status, score); } catch (e) { } }
+     if (currentSessionId) { try { await completeAuditSession(currentSessionId, status, score); } catch (e) { } }
+    try {
+        const u = getCurrentUserLocal();
+        await saveComplianceScore({
+            user_id: u.id,
+            control_id: currentControlDbId,
+            score: score,
+            total_questions: total || auditAnswers.length,
+            answered_yes: yes || auditAnswers.filter(a=>a.answer==='yes').length,
+            answered_partial: partial || auditAnswers.filter(a=>a.answer==='partial').length,
+            answered_no: no || auditAnswers.filter(a=>a.answer==='no').length
+        });
+    } catch(e) { console.error('Score save error:', e); }
 }
 
 function updateRightPanel(id) {
