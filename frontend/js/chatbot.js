@@ -84,46 +84,6 @@ function renderControlBrowser() {
     });
 }
 
-// async function selectControl(ctrl, el) {
-//     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
-//     el.classList.add('selected');
-    
-//     currentControlId = ctrl.id;
-//     selectedControlInfo = ctrl;
-
-//     // 1. استعادة المحادثة السابقة من ذاكرة المتصفح بدلاً من مسحها
-//     const savedChat = localStorage.getItem(`chat_history_${ctrl.id}`);
-//     const cm = document.getElementById('chat-messages');
-//     cm.innerHTML = savedChat || ''; // إذا لم يوجد سجل، تظل فارغة
-    
-//     // 2. التحقق من وجود "جلسة تقييم" معلقة
-//     const savedSession = localStorage.getItem(`session_resume_${ctrl.id}`);
-//     if (savedSession) {
-//         const sessionData = JSON.parse(savedSession);
-//         // عرض قائمة الاستكمال فقط إذا لم تكن معروضة مسبقاً في المحادثة
-//         if (sessionData.index > 0 && sessionData.questions.length > 0) {
-//             showResumeOption(sessionData);
-//         } else {
-//             showSubControlOptions(ctrl);
-//         }
-//     } else if (!savedChat) {
-//         showSubControlOptions(ctrl);
-//     }
-//     cm.scrollTop = cm.scrollHeight;
-// }
-
-// // دالة الاستكمال المعدلة (تأكد من تعريفها هكذا)
-// window.resumeAudit = function(data) {
-//     // تحديث المتغيرات العالمية فوراً
-//     currentQuestions = data.questions;
-//     currentQuestionIndex = data.index;
-//     auditAnswers = data.answers;
-//     currentSessionId = data.sessionId;
-//     currentControlDbId = data.dbId;
-    
-//     appendMsg('ai', `Continued from question number ${currentQuestionIndex + 1}...`);
-//     setTimeout(showAuditQ, 600);
-// };
 
 async function selectControl(ctrl, el) {
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
@@ -255,52 +215,6 @@ function showAuditQ() {
     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
 }
 
-// async function answerAudit(ans, btn) {
-//     // 1. تعطيل الأزرار لمنع النقرات المتكررة وتغيير المظهر
-//     btn.closest('div').querySelectorAll('button').forEach(b => { 
-//         b.disabled = true; 
-//         b.style.opacity = '0.35'; 
-//     }); 
-//     btn.style.opacity = '1';
-    
-//     const labels = { yes: 'Yes — Verified', partial: 'Partial — Needs improvement', no: 'No — Gap' };
-//     appendMsg('user', labels[ans]);
-    
-//     // 2. تسجيل الإجابة الحالية في المصفوفة
-//     const currentQ = currentQuestions[currentQuestionIndex];
-//     auditAnswers.push({ 
-//         question: currentQ.q, 
-//         answer: ans, 
-//         evidence: currentQ.ev 
-//     });
-    
-//     // 3. حفظ الإجابة في السيرفر (API) إذا كانت الجلسة نشطة
-//     if (currentSessionId) {
-//         try { 
-//             await saveAuditAnswer(currentSessionId, currentQ.q, ans); 
-//         } catch (e) { 
-//             console.warn("Server sync failed, keeping local state only.");
-//         }
-//     }
-    
-//     // 4. الانتقال للفهرس التالي
-//     currentQuestionIndex++; 
-
-//     // 5. حفظ حالة التقدم في LocalStorage للتمكن من الاستكمال لاحقاً
-//     // نستخدم معرف الضابط الأساسي (currentControlId) كمفتاح للحفظ
-//     const sessionToSave = {
-//         subId: currentQ.cat, // معرف الضابط الفرعي (مثل 1-1-1)
-//         questions: currentQuestions,
-//         index: currentQuestionIndex,
-//         answers: auditAnswers,
-//         sessionId: currentSessionId,
-//         dbId: currentControlDbId
-//     };
-//     localStorage.setItem(`session_resume_${currentControlId}`, JSON.stringify(sessionToSave));
-    
-//     // 6. عرض السؤال التالي بعد تأخير بسيط
-//     setTimeout(showAuditQ, 500);
-// }
 
 async function answerAudit(ans, btn) {
     btn.closest('div').querySelectorAll('button').forEach(b => { b.disabled = true; b.style.opacity = '0.35'; }); 
@@ -333,45 +247,6 @@ async function answerAudit(ans, btn) {
     setTimeout(showAuditQ, 500);
 }
 
-// async function finishAudit() {
-//     const total = auditAnswers.length, 
-//           yes = auditAnswers.filter(a => a.answer === 'yes').length, 
-//           partial = auditAnswers.filter(a => a.answer === 'partial').length, 
-//           no = auditAnswers.filter(a => a.answer === 'no').length;
-    
-//     const score = total > 0 ? Math.round(((yes + partial * 0.5) / total) * 100) : 0;
-//     const status = score >= 80 ? 'Compliant' : score >= 40 ? 'Partial' : 'Non-Compliant';
-//     const color = getDotColor(status);
-
-//     // 1. مسح بيانات الاستكمال من الذاكرة المحلية لأن التقييم اكتمل بنجاح
-//     localStorage.removeItem(`session_resume_${currentControlId}`);
-
-//     appendMsg('ai', `
-//         <div style="border:1px solid ${color}30; border-radius:12px; padding:20px; background:${color}08; margin-top:10px">
-//             <div style="display:flex; justify-content:space-between; align-items:center;">
-//                 <strong>${auditAnswers[0]?.cat || currentControlId} Assessment Complete</strong>
-//                 <span style="font-size:20px; font-weight:800; color:${color}">${score}%</span>
-//             </div>
-//             <p style="font-size:12px; color:var(--text-muted); margin-top:5px">Section results saved. You can now assess another sub-control.</p>
-//         </div>
-//     `);
-
-//     // 2. حفظ النتائج النهائية في قاعدة البيانات والمتصفح
-//     await saveProgress(currentControlId, status, score, yes, partial, no, total);
-//     await saveAuditToEvidence(currentControlId, selectedControlInfo?.title || currentControlId, status, score, auditAnswers, currentSessionId, currentControlDbId);
-    
-//     // 3. تصفير المتغيرات المؤقتة للجلسة
-//     auditAnswers = [];
-//     currentQuestions = [];
-//     currentQuestionIndex = 0;
-
-//     // 4. العودة التلقائية لعرض خيارات الضوابط الفرعية للبدء في ضابط آخر
-//     setTimeout(() => {
-//         if (selectedControlInfo) {
-//             showSubControlOptions(selectedControlInfo);
-//         }
-//     }, 2500);
-// }
 
 async function finishAudit() {
     // 1. حساب الإحصائيات والنتائج بناءً على الإجابات الحالية
@@ -507,17 +382,7 @@ function setMode(m) {
     if (selectedControlInfo) selectControl(selectedControlInfo, document.querySelector(`.control-item[data-id="${currentControlId}"]`));
 }
 
-// function appendMsg(role, txt) {
-//     const cm = document.getElementById('chat-messages'), m = document.createElement('div');
-//     m.className = `message ${role}-message`;
-//     m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
-//     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
 
-//     // حفظ المحادثة لهذا الضابط تحديداً
-//     if (currentControlId) {
-//         localStorage.setItem(`chat_history_${currentControlId}`, cm.innerHTML);
-//     }
-// }
 
 function appendMsg(role, txt) {
     const cm = document.getElementById('chat-messages'), m = document.createElement('div');
@@ -596,17 +461,6 @@ async function finishGuide() {
     setTimeout(() => showSubControlOptions(selectedControlInfo), 3000);
 }
 
-// // دالة مسح محتويات الشات
-// function clearChat() {
-//     if (confirm("Are you sure you want to delete this control's conversation?")) {
-//         document.getElementById('chat-messages').innerHTML = '';
-//         // مسح الحالة المحفوظة لهذا الضابط فقط
-//         localStorage.removeItem(`session_resume_${currentControlId}`);
-//         // إعادة عرض خيارات الضوابط الفرعية
-//         if (selectedControlInfo) showSubControlOptions(selectedControlInfo);
-//     }
-// }
-
 function showResumeOption(sessionData) {
     const cm = document.getElementById('chat-messages');
     
@@ -631,24 +485,7 @@ function showResumeOption(sessionData) {
     cm.scrollTop = cm.scrollHeight;
 }
 
-// window.resumeAuditAction = function() {
-//     const data = window.pendingSessionData;
-//     if (!data) return;
 
-//     // 1. تحديث المتغيرات البرمجية
-//     currentQuestions = data.questions;
-//     currentQuestionIndex = data.index;
-//     auditAnswers = data.answers;
-//     currentSessionId = data.sessionId;
-//     currentControlDbId = data.dbId;
-
-//     // 2. إرسال رسالة توضيحية في الشات
-//     appendMsg('ai', `The session has been successfully restored. We will continue from question number ${currentQuestionIndex + 1}...`);
-    
-//     // 3. تنظيف البيانات المؤقتة والبدء
-//     window.pendingSessionData = null;
-//     setTimeout(showAuditQ, 600);
-// };
 window.resumeAuditAction = function() {
     const data = window.pendingSessionData;
     if (!data) return;
@@ -696,16 +533,6 @@ function addClearButton() {
         header.appendChild(btn);
     }
 }
-
-// async function clearChat() {
-//     if (!currentControlId) return;
-//     if (confirm("The conversation history and current assessment of this control will be deleted, are you sure?")) {
-//         localStorage.removeItem(`chat_history_${currentControlId}`);
-//         localStorage.removeItem(`session_resume_${currentControlId}`);
-//         document.getElementById('chat-messages').innerHTML = '';
-//         showSubControlOptions(selectedControlInfo);
-//     }
-// }
 
 async function clearChat() {
     if (!currentControlId) return;
