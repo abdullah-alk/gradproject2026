@@ -164,10 +164,9 @@ async function initiateSubAudit(subId) {
             const u = getCurrentUserLocal();
             
             // التعديل الجوهري هنا: تحويل المعرف إلى String لمنع خطأ الـ SQL
-            const dbIdToSend = String(currentControlDbId || subId);
-            const s = await startAuditSessionAPI(u.id, dbIdToSend, currentMode);
-            
+            const s = await startAuditSessionAPI(u.id, subId, currentMode);
             if(s?.session_id) currentSessionId = s.session_id;
+            if(s?.control_db_id) currentControlDbId = s.control_db_id;
 
             setTimeout(showAuditQ, 400);
         } else {
@@ -452,7 +451,7 @@ async function finishGuide() {
                 await saveAuditRecommendation({
                     control_id: currentControlDbId || null,
                     session_id: currentSessionId,
-                    gap_description: answersStr,
+                    gap_description: answersText,
                     recommendation: r.answer,
                     priority: 'High'
         });
