@@ -977,12 +977,14 @@ async def save_gap(data: dict = Body(...)):
     try:
         session_id = data.get("session_id")
         control_id = data.get("control_id")
+        gap_description = data.get("gap_description")
+        recommendation = data.get("recommendation")
+        priority = data.get("priority", "Medium")
         # تحويل control_id من نص إلى integer إذا لزم
         if control_id and not str(control_id).isdigit():
             cur.execute("SELECT id FROM ecc_controls WHERE control_id = %s", (control_id,))
             row = cur.fetchone()
             control_id = row["id"] if row else None
-
         cur.execute(
             """
             INSERT INTO gaps_recommendations
@@ -990,9 +992,8 @@ async def save_gap(data: dict = Body(...)):
             VALUES (%s, %s, %s, %s, %s, 'Open', NOW())
             RETURNING id
             """,
-            (session_id, control_id, gap_desc, recommendation, priority),
+            (session_id, control_id, gap_description, recommendation, priority),
         )
-
         gap = cur.fetchone()
         conn.commit()
         print(f"[🔍] Gap saved: ID={gap['id']}, control={control_id}, priority={priority}")
@@ -1004,7 +1005,6 @@ async def save_gap(data: dict = Body(...)):
     finally:
         cur.close()
         conn.close()
-
 
 @app.get("/api/gaps/")
 async def get_gaps(session_id: int = None, control_id: int = None):
