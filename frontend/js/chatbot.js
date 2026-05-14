@@ -283,7 +283,8 @@ async function finishAudit() {
         console.error("Error saving final audit results:", e);
     }
     // حفظ gap قبل تصفير المتغيرات
-    try {
+        const hasGaps = auditAnswers.some(a => a.answer === 'no' || a.answer === 'partial');
+        if (hasGaps) try {
         const answersText = auditAnswers.map((a,i) => 
             `Q${i+1}: "${a.question}" => ${a.answer.toUpperCase()}`
         ).join('\n');
@@ -291,7 +292,7 @@ async function finishAudit() {
             control_id: currentControlDbId,
             session_id: currentSessionId,
             gap_description: answersText,
-            recommendation: `Audit completed for ${currentControlId} with score ${score}%. Status: ${status}.`,
+            recommendation: `Gaps identified in ${currentControlId}. Score: ${score}%. Review and remediate the following: ${auditAnswers.filter(a=>a.answer==='no').map(a=>a.question).join(' | ')}`,
             priority: status === 'Non-Compliant' ? 'High' : status === 'Partial' ? 'Medium' : 'Low'
         });
     } catch(e) { console.error('Gap save error:', e); }
