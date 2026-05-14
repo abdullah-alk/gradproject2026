@@ -165,9 +165,9 @@ function renderGapsAndRecs(gaps) {
         <div style="border:1px solid rgba(139,92,246,.2);border-radius:8px;padding:14px;margin-bottom:10px;background:rgba(139,92,246,.05)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                 <i class="fas fa-lightbulb" style="color:#8b5cf6;font-size:14px"></i>
-                <span style="font-size:13px;font-weight:600;color:#8b5cf6">${g.control_title}</span>
+                <span style="font-size:13px;font-weight:600;color:#8b5cf6">${g.control_id} — ${g.control_title}</span>
             </div>
-            <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">${g.recommendation ? g.recommendation.substring(0,200)+'...' : 'Review and remediate this control'}</div>
+            <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">${g.recommendation ? g.recommendation.replace(/\*\*(.*?)\*\*/g,'$1').replace(/^#+\s*/gm,'').substring(0,200)+'...' : 'Review and remediate this control'}</div>
             <a href="chatbot.html?control=${g.control_id}" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:var(--accent-primary);text-decoration:none"><i class="fas fa-arrow-right"></i> Start Audit</a>
         </div>
     `).join('') : '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center"><i class="fas fa-check-circle" style="color:#10b981;margin-right:8px"></i>Use Guide Mode to generate recommendations</div>';
