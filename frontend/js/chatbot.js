@@ -496,7 +496,7 @@ window.resumeAuditAction = function() {
     currentSessionId = data.sessionId;
     currentControlDbId = data.dbId;
 
-    appendMsg('ai', `تم استعادة الجلسة بنجاح في وضع (${currentMode}). سنتابع من السؤال رقم ${currentQuestionIndex + 1}...`);
+    appendMsg('ai', `The session was successfully restored in mode (${currentMode}). We will continue from question number ${currentQuestionIndex + 1}...`);
     
     window.pendingSessionData = null;
     setTimeout(showAuditQ, 600);
