@@ -63,47 +63,40 @@ async function selectControl(ctrl, el) {
     
     currentControlId = ctrl.id;
     selectedControlInfo = ctrl;
-    auditAnswers = [];
-    currentQuestions = [];
-    currentQuestionIndex = 0;
 
-    try { 
-        const cs = await getAllControls(); 
-        // التعديل هنا: تحويل المعرفات لنصوص لضمان المطابقة
-        const m = cs.find(c => String(c.control_id) === String(ctrl.id)); 
-        if (m) {
-            currentControlDbId = m.id; 
-        } else {
-            // خطة بديلة: استخدام المعرف النصي مباشرة
-            currentControlDbId = ctrl.id; 
-        }
-    } catch (e) { 
-        console.error("Control DB sync error"); 
-        currentControlDbId = ctrl.id; // Fallback
-    }
-
-    document.getElementById('current-control-id').textContent = ctrl.id;
-    document.getElementById('current-control-name').textContent = ctrl.title;
-    document.getElementById('current-control-requirement').textContent = `ECC-2023 compliance assessment for ${ctrl.title}`;
+    // 1. استعادة المحادثة السابقة من ذاكرة المتصفح بدلاً من مسحها
+    const savedChat = localStorage.getItem(`chat_history_${ctrl.id}`);
+    const cm = document.getElementById('chat-messages');
+    cm.innerHTML = savedChat || ''; // إذا لم يوجد سجل، تظل فارغة
     
-    updateRightPanel(ctrl.id);
-    document.getElementById('chat-messages').innerHTML = '';
-    
-    // التحقق من وجود جلسة محفوظة لهذا الضابط تحديداً
+    // 2. التحقق من وجود "جلسة تقييم" معلقة
     const savedSession = localStorage.getItem(`session_resume_${ctrl.id}`);
-    
     if (savedSession) {
         const sessionData = JSON.parse(savedSession);
-        // نتحقق أن الجلسة تحتوي على أسئلة وبدأ المستخدم فعلياً فيها
-        if (sessionData.questions && sessionData.questions.length > 0 && sessionData.index > 0) {
+        // عرض قائمة الاستكمال فقط إذا لم تكن معروضة مسبقاً في المحادثة
+        if (sessionData.index > 0) {
             showResumeOption(sessionData);
         } else {
             showSubControlOptions(ctrl);
         }
-    } else {
+    } else if (!savedChat) {
         showSubControlOptions(ctrl);
     }
+    cm.scrollTop = cm.scrollHeight;
 }
+
+// دالة الاستكمال المعدلة (تأكد من تعريفها هكذا)
+window.resumeAudit = function(data) {
+    // تحديث المتغيرات العالمية فوراً
+    currentQuestions = data.questions;
+    currentQuestionIndex = data.index;
+    auditAnswers = data.answers;
+    currentSessionId = data.sessionId;
+    currentControlDbId = data.dbId;
+    
+    appendMsg('ai', `جاري المتابعة من السؤال رقم ${currentQuestionIndex + 1}...`);
+    setTimeout(showAuditQ, 600);
+};
 
 function showSubControlOptions(ctrl) {
     const cm = document.getElementById('chat-messages');
@@ -361,6 +354,11 @@ function appendMsg(role, txt) {
     m.className = `message ${role}-message`;
     m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+
+    // حفظ المحادثة لهذا الضابط تحديداً
+    if (currentControlId) {
+        localStorage.setItem(`chat_history_${currentControlId}`, cm.innerHTML);
+    }
 }
 
 function showTyping() {
@@ -475,7 +473,29 @@ function restartAudit() {
     showSubControlOptions(selectedControlInfo);
 }
 
+// أضف هذا الكود في نهاية ملفك أو داخل DOMContentLoaded
+function addClearButton() {
+    const header = document.querySelector('.chat-header') || document.getElementById('audit-mode-btn').parentElement;
+    if (!document.getElementById('clear-chat-btn')) {
+        const btn = document.createElement('button');
+        btn.id = 'clear-chat-btn';
+        btn.innerHTML = '<i class="fas fa-trash"></i> مسح المحادثة';
+        btn.style = "margin-left:10px; padding:5px 12px; background:#ef444420; color:#ef4444; border:1px solid #ef4444; border-radius:6px; cursor:pointer; font-size:12px;";
+        btn.onclick = clearChat;
+        header.appendChild(btn);
+    }
+}
 
+async function clearChat() {
+    if (!currentControlId) return;
+    if (confirm("سيتم حذف سجل المحادثة والتقييم الحالي لهذا الضابط، هل أنت متأكد؟")) {
+        localStorage.removeItem(`chat_history_${currentControlId}`);
+        localStorage.removeItem(`session_resume_${currentControlId}`);
+        document.getElementById('chat-messages').innerHTML = '';
+        showSubControlOptions(selectedControlInfo);
+    }
+}
+addClearButton(); // تشغيل الدالة لإظهار الزر
 
 
 
