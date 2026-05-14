@@ -89,7 +89,20 @@ async function selectControl(ctrl, el) {
     updateRightPanel(ctrl.id);
     document.getElementById('chat-messages').innerHTML = '';
     
-    showSubControlOptions(ctrl);
+    // التحقق من وجود جلسة محفوظة لهذا الضابط تحديداً
+    const savedSession = localStorage.getItem(`session_resume_${ctrl.id}`);
+    
+    if (savedSession) {
+        const sessionData = JSON.parse(savedSession);
+        // نتحقق أن الجلسة تحتوي على أسئلة وبدأ المستخدم فعلياً فيها
+        if (sessionData.questions && sessionData.questions.length > 0 && sessionData.index > 0) {
+            showResumeOption(sessionData);
+        } else {
+            showSubControlOptions(ctrl);
+        }
+    } else {
+        showSubControlOptions(ctrl);
+    }
 }
 
 function showSubControlOptions(ctrl) {
@@ -186,19 +199,49 @@ function showAuditQ() {
 }
 
 async function answerAudit(ans, btn) {
-    btn.closest('div').querySelectorAll('button').forEach(b => { b.disabled = true; b.style.opacity = '0.35'; }); 
+    // 1. تعطيل الأزرار لمنع النقرات المتكررة وتغيير المظهر
+    btn.closest('div').querySelectorAll('button').forEach(b => { 
+        b.disabled = true; 
+        b.style.opacity = '0.35'; 
+    }); 
     btn.style.opacity = '1';
     
     const labels = { yes: 'Yes — Verified', partial: 'Partial — Needs improvement', no: 'No — Gap' };
     appendMsg('user', labels[ans]);
     
-    auditAnswers.push({ question: currentQuestions[currentQuestionIndex].q, answer: ans, evidence: currentQuestions[currentQuestionIndex].ev });
+    // 2. تسجيل الإجابة الحالية في المصفوفة
+    const currentQ = currentQuestions[currentQuestionIndex];
+    auditAnswers.push({ 
+        question: currentQ.q, 
+        answer: ans, 
+        evidence: currentQ.ev 
+    });
     
+    // 3. حفظ الإجابة في السيرفر (API) إذا كانت الجلسة نشطة
     if (currentSessionId) {
-        try { await saveAuditAnswer(currentSessionId, currentQuestions[currentQuestionIndex].q, ans); } catch (e) { }
+        try { 
+            await saveAuditAnswer(currentSessionId, currentQ.q, ans); 
+        } catch (e) { 
+            console.warn("Server sync failed, keeping local state only.");
+        }
     }
     
+    // 4. الانتقال للفهرس التالي
     currentQuestionIndex++; 
+
+    // 5. حفظ حالة التقدم في LocalStorage للتمكن من الاستكمال لاحقاً
+    // نستخدم معرف الضابط الأساسي (currentControlId) كمفتاح للحفظ
+    const sessionToSave = {
+        subId: currentQ.cat, // معرف الضابط الفرعي (مثل 1-1-1)
+        questions: currentQuestions,
+        index: currentQuestionIndex,
+        answers: auditAnswers,
+        sessionId: currentSessionId,
+        dbId: currentControlDbId
+    };
+    localStorage.setItem(`session_resume_${currentControlId}`, JSON.stringify(sessionToSave));
+    
+    // 6. عرض السؤال التالي بعد تأخير بسيط
     setTimeout(showAuditQ, 500);
 }
 
@@ -212,21 +255,34 @@ async function finishAudit() {
     const status = score >= 80 ? 'Compliant' : score >= 40 ? 'Partial' : 'Non-Compliant';
     const color = getDotColor(status);
 
+    // 1. مسح بيانات الاستكمال من الذاكرة المحلية لأن التقييم اكتمل بنجاح
+    localStorage.removeItem(`session_resume_${currentControlId}`);
+
     appendMsg('ai', `
         <div style="border:1px solid ${color}30; border-radius:12px; padding:20px; background:${color}08; margin-top:10px">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <strong>${auditAnswers[0]?.cat} Assessment Complete</strong>
+                <strong>${auditAnswers[0]?.cat || currentControlId} Assessment Complete</strong>
                 <span style="font-size:20px; font-weight:800; color:${color}">${score}%</span>
             </div>
             <p style="font-size:12px; color:var(--text-muted); margin-top:5px">Section results saved. You can now assess another sub-control.</p>
         </div>
     `);
 
+    // 2. حفظ النتائج النهائية في قاعدة البيانات والمتصفح
     await saveProgress(currentControlId, status, score, yes, partial, no, total);
     await saveAuditToEvidence(currentControlId, selectedControlInfo?.title || currentControlId, status, score, auditAnswers, currentSessionId, currentControlDbId);
     
-    // العودة التلقائية لعرض الخيارات الفرعية
-    setTimeout(() => showSubControlOptions(selectedControlInfo), 2500);
+    // 3. تصفير المتغيرات المؤقتة للجلسة
+    auditAnswers = [];
+    currentQuestions = [];
+    currentQuestionIndex = 0;
+
+    // 4. العودة التلقائية لعرض خيارات الضوابط الفرعية للبدء في ضابط آخر
+    setTimeout(() => {
+        if (selectedControlInfo) {
+            showSubControlOptions(selectedControlInfo);
+        }
+    }, 2500);
 }
 
 async function saveAuditToEvidence(controlId, controlTitle, status, score, answers, sessionId, controlDbId) {
@@ -369,6 +425,57 @@ async function finishGuide() {
     }
     setTimeout(() => showSubControlOptions(selectedControlInfo), 3000);
 }
+
+// دالة مسح محتويات الشات
+function clearChat() {
+    if (confirm("هل أنت متأكد من رغبتك في مسح محادثة هذا الضابط؟")) {
+        document.getElementById('chat-messages').innerHTML = '';
+        // مسح الحالة المحفوظة لهذا الضابط فقط
+        localStorage.removeItem(`session_resume_${currentControlId}`);
+        // إعادة عرض خيارات الضوابط الفرعية
+        if (selectedControlInfo) showSubControlOptions(selectedControlInfo);
+    }
+}
+
+function showResumeOption(sessionData) {
+    const cm = document.getElementById('chat-messages');
+    const m = document.createElement('div');
+    m.className = 'message ai-message';
+    m.innerHTML = `
+        <div class="message-content">
+            <div class="message-header">AI Assistant</div>
+            <div class="message-text">
+                <p>مرحباً بعودتك! لاحظت أنك لم تكمل تقييم الضابط الفرعي <strong>${sessionData.subId}</strong>.</p>
+                <p style="font-size:12px; color:var(--text-muted)">وصلت إلى السؤال ${sessionData.index} من أصل ${sessionData.questions.length}</p>
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button onclick='resumeAudit(${JSON.stringify(sessionData)})' style="padding:8px 15px; background:var(--accent-primary); color:white; border:none; border-radius:5px; cursor:pointer;">استكمال من حيث توقفت</button>
+                    <button onclick='restartAudit()' style="padding:8px 15px; background:transparent; border:1px solid #ef4444; color:#ef4444; border-radius:5px; cursor:pointer;">البدء من جديد</button>
+                </div>
+            </div>
+        </div>`;
+    cm.appendChild(m);
+}
+
+function resumeAudit(data) {
+    document.getElementById('chat-messages').innerHTML = '';
+    appendMsg('ai', `جاري استكمال التقييم لـ ${data.subId}...`);
+    
+    currentQuestions = data.questions;
+    currentQuestionIndex = data.index;
+    auditAnswers = data.answers;
+    currentSessionId = data.sessionId;
+    currentControlDbId = data.dbId;
+    
+    setTimeout(showAuditQ, 600);
+}
+
+function restartAudit() {
+    localStorage.removeItem(`session_resume_${currentControlId}`);
+    document.getElementById('chat-messages').innerHTML = '';
+    showSubControlOptions(selectedControlInfo);
+}
+
+
 
 
 
