@@ -2033,45 +2033,42 @@ function renderControlBrowser() {
 // }
 
 async function selectControl(ctrl, el) {
-    // 1. تصفير المتغيرات العالمية (إجباري)
+    // 1. تصفير شامل فوري
     currentQuestions = [];
     currentQuestionIndex = 0;
     auditAnswers = [];
-    currentSessionId = null; // تأكد من تصفير الجلسة أيضاً
+    currentSessionId = null;
     currentControlId = ctrl.id;
     selectedControlInfo = ctrl;
 
     // 2. تحديث الواجهة
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
-
     const chatContainer = document.getElementById('chat-messages');
-    chatContainer.innerHTML = ''; // مسح الشاشة فوراً
+    chatContainer.innerHTML = ''; 
 
-    // 3. جلب البيانات
+    // 3. محاولة الاسترجاع
     const rawData = localStorage.getItem(`chat_session_${ctrl.id}`);
-
+    
     if (rawData) {
         const data = JSON.parse(rawData);
         
-        // استعادة البيانات بدقة
-        chatContainer.innerHTML = data.html || '';
-        currentQuestions = data.questions || [];
+        // استعادة القيم مع فحص إضافي
+        currentQuestions = Array.isArray(data.questions) ? data.questions : [];
         currentQuestionIndex = data.index || 0;
         auditAnswers = data.answers || [];
-        currentSessionId = data.sessionId || null;
+        chatContainer.innerHTML = data.html || '';
 
-        // الشرط الحاسم: هل المصفوفة فعلاً تحتوي أسئلة والعداد لم يصل للنهاية؟
-        const hasActiveQuestions = Array.isArray(currentQuestions) && currentQuestions.length > 0;
-        const isNotFinished = currentQuestionIndex < currentQuestions.length;
-
-        if (hasActiveQuestions && isNotFinished) {
+        // منطق إظهار الرسالة: فقط إذا كان هناك أسئلة تخص هذا الضابط ولم تنتهِ
+        const isSessionActive = currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length;
+        
+        if (isSessionActive) {
             const promptDiv = document.createElement('div');
-            promptDiv.className = 'message ai-message resume-box'; // إضافة class للتمييز
+            promptDiv.className = 'message ai-message';
             promptDiv.id = 'resume-prompt';
             promptDiv.innerHTML = `
                 <div class="message-content" style="border-left: 4px solid #06b6d4; background: rgba(6,182,212,0.05); padding: 15px; margin-top: 10px;">
-                    <p style="font-size: 13px; margin-bottom: 10px;"><strong>جلسة غير مكتملة:</strong> هل ترغب في العودة للسؤال ${currentQuestionIndex + 1}؟</p>
+                    <p style="font-size: 13px; margin-bottom: 10px;"><strong>جلسة معلقة:</strong> هل ترغب في استكمال التقييم؟</p>
                     <div style="display:flex; gap:10px;">
                         <button onclick="resumeAudit()" style="padding:6px 12px; background:#06b6d4; color:white; border:none; border-radius:4px; cursor:pointer; font-size:12px;">استكمال</button>
                         <button onclick="restartAudit()" style="padding:6px 12px; background:transparent; border:1px solid #ccc; color:#ccc; border-radius:4px; cursor:pointer; font-size:12px;">بدء جديد</button>
@@ -2082,6 +2079,7 @@ async function selectControl(ctrl, el) {
             showSubControlOptions(ctrl);
         }
     } else {
+        // ضابط جديد تماماً
         showSubControlOptions(ctrl);
     }
 
@@ -2463,14 +2461,19 @@ function saveChatHistory() {
     if (!currentControlId) return;
     
     const chatContainer = document.getElementById('chat-messages');
-    // لا تحفظ إذا كان الشات فارغاً تماماً (اختياري)
-    if (!chatContainer.innerHTML.trim()) return;
+    
+    // قفل الأمان: لا تحفظ الأسئلة إلا إذا كانت تنتمي فعلاً للضابط المختار
+    // إذا كانت المصفوفة تحتوي أسئلة لضابط آخر (مثلاً 1-1 وأنت في 1-2)، احفظ المصفوفة فارغة لهذا الضابط
+    let questionsToSave = [];
+    if (currentQuestions.length > 0 && currentQuestions[0].cat && currentQuestions[0].cat.startsWith(currentControlId)) {
+        questionsToSave = currentQuestions;
+    }
 
     const sessionData = {
         html: chatContainer.innerHTML,
-        questions: currentQuestions || [],
-        index: currentQuestionIndex || 0,
-        answers: auditAnswers || [],
+        questions: questionsToSave, // حفظ الأسئلة الصحيحة فقط
+        index: currentQuestionIndex,
+        answers: auditAnswers,
         controlDbId: currentControlDbId,
         sessionId: currentSessionId
     };
