@@ -3,10 +3,14 @@ let countdownInterval = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
+
     loadUserToSidebar();
+
     await loadSchedulerData();
-    document.getElementById('schedule-manual-audit-btn')?.addEventListener('click', handleScheduleManualAudit);
-     ?.addEventListener('click', handleScheduleManualAudit);
+
+    document.getElementById('schedule-manual-audit-btn')
+        ?.addEventListener('click', handleScheduleManualAudit);
+
     const repeatToggle = document.getElementById('repeat-toggle');
     const repeatOptions = document.getElementById('repeat-options');
 
