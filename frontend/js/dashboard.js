@@ -160,7 +160,8 @@ function renderGapsAndRecs(gaps) {
             <div style="font-size:12px;color:var(--text-secondary)">${g.gap_description ? g.gap_description.substring(0,150)+'...' : 'Gap identified in last audit'}</div>
         </div>
     `).join('');
-    if (rEl) rEl.innerHTML = gaps.map(g => `
+    const guideGaps = gaps.filter(g => g.mode === 'guide');
+    if (rEl) rEl.innerHTML = guideGaps.length ? guideGaps.map(g => `
         <div style="border:1px solid rgba(139,92,246,.2);border-radius:8px;padding:14px;margin-bottom:10px;background:rgba(139,92,246,.05)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                 <i class="fas fa-lightbulb" style="color:#8b5cf6;font-size:14px"></i>
