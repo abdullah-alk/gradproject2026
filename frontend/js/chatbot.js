@@ -2033,44 +2033,34 @@ function renderControlBrowser() {
 // }
 
 async function selectControl(ctrl, el) {
-    // 1. تصفير المتغيرات العالمية فوراً لضمان عدم انتقال بيانات من ضابط لآخر
+    // 1. تصفير المتغيرات العالمية فوراً لقطع الصلة بالضابط السابق
     currentQuestions = [];
     currentQuestionIndex = 0;
     auditAnswers = [];
     currentControlId = ctrl.id;
     selectedControlInfo = ctrl;
 
-    // 2. تحديث الواجهة (Active Class)
+    // 2. تحديث واجهة المستخدم (تحديد العنصر المختار)
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
 
-    // 3. إضافة زر المسح برمجياً
-    const headerNameArea = document.getElementById('current-control-name');
-    if (headerNameArea) {
-        const existingBtn = document.getElementById('dynamic-clear-btn');
-        if (existingBtn) existingBtn.remove();
-        const clearBtn = document.createElement('button');
-        clearBtn.id = 'dynamic-clear-btn';
-        clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear';
-        clearBtn.style = "margin-left:15px; padding:4px 8px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer; font-size:10px;";
-        clearBtn.onclick = (e) => { e.stopPropagation(); clearChatHistory(); };
-        headerNameArea.appendChild(clearBtn);
-    }
-
+    // 3. مسح واجهة الشات استعداداً للبيانات الجديدة
     const chatContainer = document.getElementById('chat-messages');
-    // محاولة جلب البيانات الخاصة بالضابط المختار فقط
+    chatContainer.innerHTML = ''; 
+
+    // 4. محاولة جلب البيانات الخاصة بالضابط الجديد فقط من الذاكرة
     const rawData = localStorage.getItem(`chat_session_${ctrl.id}`);
 
     if (rawData) {
         const data = JSON.parse(rawData);
         
-        // استعادة البيانات للضابط الحالي
+        // استعادة البيانات للضابط الحالي (إذا وجدت)
         chatContainer.innerHTML = data.html || '';
         currentQuestions = data.questions || [];
         currentQuestionIndex = data.index || 0;
         auditAnswers = data.answers || [];
 
-        // الشرط الحاسم: لا تظهر الرسالة إلا إذا كان هناك أسئلة "حقيقية" لم تنتهِ
+        // 5. الفحص: هل توجد جلسة "حقيقية" معلقة لهذا الضابط تحديداً؟
         if (currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
             const promptDiv = document.createElement('div');
             promptDiv.className = 'message ai-message';
@@ -2085,17 +2075,32 @@ async function selectControl(ctrl, el) {
                 </div>`;
             chatContainer.appendChild(promptDiv);
         } else {
-            // إذا كان الأرشيف موجوداً ولكن لا توجد أسئلة معلقة، نعرض خيارات الضوابط الفرعية
+            // إذا وجد أرشيف نصي فقط بدون أسئلة معلقة
             showSubControlOptions(ctrl);
         }
     } else {
-        // ضابط جديد تماماً لم يسبق الدخول إليه
-        chatContainer.innerHTML = '';
+        // إذا كان الضابط جديداً كلياً ولم يسبق فتحه
         showSubControlOptions(ctrl);
     }
 
     chatContainer.scrollTop = chatContainer.scrollHeight;
     updateRightPanel(ctrl.id);
+    
+    // إعادة بناء زر المسح في العنوان
+    renderClearButton(); 
+}
+
+// دالة مساعدة لإضافة زر المسح في العنوان (اختياري للتنظيم)
+function renderClearButton() {
+    const headerNameArea = document.getElementById('current-control-name');
+    const existingBtn = document.getElementById('dynamic-clear-btn');
+    if (existingBtn) existingBtn.remove();
+    const clearBtn = document.createElement('button');
+    clearBtn.id = 'dynamic-clear-btn';
+    clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear';
+    clearBtn.style = "margin-left:15px; padding:4px 8px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer; font-size:10px;";
+    clearBtn.onclick = (e) => { e.stopPropagation(); clearChatHistory(); };
+    headerNameArea.appendChild(clearBtn);
 }
 //############################################################
 
