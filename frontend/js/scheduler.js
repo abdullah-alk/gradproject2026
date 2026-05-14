@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadUserToSidebar();
     await loadSchedulerData();
     document.getElementById('schedule-manual-audit-btn')?.addEventListener('click', handleScheduleManualAudit);
-);
+});
 
 async function loadSchedulerData() {
     try {
