@@ -1948,24 +1948,44 @@ async function selectControl(ctrl, el) {
     
     currentControlId = ctrl.id;
     selectedControlInfo = ctrl;
-    
-    // تحديث واجهة المعلومات
-    document.getElementById('current-control-id').textContent = ctrl.id;
-    document.getElementById('current-control-name').textContent = ctrl.title;
-    
-    // محاولة تحميل التاريخ القديم
-    const hasHistory = loadChatHistory(ctrl.id);
-    
-    // إذا لم يكن هناك تاريخ قديم، افتح واجهة اختيار الضوابط الفرعية لأول مرة
-    if (!hasHistory) {
-        document.getElementById('chat-messages').innerHTML = '';
+
+    // 1. إضافة زر المسح برمجياً في العنوان
+    const headerNameArea = document.getElementById('current-control-name');
+    const existingBtn = document.getElementById('dynamic-clear-btn');
+    if (existingBtn) existingBtn.remove();
+
+    const clearBtn = document.createElement('button');
+    clearBtn.id = 'dynamic-clear-btn';
+    clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Chat';
+    clearBtn.style = "margin-left:15px; padding:4px 10px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer; font-size:11px;";
+    clearBtn.onclick = (e) => { e.stopPropagation(); clearChatHistory(); };
+    headerNameArea.appendChild(clearBtn);
+
+    // 2. محاولة تحميل التاريخ
+    const savedContent = localStorage.getItem(`chat_history_${ctrl.id}`);
+    const chatContainer = document.getElementById('chat-messages');
+
+    if (savedContent && savedContent.trim() !== "") {
+        // إذا وجدنا محتوى، نعرضه فوراً ولا نمسح الشات
+        chatContainer.innerHTML = savedContent;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        console.log("تم استعادة المحادثة للضابط: " + ctrl.id);
+    } else {
+        // إذا لم يوجد محتوى، ننظف الشات ونظهر الخيارات البدائية
+        chatContainer.innerHTML = '';
         showSubControlOptions(ctrl);
+        console.log("لا يوجد تاريخ سابق، بدء جلسة جديدة.");
     }
 
+    // تحديث لوحة المعلومات الجانبية
     updateRightPanel(ctrl.id);
-    document.getElementById('chat-messages').innerHTML = '';
     
-    showSubControlOptions(ctrl);
+    // المزامنة مع قاعدة البيانات (الكود الأصلي الخاص بك)
+    try { 
+        const cs = await getAllControls(); 
+        const m = cs.find(c => String(c.control_id) === String(ctrl.id)); 
+        currentControlDbId = m ? m.id : ctrl.id; 
+    } catch (e) { currentControlDbId = ctrl.id; }
 }
 //############################################################
 
