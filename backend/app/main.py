@@ -1483,6 +1483,13 @@ async def update_profile(data: dict = Body(...), current_user: dict = Depends(ge
                 raise HTTPException(status_code=400, detail=name_msg)
             cur.execute("UPDATE users SET full_name = %s WHERE id = %s", (full_name, user_id))
 
+        email = data.get("email", "").strip()
+        if email:
+            cur.execute("SELECT id FROM users WHERE email = %s AND id != %s", (email, user_id))
+            if cur.fetchone():
+                raise HTTPException(status_code=400, detail="Email already in use")
+            cur.execute("UPDATE users SET email = %s WHERE id = %s", (email, user_id))
+
         if new_password:
             cur.execute("SELECT password_hash FROM users WHERE id = %s", (user_id,))
             user = cur.fetchone()
