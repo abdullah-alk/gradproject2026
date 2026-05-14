@@ -1754,6 +1754,83 @@ async def verify_email(data: dict = Body(...)):
     finally:
         cur.close()
         conn.close()
+@app.post("/api/profile/change-email")
+async def change_email(data: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    new_email = data.get("new_email", "").strip().lower()
+    current_password = data.get("current_password", "")
+    if not new_email or not current_password:
+        raise HTTPException(status_code=400, detail="Email and password are required")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # تحقق من كلمة المرور
+        cur.execute("SELECT password_hash FROM users WHERE id = %s", (current_user["id"],))
+        user = cur.fetchone()
+        if not verify_password(current_password, user["password_hash"]):
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+        # تحقق إن الإيميل مو مستخدم
+        cur.execute("SELECT id FROM users WHERE email = %s AND id != %s", (new_email, current_user["id"]))
+        if cur.fetchone():
+            raise HTTPException(status_code=400, detail="Email already in use")
+        # حفظ الإيميل الجديد مؤقتاً في otp_store
+        otp = str(random.randint(100000, 999999))
+        otp_store[new_email] = {
+            "otp": otp,
+            "expires": datetime.now() + timedelta(minutes=10),
+            "purpose": "change_email",
+            "user_id": current_user["id"]
+        }
+        subject = "ECC Auditor — Verify Your New Email"
+        body = f"""
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#0f172a;color:#f1f5f9;padding:32px;border-radius:12px">
+            <div style="text-align:center;margin-bottom:24px">
+                <div style="font-size:32px">🛡️</div>
+                <h2 style="color:#06b6d4;margin:8px 0">ECC Auditor</h2>
+            </div>
+            <p style="color:#94a3b8;margin-bottom:20px">Verify your new email address:</p>
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:20px;text-align:center;margin-bottom:20px">
+                <span style="font-size:36px;font-weight:800;letter-spacing:8px;color:#06b6d4">{otp}</span>
+            </div>
+            <p style="color:#64748b;font-size:13px">This code expires in 10 minutes. Do not share it with anyone.</p>
+        </div>
+        """
+        send_email(new_email, subject, body)
+        return {"message": "OTP sent to new email"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/api/profile/confirm-email-change")
+async def confirm_email_change(data: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    new_email = data.get("new_email", "").strip().lower()
+    otp = str(data.get("otp", "")).strip()
+    stored = otp_store.get(new_email)
+    if not stored or stored.get("purpose") != "change_email":
+        raise HTTPException(status_code=400, detail="No OTP found. Please request a new one")
+    if datetime.now() > stored["expires"]:
+        del otp_store[new_email]
+        raise HTTPException(status_code=400, detail="OTP expired")
+    if stored["otp"] != otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+    if stored["user_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    del otp_store[new_email]
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("UPDATE users SET email = %s WHERE id = %s", (new_email, current_user["id"]))
+        conn.commit()
+        return {"message": "Email updated successfully", "new_email": new_email}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
 
 # --- Health ---
 @app.get("/")
