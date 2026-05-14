@@ -248,7 +248,6 @@ async function answerAudit(ans, btn) {
 
 
 async function finishAudit() {
-    // 1. حساب الإحصائيات والنتائج بناءً على الإجابات الحالية
     const total = auditAnswers.length, 
           yes = auditAnswers.filter(a => a.answer === 'yes').length, 
           partial = auditAnswers.filter(a => a.answer === 'partial').length, 
@@ -257,59 +256,53 @@ async function finishAudit() {
     const score = total > 0 ? Math.round(((yes + partial * 0.5) / total) * 100) : 0;
     const status = score >= 80 ? 'Compliant' : score >= 40 ? 'Partial' : 'Non-Compliant';
     const color = getDotColor(status);
-
-    // 2. تحديد مفتاح التخزين المركب للوضع الحالي (لضمان حذف الجلسة الصحيحة)
     const storageKey = `${currentMode}_${currentControlId}`;
-
-    // 3. مسح بيانات "استكمال الجلسة" فقط من الذاكرة لأن التقييم اكتمل
-    // ملاحظة: لا نمسح chat_history هنا لكي تبقى المحادثة ظاهرة كمرجع للمستخدم
     localStorage.removeItem(`session_resume_${storageKey}`);
-
-    // 4. عرض رسالة النجاح والنتيجة النهائية في الشات
     const sectionName = auditAnswers[0]?.cat || currentControlId;
     appendMsg('ai', `
         <div style="border:1px solid ${color}30; border-radius:12px; padding:20px; background:${color}08; margin-top:10px">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <strong style="color:var(--text-primary)">التقييم اكتمل: ${sectionName}</strong>
+                <strong style="color:var(--text-primary)">Assessment Complete: ${sectionName}</strong>
                 <span style="font-size:20px; font-weight:800; color:${color}">${score}%</span>
             </div>
             <div style="margin: 15px 0; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
                 <div style="width: ${score}%; height: 100%; background: ${color}; box-shadow: 0 0 10px ${color}50;"></div>
             </div>
-            <p style="font-size:12px; color:var(--text-muted); margin-top:5px">تم حفظ النتائج في سجل الأدلة. يمكنك الآن الانتقال لضابط فرعي آخر أو استعراض التوصيات.</p>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:5px">Results saved. You can now assess another sub-control.</p>
         </div>
     `);
-
-    // 5. مزامنة النتائج مع السيرفر والذاكرة المحلية (Status & Score)
     try {
         await saveProgress(currentControlId, status, score, yes, partial, no, total);
         await saveAuditToEvidence(
             currentControlId, 
             selectedControlInfo?.title || currentControlId, 
-            status, 
-            score, 
-            auditAnswers, 
-            currentSessionId, 
-            currentControlDbId
+            status, score, auditAnswers, 
+            currentSessionId, currentControlDbId
         );
     } catch (e) {
         console.error("Error saving final audit results:", e);
     }
-    
-    // 6. تصفير المتغيرات العالمية الخاصة بالجلسة الحالية لتجنب التكرار
+    // حفظ gap قبل تصفير المتغيرات
+    try {
+        const answersText = auditAnswers.map((a,i) => 
+            `Q${i+1}: "${a.question}" => ${a.answer.toUpperCase()}`
+        ).join('\n');
+        await saveAuditRecommendation({
+            control_id: currentControlDbId,
+            session_id: currentSessionId,
+            gap_description: answersText,
+            recommendation: `Audit completed for ${currentControlId} with score ${score}%. Status: ${status}.`,
+            priority: status === 'Non-Compliant' ? 'High' : status === 'Partial' ? 'Medium' : 'Low'
+        });
+    } catch(e) { console.error('Gap save error:', e); }
     auditAnswers = [];
     currentQuestions = [];
     currentQuestionIndex = 0;
     currentSessionId = null;
-
-    // 7. العودة التلقائية لعرض خيارات الضوابط الفرعية بعد مهلة بسيطة
     setTimeout(() => {
-        if (selectedControlInfo) {
-            showSubControlOptions(selectedControlInfo);
-        }
+        if (selectedControlInfo) showSubControlOptions(selectedControlInfo);
     }, 3000);
 }
-
 async function saveAuditToEvidence(controlId, controlTitle, status, score, answers, sessionId, controlDbId) {
     try {
         const transcript = answers.map((a, i) => {
