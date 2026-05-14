@@ -17,7 +17,34 @@ const eccDomains = [
     { id: '1-2', title: 'Cybersecurity Management', subControls: ['1-2-1', '1-2-2', '1-2-3'] },
     { id: '1-3', title: 'Cybersecurity Policies and Procedures', subControls: ['1-3-1', '1-3-2', '1-3-3', '1-3-4'] },
     { id: '1-4', title: 'Cybersecurity Roles and Responsibilities', subControls: ['1-4-1', '1-4-2'] },
-    { id: '1-5', title: 'Cybersecurity Risk Management', subControls: ['1-5-1', '1-5-2', '1-5-3-1', '1-5-3-2', '1-5-3-3', '1-5-3-4', '1-5-4'] }
+    { id: '1-5', title: 'Cybersecurity Risk Management', subControls: ['1-5-1', '1-5-2', '1-5-3-1', '1-5-3-2', '1-5-3-3', '1-5-3-4', '1-5-4'] },
+    
+    // الضوابط الجديدة المضافة
+    { 
+        id: '1-6', 
+        title: 'Cybersecurity in IT Project Management', 
+        subControls: ['1-6-1', '1-6-2-1', '1-6-2-2', '1-6-3-1', '1-6-3-2', '1-6-3-3', '1-6-3-4', '1-6-3-5', '1-6-4'] 
+    },
+    { 
+        id: '1-7', 
+        title: 'Compliance with Laws and Regulations', 
+        subControls: ['1-7-1', '1-7-2'] 
+    },
+    { 
+        id: '1-8', 
+        title: 'Periodical Review and Audit', 
+        subControls: ['1-8-1', '1-8-2', '1-8-3'] 
+    },
+    { 
+        id: '1-9', 
+        title: 'Cybersecurity in Human Resources', 
+        subControls: ['1-9-1', '1-9-2', '1-9-3-1', '1-9-3-2', '1-9-4-1', '1-9-4-2', '1-9-5', '1-9-6'] 
+    },
+    { 
+        id: '1-10', 
+        title: 'Cybersecurity Awareness and Training', 
+        subControls: ['1-10-1', '1-10-2', '1-10-3-1', '1-10-3-2', '1-10-3-3', '1-10-3-4', '1-10-4-1', '1-10-4-2', '1-10-4-3', '1-10-5'] 
+    }
 ];
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -94,7 +121,7 @@ window.resumeAudit = function(data) {
     currentSessionId = data.sessionId;
     currentControlDbId = data.dbId;
     
-    appendMsg('ai', `جاري المتابعة من السؤال رقم ${currentQuestionIndex + 1}...`);
+    appendMsg('ai', `Continued from question number ${currentQuestionIndex + 1}...`);
     setTimeout(showAuditQ, 600);
 };
 
@@ -113,7 +140,7 @@ function showSubControlOptions(ctrl) {
         <div class="message-content">
             <div class="message-header">AI Compliance Assistant</div>
             <div class="message-text">
-                <p style="margin-bottom:15px">لقد اخترت الضابط الرئيسي <strong>${ctrl.id}</strong>. يرجى اختيار الضابط الفرعي المطلوب تقييمه الآن للبدء:</p>
+                <p style="margin-bottom:15px">You have chosen the main control <strong>${ctrl.id}</strong>. Please select the sub-control you wish to assess now to begin:</p>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">${buttonsHtml}</div>
             </div>
         </div>`;
@@ -122,7 +149,7 @@ function showSubControlOptions(ctrl) {
 }
 
 async function initiateSubAudit(subId) {
-    appendMsg('user', `بدء تقييم الضابط الفرعي: ${subId}`);
+    appendMsg('user', `Starting the sub-control assessment: ${subId}`);
     showTyping();
     
     try {
@@ -426,7 +453,7 @@ async function finishGuide() {
 
 // دالة مسح محتويات الشات
 function clearChat() {
-    if (confirm("هل أنت متأكد من رغبتك في مسح محادثة هذا الضابط؟")) {
+    if (confirm("Are you sure you want to delete this control's conversation?")) {
         document.getElementById('chat-messages').innerHTML = '';
         // مسح الحالة المحفوظة لهذا الضابط فقط
         localStorage.removeItem(`session_resume_${currentControlId}`);
@@ -447,11 +474,11 @@ function showResumeOption(sessionData) {
         <div class="message-content">
             <div class="message-header">AI Assistant</div>
             <div class="message-text">
-                <p>مرحباً بعودتك! لاحظت أنك لم تكمل تقييم الضابط الفرعي <strong>${sessionData.subId}</strong>.</p>
-                <p style="font-size:12px; color:var(--text-muted)">وصلت إلى السؤال ${sessionData.index} من أصل ${sessionData.questions.length}</p>
+                <p>Welcome back! I noticed you haven't completed the sub-control assessment. <strong>${sessionData.subId}</strong>.</p>
+                <p style="font-size:12px; color:var(--text-muted)">You have reached the question ${sessionData.index} Out of ${sessionData.questions.length}</p>
                 <div style="display:flex; gap:10px; margin-top:15px;">
-                    <button onclick="resumeAuditAction()" style="padding:10px 18px; background:#06b6d4; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">استكمال من حيث توقفت</button>
-                    <button onclick="restartAudit()" style="padding:10px 18px; background:transparent; border:1px solid #ef4444; color:#ef4444; border-radius:8px; cursor:pointer;">البدء من جديد</button>
+                    <button onclick="resumeAuditAction()" style="padding:10px 18px; background:#06b6d4; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">Continue where you left off</button>
+                    <button onclick="restartAudit()" style="padding:10px 18px; background:transparent; border:1px solid #ef4444; color:#ef4444; border-radius:8px; cursor:pointer;">Starting over</button>
                 </div>
             </div>
         </div>`;
@@ -471,7 +498,7 @@ window.resumeAuditAction = function() {
     currentControlDbId = data.dbId;
 
     // 2. إرسال رسالة توضيحية في الشات
-    appendMsg('ai', `تم استعادة الجلسة بنجاح. سنتابع من السؤال رقم ${currentQuestionIndex + 1}...`);
+    appendMsg('ai', `The session has been successfully restored. We will continue from question number ${currentQuestionIndex + 1}...`);
     
     // 3. تنظيف البيانات المؤقتة والبدء
     window.pendingSessionData = null;
@@ -480,7 +507,7 @@ window.resumeAuditAction = function() {
 
 function resumeAudit(data) {
     document.getElementById('chat-messages').innerHTML = '';
-    appendMsg('ai', `جاري استكمال التقييم لـ ${data.subId}...`);
+    appendMsg('ai', `The assessment is being completed for ${data.subId}...`);
     
     currentQuestions = data.questions;
     currentQuestionIndex = data.index;
@@ -503,7 +530,7 @@ function addClearButton() {
     if (!document.getElementById('clear-chat-btn')) {
         const btn = document.createElement('button');
         btn.id = 'clear-chat-btn';
-        btn.innerHTML = '<i class="fas fa-trash"></i> مسح المحادثة';
+        btn.innerHTML = '<i class="fas fa-trash"></i> Clear the conversation';
         btn.style = "margin-left:10px; padding:5px 12px; background:#ef444420; color:#ef4444; border:1px solid #ef4444; border-radius:6px; cursor:pointer; font-size:12px;";
         btn.onclick = clearChat;
         header.appendChild(btn);
@@ -512,7 +539,7 @@ function addClearButton() {
 
 async function clearChat() {
     if (!currentControlId) return;
-    if (confirm("سيتم حذف سجل المحادثة والتقييم الحالي لهذا الضابط، هل أنت متأكد؟")) {
+    if (confirm("The conversation history and current assessment of this control will be deleted, are you sure?")) {
         localStorage.removeItem(`chat_history_${currentControlId}`);
         localStorage.removeItem(`session_resume_${currentControlId}`);
         document.getElementById('chat-messages').innerHTML = '';
