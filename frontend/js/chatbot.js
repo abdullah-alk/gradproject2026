@@ -2033,37 +2033,41 @@ function renderControlBrowser() {
 // }
 
 async function selectControl(ctrl, el) {
-    // 1. تصفير المتغيرات العالمية فوراً لقطع الصلة بالضابط السابق
+    // 1. تصفير المتغيرات العالمية (إجباري)
     currentQuestions = [];
     currentQuestionIndex = 0;
     auditAnswers = [];
+    currentSessionId = null; // تأكد من تصفير الجلسة أيضاً
     currentControlId = ctrl.id;
     selectedControlInfo = ctrl;
 
-    // 2. تحديث واجهة المستخدم (تحديد العنصر المختار)
+    // 2. تحديث الواجهة
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
 
-    // 3. مسح واجهة الشات استعداداً للبيانات الجديدة
     const chatContainer = document.getElementById('chat-messages');
-    chatContainer.innerHTML = ''; 
+    chatContainer.innerHTML = ''; // مسح الشاشة فوراً
 
-    // 4. محاولة جلب البيانات الخاصة بالضابط الجديد فقط من الذاكرة
+    // 3. جلب البيانات
     const rawData = localStorage.getItem(`chat_session_${ctrl.id}`);
 
     if (rawData) {
         const data = JSON.parse(rawData);
         
-        // استعادة البيانات للضابط الحالي (إذا وجدت)
+        // استعادة البيانات بدقة
         chatContainer.innerHTML = data.html || '';
         currentQuestions = data.questions || [];
         currentQuestionIndex = data.index || 0;
         auditAnswers = data.answers || [];
+        currentSessionId = data.sessionId || null;
 
-        // 5. الفحص: هل توجد جلسة "حقيقية" معلقة لهذا الضابط تحديداً؟
-        if (currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
+        // الشرط الحاسم: هل المصفوفة فعلاً تحتوي أسئلة والعداد لم يصل للنهاية؟
+        const hasActiveQuestions = Array.isArray(currentQuestions) && currentQuestions.length > 0;
+        const isNotFinished = currentQuestionIndex < currentQuestions.length;
+
+        if (hasActiveQuestions && isNotFinished) {
             const promptDiv = document.createElement('div');
-            promptDiv.className = 'message ai-message';
+            promptDiv.className = 'message ai-message resume-box'; // إضافة class للتمييز
             promptDiv.id = 'resume-prompt';
             promptDiv.innerHTML = `
                 <div class="message-content" style="border-left: 4px solid #06b6d4; background: rgba(6,182,212,0.05); padding: 15px; margin-top: 10px;">
@@ -2075,18 +2079,14 @@ async function selectControl(ctrl, el) {
                 </div>`;
             chatContainer.appendChild(promptDiv);
         } else {
-            // إذا وجد أرشيف نصي فقط بدون أسئلة معلقة
             showSubControlOptions(ctrl);
         }
     } else {
-        // إذا كان الضابط جديداً كلياً ولم يسبق فتحه
         showSubControlOptions(ctrl);
     }
 
     chatContainer.scrollTop = chatContainer.scrollHeight;
     updateRightPanel(ctrl.id);
-    
-    // إعادة بناء زر المسح في العنوان
     renderClearButton(); 
 }
 
@@ -2443,15 +2443,34 @@ async function handleUserMessage() {
 // } 
 
 // ############ NEW FUNCTION ############
+// function saveChatHistory() {
+//     if (!currentControlId) return;
+//     const content = document.getElementById('chat-messages').innerHTML;
+    
+//     const sessionData = {
+//         html: content,
+//         questions: currentQuestions,
+//         index: currentQuestionIndex,
+//         answers: auditAnswers,
+//         controlDbId: currentControlDbId,
+//         sessionId: currentSessionId
+//     };
+    
+//     localStorage.setItem(`chat_session_${currentControlId}`, JSON.stringify(sessionData));
+// }
+
 function saveChatHistory() {
     if (!currentControlId) return;
-    const content = document.getElementById('chat-messages').innerHTML;
     
+    const chatContainer = document.getElementById('chat-messages');
+    // لا تحفظ إذا كان الشات فارغاً تماماً (اختياري)
+    if (!chatContainer.innerHTML.trim()) return;
+
     const sessionData = {
-        html: content,
-        questions: currentQuestions,
-        index: currentQuestionIndex,
-        answers: auditAnswers,
+        html: chatContainer.innerHTML,
+        questions: currentQuestions || [],
+        index: currentQuestionIndex || 0,
+        answers: auditAnswers || [],
         controlDbId: currentControlDbId,
         sessionId: currentSessionId
     };
@@ -2510,35 +2529,54 @@ function resumeAudit() {
 }
 
 // البدء من جديد
-function restartAudit() {
-    if (confirm("سيتم إنهاء الجلسة الحالية والبدء من جديد. ستبقى المحادثات السابقة موجودة كمرجع. هل تريد المتابعة؟")) {
+// function restartAudit() {
+//     if (confirm("سيتم إنهاء الجلسة الحالية والبدء من جديد. ستبقى المحادثات السابقة موجودة كمرجع. هل تريد المتابعة؟")) {
         
-        const chatContainer = document.getElementById('chat-messages');
+//         const chatContainer = document.getElementById('chat-messages');
         
-        // 1. إضافة فاصل بصري في الشات يوضح نهاية الجلسة السابقة
-        const separator = document.createElement('div');
-        separator.style = "margin: 30px 0; border-top: 2px dashed rgba(255,255,255,0.1); position: relative; text-align: center;";
-        separator.innerHTML = `
-            <span style="background: #1e293b; padding: 0 15px; color: var(--text-muted); font-size: 11px; position: absolute; top: -10px; left: 50%; transform: translateX(-50%);">
-                تاريخ الأرشفة: ${new Date().toLocaleString('ar-SA')}
-            </span>
-        `;
-        chatContainer.appendChild(separator);
+//         // 1. إضافة فاصل بصري في الشات يوضح نهاية الجلسة السابقة
+//         const separator = document.createElement('div');
+//         separator.style = "margin: 30px 0; border-top: 2px dashed rgba(255,255,255,0.1); position: relative; text-align: center;";
+//         separator.innerHTML = `
+//             <span style="background: #1e293b; padding: 0 15px; color: var(--text-muted); font-size: 11px; position: absolute; top: -10px; left: 50%; transform: translateX(-50%);">
+//                 تاريخ الأرشفة: ${new Date().toLocaleString('ar-SA')}
+//             </span>
+//         `;
+//         chatContainer.appendChild(separator);
 
-        // 2. تصفير المتغيرات البرمجية فقط دون مسح HTML الشات
+//         // 2. تصفير المتغيرات البرمجية فقط دون مسح HTML الشات
+//         currentQuestions = [];
+//         currentQuestionIndex = 0;
+//         auditAnswers = [];
+        
+//         // 3. تحديث الذاكرة المحلية (نحفظ النص الحالي مع تصفير الـ Index)
+//         saveChatHistory();
+
+//         // 4. إظهار خيارات البداية من جديد
+//         showSubControlOptions(selectedControlInfo);
+        
+//         // إزالة رسالة التخيير (التي تحتوي على زر استكمال/بدء جديد) لكي لا تبقى في المنتصف
+//         const prompts = document.querySelectorAll('.message.ai-message');
+//         prompts[prompts.length - 2]?.remove(); // حذف رسالة التخيير قبل الأخيرة
+//     }
+// }
+
+function restartAudit() {
+    if (confirm("سيتم إنهاء الجلسة الحالية والبدء من جديد. هل تريد المتابعة؟")) {
+        // 1. تصفير المتغيرات
         currentQuestions = [];
         currentQuestionIndex = 0;
         auditAnswers = [];
         
-        // 3. تحديث الذاكرة المحلية (نحفظ النص الحالي مع تصفير الـ Index)
+        // 2. إزالة رسالة الاستكمال من الواجهة فوراً
+        const prompt = document.getElementById('resume-prompt');
+        if (prompt) prompt.remove();
+
+        // 3. تحديث الذاكرة المحلية (هذا سيجعل rawData لا تحتوي على أسئلة)
         saveChatHistory();
 
-        // 4. إظهار خيارات البداية من جديد
+        // 4. إظهار الخيارات
         showSubControlOptions(selectedControlInfo);
-        
-        // إزالة رسالة التخيير (التي تحتوي على زر استكمال/بدء جديد) لكي لا تبقى في المنتصف
-        const prompts = document.querySelectorAll('.message.ai-message');
-        prompts[prompts.length - 2]?.remove(); // حذف رسالة التخيير قبل الأخيرة
     }
 }
 
