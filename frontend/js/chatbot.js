@@ -1988,8 +1988,52 @@ function renderControlBrowser() {
 //     } catch (e) { currentControlDbId = ctrl.id; }
 // }
 
+// async function selectControl(ctrl, el) {
+//     // ... (تنسيق القائمة والزر كما هي في الكود السابق) ...
+//     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
+//     el.classList.add('selected');
+//     currentControlId = ctrl.id;
+//     selectedControlInfo = ctrl;
+
+//     const chatContainer = document.getElementById('chat-messages');
+//     const rawData = localStorage.getItem(`chat_session_${ctrl.id}`);
+
+//     if (rawData) {
+//         const data = JSON.parse(rawData);
+//         // استعادة البيانات برمجياً
+//         chatContainer.innerHTML = data.html;
+//         currentQuestions = data.questions || [];
+//         currentQuestionIndex = data.index || 0;
+//         auditAnswers = data.answers || [];
+//         currentControlDbId = data.controlDbId;
+//         currentSessionId = data.sessionId;
+
+//         // إضافة رسالة تخيير للمستخدم
+//         const promptDiv = document.createElement('div');
+//         promptDiv.className = 'message ai-message';
+//         promptDiv.innerHTML = `
+//             <div class="message-content" style="border-left: 4px solid var(--accent-primary); background: rgba(6,182,212,0.1);">
+//                 <div class="message-text">
+//                     <p><strong>مرحباً بك مجدداً!</strong> لقد توقفت عند السؤال <strong>${currentQuestionIndex}</strong> من أصل ${currentQuestions.length}.</p>
+//                     <div style="display:flex; gap:10px; margin-top:10px;">
+//                         <button onclick="resumeAudit()" style="padding:8px 15px; background:var(--accent-primary); color:white; border:none; border-radius:5px; cursor:pointer;">استكمال التقييم</button>
+//                         <button onclick="restartAudit()" style="padding:8px 15px; background:transparent; border:1px solid var(--text-muted); color:var(--text-muted); border-radius:5px; cursor:pointer;">بدء تقييم جديد</button>
+//                     </div>
+//                 </div>
+//             </div>`;
+//         chatContainer.appendChild(promptDiv);
+//         chatContainer.scrollTop = chatContainer.scrollHeight;
+
+//     } else {
+//         chatContainer.innerHTML = '';
+//         showSubControlOptions(ctrl);
+//     }
+    
+//     updateRightPanel(ctrl.id);
+// }
+
 async function selectControl(ctrl, el) {
-    // ... (تنسيق القائمة والزر كما هي في الكود السابق) ...
+    // ... (تنسيق القائمة والزر كما هي) ...
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
     currentControlId = ctrl.id;
@@ -2000,35 +2044,44 @@ async function selectControl(ctrl, el) {
 
     if (rawData) {
         const data = JSON.parse(rawData);
-        // استعادة البيانات برمجياً
+        
+        // استعادة البيانات في المتغيرات أولاً خلف الكواليس
         chatContainer.innerHTML = data.html;
         currentQuestions = data.questions || [];
         currentQuestionIndex = data.index || 0;
         auditAnswers = data.answers || [];
-        currentControlDbId = data.controlDbId;
-        currentSessionId = data.sessionId;
 
-        // إضافة رسالة تخيير للمستخدم
-        const promptDiv = document.createElement('div');
-        promptDiv.className = 'message ai-message';
-        promptDiv.innerHTML = `
-            <div class="message-content" style="border-left: 4px solid var(--accent-primary); background: rgba(6,182,212,0.1);">
-                <div class="message-text">
-                    <p><strong>مرحباً بك مجدداً!</strong> لقد توقفت عند السؤال <strong>${currentQuestionIndex}</strong> من أصل ${currentQuestions.length}.</p>
-                    <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button onclick="resumeAudit()" style="padding:8px 15px; background:var(--accent-primary); color:white; border:none; border-radius:5px; cursor:pointer;">استكمال التقييم</button>
-                        <button onclick="restartAudit()" style="padding:8px 15px; background:transparent; border:1px solid var(--text-muted); color:var(--text-muted); border-radius:5px; cursor:pointer;">بدء تقييم جديد</button>
+        // الشرط الذكي: هل يوجد أسئلة وهل المستخدم لم يصل للنهاية بعد؟
+        const isSessionActive = currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length;
+
+        if (isSessionActive) {
+            // فقط إذا كانت هناك جلسة "قيد التنفيذ" نُظهر خيار الاستكمال
+            const promptDiv = document.createElement('div');
+            promptDiv.className = 'message ai-message';
+            promptDiv.id = 'resume-prompt'; // إضافة ID لسهولة الحذف لاحقاً
+            promptDiv.innerHTML = `
+                <div class="message-content" style="border-left: 4px solid var(--accent-primary); background: rgba(6,182,212,0.1);">
+                    <div class="message-text">
+                        <p><strong>جلسة معلقة:</strong> لقد توقفت عند السؤال <strong>${currentQuestionIndex + 1}</strong> لضابط فرعي سابق.</p>
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button onclick="resumeAudit()" style="padding:8px 15px; background:var(--accent-primary); color:white; border:none; border-radius:5px; cursor:pointer; font-size:12px;">استكمال السؤال التالي</button>
+                            <button onclick="restartAudit()" style="padding:8px 15px; background:transparent; border:1px solid var(--text-muted); color:var(--text-muted); border-radius:5px; cursor:pointer; font-size:12px;">تجاهل والبدء من جديد</button>
+                        </div>
                     </div>
-                </div>
-            </div>`;
-        chatContainer.appendChild(promptDiv);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-
+                </div>`;
+            chatContainer.appendChild(promptDiv);
+        } else {
+            // إذا كان المستخدم قد أنهى الأسئلة سابقاً أو دخل ولم يبدأ بعد
+            // نكتفي بعرض المحادثة السابقة (أرشيف) ونعرض خيارات الضوابط الفرعية فوراً
+            showSubControlOptions(ctrl);
+        }
     } else {
+        // أول مرة يدخل الضابط نهائياً
         chatContainer.innerHTML = '';
         showSubControlOptions(ctrl);
     }
-    
+
+    chatContainer.scrollTop = chatContainer.scrollHeight;
     updateRightPanel(ctrl.id);
 }
 //############################################################
@@ -2204,6 +2257,11 @@ async function finishAudit() {
 
     await saveProgress(currentControlId, status, score, yes, partial, no, total);
     await saveAuditToEvidence(currentControlId, selectedControlInfo?.title || currentControlId, status, score, auditAnswers, currentSessionId, currentControlDbId);
+
+    // إضافة: تصفير مصفوفة الأسئلة لكي لا تظهر رسالة "استكمال" في المرة القادمة
+    currentQuestions = [];
+    currentQuestionIndex = 0;
+    saveChatHistory(); // حفظ الحالة بأنها "منتهية"
     
     setTimeout(() => showSubControlOptions(selectedControlInfo), 2500);
 }
@@ -2404,18 +2462,28 @@ function clearChatHistory() {
 }
 
 // استكمال من حيث توقفنا
-function resumeAudit() {
-    const chatContainer = document.getElementById('chat-messages');
+// function resumeAudit() {
+//     const chatContainer = document.getElementById('chat-messages');
     
-    // البحث عن آخر رسالة (التي تحتوي على أزرار التخيير) وحذفها
-    const lastMsg = chatContainer.lastElementChild;
-    if (lastMsg) lastMsg.remove();
+//     // البحث عن آخر رسالة (التي تحتوي على أزرار التخيير) وحذفها
+//     const lastMsg = chatContainer.lastElementChild;
+//     if (lastMsg) lastMsg.remove();
+    
+//     if (currentQuestions.length > 0) {
+//         showAuditQ(); 
+//     } else {
+//         appendMsg('ai', 'لا توجد أسئلة نشطة حالياً، يرجى اختيار ضابط فرعي.');
+//         showSubControlOptions(selectedControlInfo);
+//     }
+// }
+
+// #### NEW FUCNTION ####
+function resumeAudit() {
+    const prompt = document.getElementById('resume-prompt');
+    if (prompt) prompt.remove();
     
     if (currentQuestions.length > 0) {
         showAuditQ(); 
-    } else {
-        appendMsg('ai', 'لا توجد أسئلة نشطة حالياً، يرجى اختيار ضابط فرعي.');
-        showSubControlOptions(selectedControlInfo);
     }
 }
 
