@@ -170,5 +170,5 @@ function renderGapsAndRecs(gaps) {
             <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">${g.recommendation ? g.recommendation.substring(0,200)+'...' : 'Review and remediate this control'}</div>
             <a href="chatbot.html?control=${g.control_id}" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:var(--accent-primary);text-decoration:none"><i class="fas fa-arrow-right"></i> Start Audit</a>
         </div>
-    `).join('');
+    `).join('') : '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center"><i class="fas fa-check-circle" style="color:#10b981;margin-right:8px"></i>Use Guide Mode to generate recommendations</div>';
 }
