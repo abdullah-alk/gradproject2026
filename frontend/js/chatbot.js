@@ -74,7 +74,7 @@ async function selectControl(ctrl, el) {
     if (savedSession) {
         const sessionData = JSON.parse(savedSession);
         // عرض قائمة الاستكمال فقط إذا لم تكن معروضة مسبقاً في المحادثة
-        if (sessionData.index > 0) {
+        if (sessionData.index > 0 && sessionData.questions.length > 0) {
             showResumeOption(sessionData);
         } else {
             showSubControlOptions(ctrl);
@@ -437,6 +437,10 @@ function clearChat() {
 
 function showResumeOption(sessionData) {
     const cm = document.getElementById('chat-messages');
+    
+    // تخزين البيانات في متغير عالمي مؤقت لسهولة الوصول إليها عند الضغط
+    window.pendingSessionData = sessionData;
+
     const m = document.createElement('div');
     m.className = 'message ai-message';
     m.innerHTML = `
@@ -446,13 +450,33 @@ function showResumeOption(sessionData) {
                 <p>مرحباً بعودتك! لاحظت أنك لم تكمل تقييم الضابط الفرعي <strong>${sessionData.subId}</strong>.</p>
                 <p style="font-size:12px; color:var(--text-muted)">وصلت إلى السؤال ${sessionData.index} من أصل ${sessionData.questions.length}</p>
                 <div style="display:flex; gap:10px; margin-top:15px;">
-                    <button onclick='resumeAudit(${JSON.stringify(sessionData)})' style="padding:8px 15px; background:var(--accent-primary); color:white; border:none; border-radius:5px; cursor:pointer;">استكمال من حيث توقفت</button>
-                    <button onclick='restartAudit()' style="padding:8px 15px; background:transparent; border:1px solid #ef4444; color:#ef4444; border-radius:5px; cursor:pointer;">البدء من جديد</button>
+                    <button onclick="resumeAuditAction()" style="padding:10px 18px; background:#06b6d4; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">استكمال من حيث توقفت</button>
+                    <button onclick="restartAudit()" style="padding:10px 18px; background:transparent; border:1px solid #ef4444; color:#ef4444; border-radius:8px; cursor:pointer;">البدء من جديد</button>
                 </div>
             </div>
         </div>`;
     cm.appendChild(m);
+    cm.scrollTop = cm.scrollHeight;
 }
+
+window.resumeAuditAction = function() {
+    const data = window.pendingSessionData;
+    if (!data) return;
+
+    // 1. تحديث المتغيرات البرمجية
+    currentQuestions = data.questions;
+    currentQuestionIndex = data.index;
+    auditAnswers = data.answers;
+    currentSessionId = data.sessionId;
+    currentControlDbId = data.dbId;
+
+    // 2. إرسال رسالة توضيحية في الشات
+    appendMsg('ai', `تم استعادة الجلسة بنجاح. سنتابع من السؤال رقم ${currentQuestionIndex + 1}...`);
+    
+    // 3. تنظيف البيانات المؤقتة والبدء
+    window.pendingSessionData = null;
+    setTimeout(showAuditQ, 600);
+};
 
 function resumeAudit(data) {
     document.getElementById('chat-messages').innerHTML = '';
