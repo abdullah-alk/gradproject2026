@@ -1942,50 +1942,94 @@ function renderControlBrowser() {
 // }
 
 //  ########## UPDATED FUNCTION ##########
+// async function selectControl(ctrl, el) {
+//     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
+//     el.classList.add('selected');
+    
+//     currentControlId = ctrl.id;
+//     selectedControlInfo = ctrl;
+
+//     // 1. إضافة زر المسح برمجياً في العنوان
+//     const headerNameArea = document.getElementById('current-control-name');
+//     const existingBtn = document.getElementById('dynamic-clear-btn');
+//     if (existingBtn) existingBtn.remove();
+
+//     const clearBtn = document.createElement('button');
+//     clearBtn.id = 'dynamic-clear-btn';
+//     clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Chat';
+//     clearBtn.style = "margin-left:15px; padding:4px 10px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer; font-size:11px;";
+//     clearBtn.onclick = (e) => { e.stopPropagation(); clearChatHistory(); };
+//     headerNameArea.appendChild(clearBtn);
+
+//     // 2. محاولة تحميل التاريخ
+//     const savedContent = localStorage.getItem(`chat_history_${ctrl.id}`);
+//     const chatContainer = document.getElementById('chat-messages');
+
+//     if (savedContent && savedContent.trim() !== "") {
+//         // إذا وجدنا محتوى، نعرضه فوراً ولا نمسح الشات
+//         chatContainer.innerHTML = savedContent;
+//         chatContainer.scrollTop = chatContainer.scrollHeight;
+//         console.log("تم استعادة المحادثة للضابط: " + ctrl.id);
+//     } else {
+//         // إذا لم يوجد محتوى، ننظف الشات ونظهر الخيارات البدائية
+//         chatContainer.innerHTML = '';
+//         showSubControlOptions(ctrl);
+//         console.log("لا يوجد تاريخ سابق، بدء جلسة جديدة.");
+//     }
+
+//     // تحديث لوحة المعلومات الجانبية
+//     updateRightPanel(ctrl.id);
+    
+//     // المزامنة مع قاعدة البيانات (الكود الأصلي الخاص بك)
+//     try { 
+//         const cs = await getAllControls(); 
+//         const m = cs.find(c => String(c.control_id) === String(ctrl.id)); 
+//         currentControlDbId = m ? m.id : ctrl.id; 
+//     } catch (e) { currentControlDbId = ctrl.id; }
+// }
+
 async function selectControl(ctrl, el) {
+    // ... (تنسيق القائمة والزر كما هي في الكود السابق) ...
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
-    
     currentControlId = ctrl.id;
     selectedControlInfo = ctrl;
 
-    // 1. إضافة زر المسح برمجياً في العنوان
-    const headerNameArea = document.getElementById('current-control-name');
-    const existingBtn = document.getElementById('dynamic-clear-btn');
-    if (existingBtn) existingBtn.remove();
-
-    const clearBtn = document.createElement('button');
-    clearBtn.id = 'dynamic-clear-btn';
-    clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Chat';
-    clearBtn.style = "margin-left:15px; padding:4px 10px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer; font-size:11px;";
-    clearBtn.onclick = (e) => { e.stopPropagation(); clearChatHistory(); };
-    headerNameArea.appendChild(clearBtn);
-
-    // 2. محاولة تحميل التاريخ
-    const savedContent = localStorage.getItem(`chat_history_${ctrl.id}`);
     const chatContainer = document.getElementById('chat-messages');
+    const rawData = localStorage.getItem(`chat_session_${ctrl.id}`);
 
-    if (savedContent && savedContent.trim() !== "") {
-        // إذا وجدنا محتوى، نعرضه فوراً ولا نمسح الشات
-        chatContainer.innerHTML = savedContent;
+    if (rawData) {
+        const data = JSON.parse(rawData);
+        // استعادة البيانات برمجياً
+        chatContainer.innerHTML = data.html;
+        currentQuestions = data.questions || [];
+        currentQuestionIndex = data.index || 0;
+        auditAnswers = data.answers || [];
+        currentControlDbId = data.controlDbId;
+        currentSessionId = data.sessionId;
+
+        // إضافة رسالة تخيير للمستخدم
+        const promptDiv = document.createElement('div');
+        promptDiv.className = 'message ai-message';
+        promptDiv.innerHTML = `
+            <div class="message-content" style="border-left: 4px solid var(--accent-primary); background: rgba(6,182,212,0.1);">
+                <div class="message-text">
+                    <p><strong>مرحباً بك مجدداً!</strong> لقد توقفت عند السؤال <strong>${currentQuestionIndex}</strong> من أصل ${currentQuestions.length}.</p>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button onclick="resumeAudit()" style="padding:8px 15px; background:var(--accent-primary); color:white; border:none; border-radius:5px; cursor:pointer;">استكمال التقييم</button>
+                        <button onclick="restartAudit()" style="padding:8px 15px; background:transparent; border:1px solid var(--text-muted); color:var(--text-muted); border-radius:5px; cursor:pointer;">بدء تقييم جديد</button>
+                    </div>
+                </div>
+            </div>`;
+        chatContainer.appendChild(promptDiv);
         chatContainer.scrollTop = chatContainer.scrollHeight;
-        console.log("تم استعادة المحادثة للضابط: " + ctrl.id);
+
     } else {
-        // إذا لم يوجد محتوى، ننظف الشات ونظهر الخيارات البدائية
         chatContainer.innerHTML = '';
         showSubControlOptions(ctrl);
-        console.log("لا يوجد تاريخ سابق، بدء جلسة جديدة.");
     }
-
-    // تحديث لوحة المعلومات الجانبية
-    updateRightPanel(ctrl.id);
     
-    // المزامنة مع قاعدة البيانات (الكود الأصلي الخاص بك)
-    try { 
-        const cs = await getAllControls(); 
-        const m = cs.find(c => String(c.control_id) === String(ctrl.id)); 
-        currentControlDbId = m ? m.id : ctrl.id; 
-    } catch (e) { currentControlDbId = ctrl.id; }
+    updateRightPanel(ctrl.id);
 }
 //############################################################
 
@@ -2133,6 +2177,8 @@ async function answerAudit(ans, btn) {
     }
     
     currentQuestionIndex++; 
+    saveChatHistory()
+    
     setTimeout(showAuditQ, 500);
 }
 
@@ -2308,12 +2354,29 @@ async function handleUserMessage() {
 // --- وظائف إدارة الذاكرة والجلسات ---
 
 // حفظ محتوى الشات الحالي بناءً على الضابط المختار
+// function saveChatHistory() {
+//     if (!currentControlId) return;
+//     const chatContainer = document.getElementById('chat-messages');
+//     if (chatContainer) {
+//         localStorage.setItem(`chat_history_${currentControlId}`, chatContainer.innerHTML);
+//     }
+// } 
+
+// ############ NEW FUNCTION ############
 function saveChatHistory() {
     if (!currentControlId) return;
-    const chatContainer = document.getElementById('chat-messages');
-    if (chatContainer) {
-        localStorage.setItem(`chat_history_${currentControlId}`, chatContainer.innerHTML);
-    }
+    const content = document.getElementById('chat-messages').innerHTML;
+    
+    const sessionData = {
+        html: content,
+        questions: currentQuestions,
+        index: currentQuestionIndex,
+        answers: auditAnswers,
+        controlDbId: currentControlDbId,
+        sessionId: currentSessionId
+    };
+    
+    localStorage.setItem(`chat_session_${currentControlId}`, JSON.stringify(sessionData));
 }
 
 // استرجاع محتوى الشات عند اختيار ضابط
@@ -2336,6 +2399,31 @@ function clearChatHistory() {
         localStorage.removeItem(`chat_history_${currentControlId}`);
         document.getElementById('chat-messages').innerHTML = '';
         // إعادة إظهار خيارات الضوابط الفرعية للبدء من جديد
+        showSubControlOptions(selectedControlInfo);
+    }
+}
+
+// استكمال من حيث توقفنا
+function resumeAudit() {
+    // إزالة رسالة التخيير الأخيرة
+    const messages = document.getElementById('chat-messages');
+    messages.removeChild(messages.lastChild);
+    
+    if (currentQuestions.length > 0) {
+        showAuditQ(); // استدعاء السؤال الحالي
+    } else {
+        showSubControlOptions(selectedControlInfo);
+    }
+}
+
+// البدء من جديد
+function restartAudit() {
+    if (confirm("سيتم مسح الجلسة الحالية والبدء من جديد، هل أنت متأكد؟")) {
+        localStorage.removeItem(`chat_session_${currentControlId}`);
+        currentQuestions = [];
+        currentQuestionIndex = 0;
+        auditAnswers = [];
+        document.getElementById('chat-messages').innerHTML = '';
         showSubControlOptions(selectedControlInfo);
     }
 }
