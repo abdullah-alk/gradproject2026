@@ -1918,9 +1918,18 @@ function renderControlBrowser() {
 
 //     try { 
 //         const cs = await getAllControls(); 
-//         const m = cs.find(c => c.control_id === ctrl.id); 
-//         if (m) currentControlDbId = m.id; 
-//     } catch (e) { console.error("Control DB sync error"); }
+//         // التعديل هنا: تحويل المعرفات لنصوص لضمان المطابقة
+//         const m = cs.find(c => String(c.control_id) === String(ctrl.id)); 
+//         if (m) {
+//             currentControlDbId = m.id; 
+//         } else {
+//             // خطة بديلة: استخدام المعرف النصي مباشرة
+//             currentControlDbId = ctrl.id; 
+//         }
+//     } catch (e) { 
+//         console.error("Control DB sync error"); 
+//         currentControlDbId = ctrl.id; // Fallback
+//     }
 
 //     document.getElementById('current-control-id').textContent = ctrl.id;
 //     document.getElementById('current-control-name').textContent = ctrl.title;
@@ -1932,40 +1941,33 @@ function renderControlBrowser() {
 //     showSubControlOptions(ctrl);
 // }
 
+//  ########## UPDATED FUNCTION ##########
 async function selectControl(ctrl, el) {
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
     
     currentControlId = ctrl.id;
     selectedControlInfo = ctrl;
-    auditAnswers = [];
-    currentQuestions = [];
-    currentQuestionIndex = 0;
-
-    try { 
-        const cs = await getAllControls(); 
-        // التعديل هنا: تحويل المعرفات لنصوص لضمان المطابقة
-        const m = cs.find(c => String(c.control_id) === String(ctrl.id)); 
-        if (m) {
-            currentControlDbId = m.id; 
-        } else {
-            // خطة بديلة: استخدام المعرف النصي مباشرة
-            currentControlDbId = ctrl.id; 
-        }
-    } catch (e) { 
-        console.error("Control DB sync error"); 
-        currentControlDbId = ctrl.id; // Fallback
-    }
-
+    
+    // تحديث واجهة المعلومات
     document.getElementById('current-control-id').textContent = ctrl.id;
     document.getElementById('current-control-name').textContent = ctrl.title;
-    document.getElementById('current-control-requirement').textContent = `ECC-2023 compliance assessment for ${ctrl.title}`;
     
+    // محاولة تحميل التاريخ القديم
+    const hasHistory = loadChatHistory(ctrl.id);
+    
+    // إذا لم يكن هناك تاريخ قديم، افتح واجهة اختيار الضوابط الفرعية لأول مرة
+    if (!hasHistory) {
+        document.getElementById('chat-messages').innerHTML = '';
+        showSubControlOptions(ctrl);
+    }
+
     updateRightPanel(ctrl.id);
     document.getElementById('chat-messages').innerHTML = '';
     
     showSubControlOptions(ctrl);
 }
+//############################################################
 
 function showSubControlOptions(ctrl) {
     const cm = document.getElementById('chat-messages');
@@ -1988,6 +1990,8 @@ function showSubControlOptions(ctrl) {
         </div>`;
     cm.appendChild(m);
     cm.scrollTop = cm.scrollHeight;
+
+    saveChatHistory();
 }
 
 
@@ -2089,6 +2093,8 @@ function showAuditQ() {
             </div>
         </div>`;
     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+
+    saveChatHistory();
 }
 
 
@@ -2254,6 +2260,8 @@ function appendMsg(role, txt) {
     m.className = `message ${role}-message`;
     m.innerHTML = `<div class="message-content"><div class="message-header">${role === 'ai' ? 'AI Auditor' : 'User'}</div><div class="message-text">${txt}</div></div>`;
     cm.appendChild(m); cm.scrollTop = cm.scrollHeight;
+
+    saveChatHistory();
 }
 
 function showTyping() {
@@ -2275,6 +2283,46 @@ async function handleUserMessage() {
     } catch (e) { hideTyping(); appendMsg('ai', 'Error connecting to AI engine.'); }
 }
 
+// ######################### New Functions ###########################
+
+// --- وظائف إدارة الذاكرة والجلسات ---
+
+// حفظ محتوى الشات الحالي بناءً على الضابط المختار
+function saveChatHistory() {
+    if (!currentControlId) return;
+    const chatContainer = document.getElementById('chat-messages');
+    if (chatContainer) {
+        localStorage.setItem(`chat_history_${currentControlId}`, chatContainer.innerHTML);
+    }
+}
+
+// استرجاع محتوى الشات عند اختيار ضابط
+function loadChatHistory(controlId) {
+    const chatContainer = document.getElementById('chat-messages');
+    const savedContent = localStorage.getItem(`chat_history_${controlId}`);
+    
+    if (savedContent) {
+        chatContainer.innerHTML = savedContent;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        return true; // تم استعادة محادثة سابقة
+    }
+    return false; // لا توجد محادثة سابقة
+}
+
+// دالة مسح الشات (للزع المخصص)
+function clearChatHistory() {
+    if (!currentControlId) return;
+    if (confirm('هل أنت متأكد من رغبتك في مسح سجل المحادثة لهذا الضابط؟')) {
+        localStorage.removeItem(`chat_history_${currentControlId}`);
+        document.getElementById('chat-messages').innerHTML = '';
+        // إعادة إظهار خيارات الضوابط الفرعية للبدء من جديد
+        showSubControlOptions(selectedControlInfo);
+    }
+}
+
+window.onbeforeunload = function() {
+    saveChatHistory();
+};
 
 
 
