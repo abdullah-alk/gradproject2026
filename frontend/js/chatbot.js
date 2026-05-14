@@ -2033,50 +2033,63 @@ function renderControlBrowser() {
 // }
 
 async function selectControl(ctrl, el) {
-    // ... (تنسيق القائمة والزر كما هي) ...
-    document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
-    el.classList.add('selected');
+    // 1. تصفير المتغيرات العالمية فوراً لضمان عدم انتقال بيانات من ضابط لآخر
+    currentQuestions = [];
+    currentQuestionIndex = 0;
+    auditAnswers = [];
     currentControlId = ctrl.id;
     selectedControlInfo = ctrl;
 
+    // 2. تحديث الواجهة (Active Class)
+    document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+
+    // 3. إضافة زر المسح برمجياً
+    const headerNameArea = document.getElementById('current-control-name');
+    if (headerNameArea) {
+        const existingBtn = document.getElementById('dynamic-clear-btn');
+        if (existingBtn) existingBtn.remove();
+        const clearBtn = document.createElement('button');
+        clearBtn.id = 'dynamic-clear-btn';
+        clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear';
+        clearBtn.style = "margin-left:15px; padding:4px 8px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer; font-size:10px;";
+        clearBtn.onclick = (e) => { e.stopPropagation(); clearChatHistory(); };
+        headerNameArea.appendChild(clearBtn);
+    }
+
     const chatContainer = document.getElementById('chat-messages');
+    // محاولة جلب البيانات الخاصة بالضابط المختار فقط
     const rawData = localStorage.getItem(`chat_session_${ctrl.id}`);
 
     if (rawData) {
         const data = JSON.parse(rawData);
         
-        // استعادة البيانات في المتغيرات أولاً خلف الكواليس
-        chatContainer.innerHTML = data.html;
+        // استعادة البيانات للضابط الحالي
+        chatContainer.innerHTML = data.html || '';
         currentQuestions = data.questions || [];
         currentQuestionIndex = data.index || 0;
         auditAnswers = data.answers || [];
 
-        // الشرط الذكي: هل يوجد أسئلة وهل المستخدم لم يصل للنهاية بعد؟
-        const isSessionActive = currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length;
-
-        if (isSessionActive) {
-            // فقط إذا كانت هناك جلسة "قيد التنفيذ" نُظهر خيار الاستكمال
+        // الشرط الحاسم: لا تظهر الرسالة إلا إذا كان هناك أسئلة "حقيقية" لم تنتهِ
+        if (currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
             const promptDiv = document.createElement('div');
             promptDiv.className = 'message ai-message';
-            promptDiv.id = 'resume-prompt'; // إضافة ID لسهولة الحذف لاحقاً
+            promptDiv.id = 'resume-prompt';
             promptDiv.innerHTML = `
-                <div class="message-content" style="border-left: 4px solid var(--accent-primary); background: rgba(6,182,212,0.1);">
-                    <div class="message-text">
-                        <p><strong>جلسة معلقة:</strong> لقد توقفت عند السؤال <strong>${currentQuestionIndex + 1}</strong> لضابط فرعي سابق.</p>
-                        <div style="display:flex; gap:10px; margin-top:10px;">
-                            <button onclick="resumeAudit()" style="padding:8px 15px; background:var(--accent-primary); color:white; border:none; border-radius:5px; cursor:pointer; font-size:12px;">استكمال السؤال التالي</button>
-                            <button onclick="restartAudit()" style="padding:8px 15px; background:transparent; border:1px solid var(--text-muted); color:var(--text-muted); border-radius:5px; cursor:pointer; font-size:12px;">تجاهل والبدء من جديد</button>
-                        </div>
+                <div class="message-content" style="border-left: 4px solid #06b6d4; background: rgba(6,182,212,0.05); padding: 15px; margin-top: 10px;">
+                    <p style="font-size: 13px; margin-bottom: 10px;"><strong>جلسة غير مكتملة:</strong> هل ترغب في العودة للسؤال ${currentQuestionIndex + 1}؟</p>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="resumeAudit()" style="padding:6px 12px; background:#06b6d4; color:white; border:none; border-radius:4px; cursor:pointer; font-size:12px;">استكمال</button>
+                        <button onclick="restartAudit()" style="padding:6px 12px; background:transparent; border:1px solid #ccc; color:#ccc; border-radius:4px; cursor:pointer; font-size:12px;">بدء جديد</button>
                     </div>
                 </div>`;
             chatContainer.appendChild(promptDiv);
         } else {
-            // إذا كان المستخدم قد أنهى الأسئلة سابقاً أو دخل ولم يبدأ بعد
-            // نكتفي بعرض المحادثة السابقة (أرشيف) ونعرض خيارات الضوابط الفرعية فوراً
+            // إذا كان الأرشيف موجوداً ولكن لا توجد أسئلة معلقة، نعرض خيارات الضوابط الفرعية
             showSubControlOptions(ctrl);
         }
     } else {
-        // أول مرة يدخل الضابط نهائياً
+        // ضابط جديد تماماً لم يسبق الدخول إليه
         chatContainer.innerHTML = '';
         showSubControlOptions(ctrl);
     }
@@ -2157,6 +2170,10 @@ async function initiateSubAudit(subId) {
                 cat: subId 
             }));
             currentQuestionIndex = 0;
+
+            // --- إضافة الحفظ هنا فوراً بعد توليد الأسئلة ---
+            saveChatHistory(); 
+            // ------------------------------------------
             
             const u = getCurrentUserLocal();
             
