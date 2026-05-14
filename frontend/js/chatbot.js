@@ -449,7 +449,13 @@ async function finishGuide() {
                     </div>
                 </div>`);
             try {
-                await saveAuditRecommendation({control_id:currentControlDbId, session_id:currentSessionId, gap_description:answersText, recommendation:r.answer, priority:'High'});
+                await saveAuditRecommendation({
+                    control_id: currentControlDbId || null,
+                    session_id: currentSessionId,
+                    gap_description: answersStr,
+                    recommendation: r.answer,
+                    priority: 'High'
+        });
             } catch(e) { console.error('[❌] Gap save error:', e); }
         } else {
             appendMsg('ai', 'Could not generate recommendations.');
