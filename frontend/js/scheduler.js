@@ -6,7 +6,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadUserToSidebar();
     await loadSchedulerData();
     document.getElementById('schedule-manual-audit-btn')?.addEventListener('click', handleScheduleManualAudit);
-});
+    ?.addEventListener('click', handleScheduleManualAudit);
+
+    const repeatToggle = document.getElementById('repeat-toggle');
+    const repeatOptions = document.getElementById('repeat-options');
+
+    if (repeatToggle && repeatOptions) {
+        repeatToggle.addEventListener('change', () => {
+            repeatOptions.style.display =
+                repeatToggle.checked ? 'block' : 'none';
+        });
+    }
+);
 
 async function loadSchedulerData() {
     try {
