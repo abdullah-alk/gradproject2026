@@ -2405,32 +2405,52 @@ function clearChatHistory() {
 
 // استكمال من حيث توقفنا
 function resumeAudit() {
-    // إزالة رسالة التخيير الأخيرة
-    const messages = document.getElementById('chat-messages');
-    messages.removeChild(messages.lastChild);
+    const chatContainer = document.getElementById('chat-messages');
+    
+    // البحث عن آخر رسالة (التي تحتوي على أزرار التخيير) وحذفها
+    const lastMsg = chatContainer.lastElementChild;
+    if (lastMsg) lastMsg.remove();
     
     if (currentQuestions.length > 0) {
-        showAuditQ(); // استدعاء السؤال الحالي
+        showAuditQ(); 
     } else {
+        appendMsg('ai', 'لا توجد أسئلة نشطة حالياً، يرجى اختيار ضابط فرعي.');
         showSubControlOptions(selectedControlInfo);
     }
 }
 
 // البدء من جديد
 function restartAudit() {
-    if (confirm("سيتم مسح الجلسة الحالية والبدء من جديد، هل أنت متأكد؟")) {
-        localStorage.removeItem(`chat_session_${currentControlId}`);
+    if (confirm("سيتم إنهاء الجلسة الحالية والبدء من جديد. ستبقى المحادثات السابقة موجودة كمرجع. هل تريد المتابعة؟")) {
+        
+        const chatContainer = document.getElementById('chat-messages');
+        
+        // 1. إضافة فاصل بصري في الشات يوضح نهاية الجلسة السابقة
+        const separator = document.createElement('div');
+        separator.style = "margin: 30px 0; border-top: 2px dashed rgba(255,255,255,0.1); position: relative; text-align: center;";
+        separator.innerHTML = `
+            <span style="background: #1e293b; padding: 0 15px; color: var(--text-muted); font-size: 11px; position: absolute; top: -10px; left: 50%; transform: translateX(-50%);">
+                تاريخ الأرشفة: ${new Date().toLocaleString('ar-SA')}
+            </span>
+        `;
+        chatContainer.appendChild(separator);
+
+        // 2. تصفير المتغيرات البرمجية فقط دون مسح HTML الشات
         currentQuestions = [];
         currentQuestionIndex = 0;
         auditAnswers = [];
-        document.getElementById('chat-messages').innerHTML = '';
+        
+        // 3. تحديث الذاكرة المحلية (نحفظ النص الحالي مع تصفير الـ Index)
+        saveChatHistory();
+
+        // 4. إظهار خيارات البداية من جديد
         showSubControlOptions(selectedControlInfo);
+        
+        // إزالة رسالة التخيير (التي تحتوي على زر استكمال/بدء جديد) لكي لا تبقى في المنتصف
+        const prompts = document.querySelectorAll('.message.ai-message');
+        prompts[prompts.length - 2]?.remove(); // حذف رسالة التخيير قبل الأخيرة
     }
 }
-
-window.onbeforeunload = function() {
-    saveChatHistory();
-};
 
 
 
