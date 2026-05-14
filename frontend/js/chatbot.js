@@ -1942,51 +1942,51 @@ function renderControlBrowser() {
 // }
 
 //  ########## UPDATED FUNCTION ##########
-// async function selectControl(ctrl, el) {
-//     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
-//     el.classList.add('selected');
+async function selectControl(ctrl, el) {
+    document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
     
-//     currentControlId = ctrl.id;
-//     selectedControlInfo = ctrl;
+    currentControlId = ctrl.id;
+    selectedControlInfo = ctrl;
 
-//     // 1. إضافة زر المسح برمجياً في العنوان
-//     const headerNameArea = document.getElementById('current-control-name');
-//     const existingBtn = document.getElementById('dynamic-clear-btn');
-//     if (existingBtn) existingBtn.remove();
+    // 1. إضافة زر المسح برمجياً في العنوان
+    const headerNameArea = document.getElementById('current-control-name');
+    const existingBtn = document.getElementById('dynamic-clear-btn');
+    if (existingBtn) existingBtn.remove();
 
-//     const clearBtn = document.createElement('button');
-//     clearBtn.id = 'dynamic-clear-btn';
-//     clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Chat';
-//     clearBtn.style = "margin-left:15px; padding:4px 10px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer; font-size:11px;";
-//     clearBtn.onclick = (e) => { e.stopPropagation(); clearChatHistory(); };
-//     headerNameArea.appendChild(clearBtn);
+    const clearBtn = document.createElement('button');
+    clearBtn.id = 'dynamic-clear-btn';
+    clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Chat';
+    clearBtn.style = "margin-left:15px; padding:4px 10px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer; font-size:11px;";
+    clearBtn.onclick = (e) => { e.stopPropagation(); clearChatHistory(); };
+    headerNameArea.appendChild(clearBtn);
 
-//     // 2. محاولة تحميل التاريخ
-//     const savedContent = localStorage.getItem(`chat_history_${ctrl.id}`);
-//     const chatContainer = document.getElementById('chat-messages');
+    // 2. محاولة تحميل التاريخ
+    const savedContent = localStorage.getItem(`chat_history_${ctrl.id}`);
+    const chatContainer = document.getElementById('chat-messages');
 
-//     if (savedContent && savedContent.trim() !== "") {
-//         // إذا وجدنا محتوى، نعرضه فوراً ولا نمسح الشات
-//         chatContainer.innerHTML = savedContent;
-//         chatContainer.scrollTop = chatContainer.scrollHeight;
-//         console.log("تم استعادة المحادثة للضابط: " + ctrl.id);
-//     } else {
-//         // إذا لم يوجد محتوى، ننظف الشات ونظهر الخيارات البدائية
-//         chatContainer.innerHTML = '';
-//         showSubControlOptions(ctrl);
-//         console.log("لا يوجد تاريخ سابق، بدء جلسة جديدة.");
-//     }
+    if (savedContent && savedContent.trim() !== "") {
+        // إذا وجدنا محتوى، نعرضه فوراً ولا نمسح الشات
+        chatContainer.innerHTML = savedContent;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        console.log("تم استعادة المحادثة للضابط: " + ctrl.id);
+    } else {
+        // إذا لم يوجد محتوى، ننظف الشات ونظهر الخيارات البدائية
+        chatContainer.innerHTML = '';
+        showSubControlOptions(ctrl);
+        console.log("لا يوجد تاريخ سابق، بدء جلسة جديدة.");
+    }
 
-//     // تحديث لوحة المعلومات الجانبية
-//     updateRightPanel(ctrl.id);
+    // تحديث لوحة المعلومات الجانبية
+    updateRightPanel(ctrl.id);
     
-//     // المزامنة مع قاعدة البيانات (الكود الأصلي الخاص بك)
-//     try { 
-//         const cs = await getAllControls(); 
-//         const m = cs.find(c => String(c.control_id) === String(ctrl.id)); 
-//         currentControlDbId = m ? m.id : ctrl.id; 
-//     } catch (e) { currentControlDbId = ctrl.id; }
-// }
+    // المزامنة مع قاعدة البيانات (الكود الأصلي الخاص بك)
+    try { 
+        const cs = await getAllControls(); 
+        const m = cs.find(c => String(c.control_id) === String(ctrl.id)); 
+        currentControlDbId = m ? m.id : ctrl.id; 
+    } catch (e) { currentControlDbId = ctrl.id; }
+}
 
 // async function selectControl(ctrl, el) {
 //     // ... (تنسيق القائمة والزر كما هي في الكود السابق) ...
