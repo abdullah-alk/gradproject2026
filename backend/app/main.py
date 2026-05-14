@@ -977,9 +977,11 @@ async def save_gap(data: dict = Body(...)):
     try:
         session_id = data.get("session_id")
         control_id = data.get("control_id")
-        gap_desc = data.get("gap_description")
-        recommendation = data.get("recommendation")
-        priority = data.get("priority", "Medium")
+        # تحويل control_id من نص إلى integer إذا لزم
+        if control_id and not str(control_id).isdigit():
+            cur.execute("SELECT id FROM ecc_controls WHERE control_id = %s", (control_id,))
+            row = cur.fetchone()
+            control_id = row["id"] if row else None
 
         cur.execute(
             """
