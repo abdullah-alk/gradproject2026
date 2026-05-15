@@ -223,10 +223,10 @@ async function answerAudit(ans, btn) {
     appendMsg('user', labels[ans]);
     
     const currentQ = currentQuestions[currentQuestionIndex];
-    auditAnswers.push({ question: currentQ.q, answer: ans, evidence: currentQ.ev });
+    auditAnswers.push({ question: currentQ.q, answer: ans, evidence: currentQ.ev, category: currentQ.cat });
     
     if (currentSessionId) {
-        try { await saveAuditAnswer(currentSessionId, currentQ.q, ans); } catch (e) {}
+        try { await saveAuditAnswer(currentSessionId, currentQ.q, ans, currentQ.ev || ''); } catch (e) {}
     }
     
     currentQuestionIndex++; 
@@ -271,14 +271,15 @@ async function finishAudit() {
             <p style="font-size:12px; color:var(--text-muted); margin-top:5px">Results saved. You can now assess another sub-control.</p>
         </div>
     `);
+    const evidenceSave = saveAuditToEvidence(
+        currentControlId,
+        selectedControlInfo?.title || currentControlId,
+        status, score, auditAnswers,
+        currentSessionId, currentControlDbId
+    );
     try {
         await saveProgress(currentControlId, status, score, yes, partial, no, total);
-        await saveAuditToEvidence(
-            currentControlId, 
-            selectedControlInfo?.title || currentControlId, 
-            status, score, auditAnswers, 
-            currentSessionId, currentControlDbId
-        );
+        await evidenceSave;
     } catch (e) {
         console.error("Error saving final audit results:", e);
     }
@@ -304,33 +305,60 @@ async function finishAudit() {
         if (selectedControlInfo) showSubControlOptions(selectedControlInfo);
     }, 3000);
 }
+function saveAuditRecordLocally(auditRecord, controlTitle) {
+    const sessions = JSON.parse(localStorage.getItem('audit_sessions_log') || '[]');
+    const localRecord = {
+        ...auditRecord,
+        control_title: controlTitle
+    };
+    const recordKey = localRecord.session_id
+        ? `session:${localRecord.session_id}`
+        : `${localRecord.control_id}:${localRecord.created_at}:${localRecord.title}`;
+    const filtered = sessions.filter(item => {
+        const itemKey = item.session_id
+            ? `session:${item.session_id}`
+            : `${item.control_id}:${item.created_at}:${item.title}`;
+        return itemKey !== recordKey;
+    });
+    filtered.unshift(localRecord);
+    localStorage.setItem('audit_sessions_log', JSON.stringify(filtered));
+}
+
 async function saveAuditToEvidence(controlId, controlTitle, status, score, answers, sessionId, controlDbId) {
+    const auditedControlId = answers[0]?.category || answers[0]?.cat || controlId;
+    const transcript = answers.map((a, i) => {
+        const icon = a.answer === 'yes' ? '✅' : a.answer === 'partial' ? '⚠️' : '❌';
+        return `Q${i + 1}: ${a.question}\nAnswer: ${icon} ${a.answer.toUpperCase()}${a.evidence ? '\nEvidence required: ' + a.evidence : ''}`;
+    }).join('\n\n');
+
+    const summary = `AUDIT REPORT — Control ${auditedControlId}\nStatus: ${status}\nScore: ${score}%\n\n${transcript}`;
+    const auditRecord = {
+        control_id: auditedControlId,
+        session_id: sessionId,
+        title: `Audit Report — ${auditedControlId}: ${controlTitle}`,
+        description: summary,
+        status: status,
+        score: score,
+        answers: answers,
+        evidence_type: 'audit_session',
+        created_at: new Date().toISOString()
+    };
+
+    // Save immediately in-browser so the Evidence page shows the audit even if the API is slow or unavailable.
+    saveAuditRecordLocally(auditRecord, controlTitle);
+
     try {
-        const transcript = answers.map((a, i) => {
-            const icon = a.answer === 'yes' ? '✅' : a.answer === 'partial' ? '⚠️' : '❌';
-            return `Q${i + 1}: ${a.question}\nAnswer: ${icon} ${a.answer.toUpperCase()}${a.evidence ? '\nEvidence required: ' + a.evidence : ''}`;
-        }).join('\n\n');
-        
-        const summary = `AUDIT REPORT — Control ${controlId}\nStatus: ${status}\nScore: ${score}%\n\n${transcript}`;
-        
+        const apiRecord = {
+            ...auditRecord,
+            control_id: controlDbId
+        };
+
         await apiRequest('/evidence/save-audit', {
             method: 'POST',
-            body: JSON.stringify({
-                control_id: controlDbId,
-                session_id: sessionId,
-                title: `Audit Report — ${controlId}: ${controlTitle}`,
-                description: summary,
-                status: status,
-                score: score,
-                answers: answers,
-                evidence_type: 'audit_session'
-            })
+            body: JSON.stringify(apiRecord)
         });
     } catch (e) {
-        console.warn('[Offline Mode] Saving session locally.');
-        const sessions = JSON.parse(localStorage.getItem('audit_sessions_log') || '[]');
-        sessions.unshift({ control_id: controlId, status, score, created_at: new Date().toISOString() });
-        localStorage.setItem('audit_sessions_log', JSON.stringify(sessions.slice(0, 50)));
+        console.warn('[Offline Mode] Audit session is available from local evidence storage.', e);
     }
 }
 
@@ -425,6 +453,17 @@ async function handleUserMessage() {
 
 // دالة مضافة لـ Guide Mode
 async function finishGuide() {
+    const total = auditAnswers.length,
+          yes = auditAnswers.filter(a => a.answer === 'yes').length,
+          partial = auditAnswers.filter(a => a.answer === 'partial').length;
+    const score = total > 0 ? Math.round(((yes + partial * 0.5) / total) * 100) : 0;
+    const status = score >= 80 ? 'Compliant' : score >= 40 ? 'Partial' : 'Non-Compliant';
+    const evidenceSave = saveAuditToEvidence(
+        currentControlId,
+        selectedControlInfo?.title || currentControlId,
+        status, score, auditAnswers,
+        currentSessionId, currentControlDbId
+    );
     appendMsg('ai', `<em style="color:var(--text-muted);font-size:12px">Generating final recommendations...</em>`);
     showTyping();
     const answersText = auditAnswers.map((a,i) => `Q${i+1}: "${a.question}" => ${a.answer.toUpperCase()}`).join('\n');
@@ -463,6 +502,7 @@ async function finishGuide() {
                     priority: 'High'
         });
             } catch(e) { console.error('[❌] Gap save error:', e); }
+            try { await evidenceSave; } catch(e) { console.error('[❌] Evidence save error:', e); }
         } else {
             appendMsg('ai', 'Could not generate recommendations.');
         }

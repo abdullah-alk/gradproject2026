@@ -88,11 +88,6 @@ function injectPopupHTML() {
           border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;
           transition:all 0.2s;
         "><i class="fas fa-redo" style="margin-right:6px;"></i>Re-Audit This Control</a>
-        <button onclick="window.print()" style="
-          background:rgba(139,92,246,0.1);border:1px solid #8b5cf6;
-          color:#8b5cf6;padding:10px 20px;border-radius:8px;cursor:pointer;
-          font-size:13px;font-weight:600;
-        "><i class="fas fa-print" style="margin-right:6px;"></i>Print</button>
       </div>
     </div>
   `;
@@ -157,7 +152,7 @@ function openAuditPopup(item) {
   `);
 
   // Render answers if available
-  const answers = item.answers || parseAnswersFromDescription(item.description);
+  const answers = (item.answers && item.answers.length > 0) ? item.answers : parseAnswersFromDescription(item.description);
 
   if (answers && answers.length > 0) {
     const total = answers.length;
@@ -294,7 +289,7 @@ async function loadEvidenceList() {
     showLoader();
     let data = [];
     try { data = await getEvidenceList(); } catch (e) { console.error('API error:', e); }
-    if (!data || data.length === 0) data = buildFromLocalStorage();
+    data = mergeEvidenceLists(data || [], buildFromLocalStorage());
     currentEvidenceList = data;
     renderEvidenceTable(currentEvidenceList);
     hideLoader();
@@ -305,27 +300,51 @@ async function loadEvidenceList() {
   }
 }
 
+
+function getEvidenceKey(item) {
+  return item.session_id
+    ? `session:${item.session_id}`
+    : `${item.control_code || item.control_id}:${item.created_at}:${item.title}`;
+}
+
+function mergeEvidenceLists(apiItems, localItems) {
+  const merged = new Map();
+  localItems.forEach(item => merged.set(getEvidenceKey(item), item));
+  apiItems.forEach(item => {
+    const key = getEvidenceKey(item);
+    const local = merged.get(key) || {};
+    merged.set(key, {
+      ...local,
+      ...item,
+      answers: item.answers && item.answers.length > 0 ? item.answers : local.answers
+    });
+  });
+  return Array.from(merged.values()).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+}
+
 function buildFromLocalStorage() {
-  // First try structured audit sessions log
+  const items = [];
   const sessions = JSON.parse(localStorage.getItem('audit_sessions_log') || '[]');
-  if (sessions.length > 0) {
-    return sessions.map((s, i) => ({
-      id: i + 1,
-      control_code: s.control_id,
-      control_id: s.control_id,
-      domain: getDomainForControl(s.control_id),
-      title: `Audit Report — ${s.control_title || s.control_id}`,
+  sessions.forEach((s, i) => {
+    const controlId = s.control_id || s.control_code;
+    items.push({
+      id: s.id || i + 1,
+      control_code: controlId,
+      control_id: controlId,
+      domain: s.domain || getDomainForControl(controlId),
+      title: s.title || `Audit Report — ${s.control_title || controlId}`,
       status: s.status,
       score: s.score,
-      answers: s.answers,
+      answers: s.answers || [],
+      description: s.description,
       session_id: s.session_id,
       created_at: s.created_at,
       file_path: null,
       evidence_type: 'audit_session'
-    }));
-  }
+    });
+  });
 
-  // Fallback: build from old audit_results format
+  // Fallback: build from old audit_results format too, even when structured sessions exist.
   const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
   const sco = JSON.parse(localStorage.getItem('audit_scores') || '{}');
   const titleMap = {
@@ -334,14 +353,18 @@ function buildFromLocalStorage() {
     '1-6':'Identity & Access Management','1-7':'Data Protection',
     '1-8':'Vulnerability Management','1-9':'Incident Defense','1-10':'Physical Security'
   };
-  return Object.entries(res).map(([id, status], i) => ({
-    id: i + 1, control_code: id, control_id: id,
-    domain: getDomainForControl(id),
-    title: `Audit Report — ${titleMap[id] || id}`,
-    status, score: sco[id] ?? null,
-    created_at: new Date().toISOString(),
-    file_path: null, evidence_type: 'audit_session'
-  }));
+  Object.entries(res).forEach(([id, status], i) => {
+    items.push({
+      id: `legacy-${i + 1}`, control_code: id, control_id: id,
+      domain: getDomainForControl(id),
+      title: `Audit Report — ${titleMap[id] || id}`,
+      status, score: sco[id] ?? null,
+      created_at: new Date().toISOString(),
+      file_path: null, evidence_type: 'audit_session'
+    });
+  });
+
+  return mergeEvidenceLists([], items);
 }
 
 function getDomainForControl(id) {
@@ -350,7 +373,8 @@ function getDomainForControl(id) {
     '1-5':'Network','1-6':'Identity','1-7':'Data','1-8':'Vulnerability',
     '1-9':'Incident','1-10':'Physical'
   };
-  return map[id] || 'General';
+  const mainId = (id || '').split('-').slice(0, 2).join('-');
+  return map[id] || map[mainId] || 'General';
 }
 
 // ===================================
@@ -365,7 +389,7 @@ function renderEvidenceTable(list) {
   }
   list.forEach(item => {
     const color = item.status === 'Compliant' ? 'success' : item.status === 'Partial' ? 'warning' : 'danger';
-    const isAuditSession = item.evidence_type === 'audit_session' || item.answers;
+    const isAuditSession = item.evidence_type === 'audit_session' || item.session_id || (item.answers && item.answers.length) || (item.title || '').toLowerCase().includes('audit report');
     const tr = document.createElement('tr');
     tr.style.cssText = 'border-bottom:1px solid #334155;cursor:pointer;transition:background 0.15s;';
     tr.onmouseover = () => tr.style.background = '#1e293b';
