@@ -72,8 +72,8 @@ async function getAIRecommendations(controlId, userAnswers) {
 async function startAuditSessionAPI(userId, controlId, mode) {
     return await apiRequest('/audit/session/start', { method: 'POST', body: JSON.stringify({ user_id: userId, control_id: controlId, mode }) });
 }
-async function saveAuditAnswer(sessionId, question, answer) {
-    return await apiRequest('/audit/session/answer', { method: 'POST', body: JSON.stringify({ session_id: sessionId, question, answer, ai_generated: true }) });
+async function saveAuditAnswer(sessionId, question, answer, notes = '') {
+    return await apiRequest('/audit/session/answer', { method: 'POST', body: JSON.stringify({ session_id: sessionId, question, answer, notes, ai_generated: true }) });
 }
 async function completeAuditSession(sessionId, status, score) {
     return await apiRequest('/audit/session/complete', { method: 'POST', body: JSON.stringify({ session_id: sessionId, status, score }) });

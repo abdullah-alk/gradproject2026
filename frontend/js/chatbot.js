@@ -226,7 +226,7 @@ async function answerAudit(ans, btn) {
     auditAnswers.push({ question: currentQ.q, answer: ans, evidence: currentQ.ev });
     
     if (currentSessionId) {
-        try { await saveAuditAnswer(currentSessionId, currentQ.q, ans); } catch (e) {}
+        try { await saveAuditAnswer(currentSessionId, currentQ.q, ans, currentQ.ev || ''); } catch (e) {}
     }
     
     currentQuestionIndex++; 
@@ -305,32 +305,42 @@ async function finishAudit() {
     }, 3000);
 }
 async function saveAuditToEvidence(controlId, controlTitle, status, score, answers, sessionId, controlDbId) {
+    const transcript = answers.map((a, i) => {
+        const icon = a.answer === 'yes' ? '✅' : a.answer === 'partial' ? '⚠️' : '❌';
+        return `Q${i + 1}: ${a.question}\nAnswer: ${icon} ${a.answer.toUpperCase()}${a.evidence ? '\nEvidence required: ' + a.evidence : ''}`;
+    }).join('\n\n');
+
+    const summary = `AUDIT REPORT — Control ${controlId}\nStatus: ${status}\nScore: ${score}%\n\n${transcript}`;
+    const auditRecord = {
+        control_id: controlId,
+        session_id: sessionId,
+        title: `Audit Report — ${controlId}: ${controlTitle}`,
+        description: summary,
+        status: status,
+        score: score,
+        answers: answers,
+        evidence_type: 'audit_session',
+        created_at: new Date().toISOString()
+    };
+
     try {
-        const transcript = answers.map((a, i) => {
-            const icon = a.answer === 'yes' ? '✅' : a.answer === 'partial' ? '⚠️' : '❌';
-            return `Q${i + 1}: ${a.question}\nAnswer: ${icon} ${a.answer.toUpperCase()}${a.evidence ? '\nEvidence required: ' + a.evidence : ''}`;
-        }).join('\n\n');
-        
-        const summary = `AUDIT REPORT — Control ${controlId}\nStatus: ${status}\nScore: ${score}%\n\n${transcript}`;
-        
+        const apiRecord = {
+            ...auditRecord,
+            control_id: controlDbId
+        };
+
         await apiRequest('/evidence/save-audit', {
             method: 'POST',
-            body: JSON.stringify({
-                control_id: controlDbId,
-                session_id: sessionId,
-                title: `Audit Report — ${controlId}: ${controlTitle}`,
-                description: summary,
-                status: status,
-                score: score,
-                answers: answers,
-                evidence_type: 'audit_session'
-            })
+            body: JSON.stringify(apiRecord)
         });
     } catch (e) {
-        console.warn('[Offline Mode] Saving session locally.');
+        console.warn('[Offline Mode] Saving complete audit session locally.');
         const sessions = JSON.parse(localStorage.getItem('audit_sessions_log') || '[]');
-        sessions.unshift({ control_id: controlId, status, score, created_at: new Date().toISOString() });
-        localStorage.setItem('audit_sessions_log', JSON.stringify(sessions.slice(0, 50)));
+        sessions.unshift({
+            ...auditRecord,
+            control_title: controlTitle
+        });
+        localStorage.setItem('audit_sessions_log', JSON.stringify(sessions));
     }
 }
 

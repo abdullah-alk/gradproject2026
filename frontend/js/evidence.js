@@ -88,11 +88,6 @@ function injectPopupHTML() {
           border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;
           transition:all 0.2s;
         "><i class="fas fa-redo" style="margin-right:6px;"></i>Re-Audit This Control</a>
-        <button onclick="window.print()" style="
-          background:rgba(139,92,246,0.1);border:1px solid #8b5cf6;
-          color:#8b5cf6;padding:10px 20px;border-radius:8px;cursor:pointer;
-          font-size:13px;font-weight:600;
-        "><i class="fas fa-print" style="margin-right:6px;"></i>Print</button>
       </div>
     </div>
   `;
@@ -157,7 +152,7 @@ function openAuditPopup(item) {
   `);
 
   // Render answers if available
-  const answers = item.answers || parseAnswersFromDescription(item.description);
+  const answers = (item.answers && item.answers.length > 0) ? item.answers : parseAnswersFromDescription(item.description);
 
   if (answers && answers.length > 0) {
     const total = answers.length;
@@ -294,7 +289,7 @@ async function loadEvidenceList() {
     showLoader();
     let data = [];
     try { data = await getEvidenceList(); } catch (e) { console.error('API error:', e); }
-    if (!data || data.length === 0) data = buildFromLocalStorage();
+    data = mergeEvidenceLists(data || [], buildFromLocalStorage());
     currentEvidenceList = data;
     renderEvidenceTable(currentEvidenceList);
     hideLoader();
@@ -303,6 +298,17 @@ async function loadEvidenceList() {
     renderEvidenceTable(currentEvidenceList);
     hideLoader();
   }
+}
+
+
+function mergeEvidenceLists(apiItems, localItems) {
+  const seen = new Set();
+  return [...apiItems, ...localItems].filter(item => {
+    const key = item.session_id ? `session:${item.session_id}` : `${item.control_code || item.control_id}:${item.created_at}:${item.title}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function buildFromLocalStorage() {
@@ -365,7 +371,7 @@ function renderEvidenceTable(list) {
   }
   list.forEach(item => {
     const color = item.status === 'Compliant' ? 'success' : item.status === 'Partial' ? 'warning' : 'danger';
-    const isAuditSession = item.evidence_type === 'audit_session' || item.answers;
+    const isAuditSession = item.evidence_type === 'audit_session' || item.session_id || (item.answers && item.answers.length) || (item.title || '').toLowerCase().includes('audit report');
     const tr = document.createElement('tr');
     tr.style.cssText = 'border-bottom:1px solid #334155;cursor:pointer;transition:background 0.15s;';
     tr.onmouseover = () => tr.style.background = '#1e293b';
