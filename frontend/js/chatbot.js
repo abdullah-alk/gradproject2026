@@ -271,14 +271,15 @@ async function finishAudit() {
             <p style="font-size:12px; color:var(--text-muted); margin-top:5px">Results saved. You can now assess another sub-control.</p>
         </div>
     `);
+    const evidenceSave = saveAuditToEvidence(
+        currentControlId,
+        selectedControlInfo?.title || currentControlId,
+        status, score, auditAnswers,
+        currentSessionId, currentControlDbId
+    );
     try {
         await saveProgress(currentControlId, status, score, yes, partial, no, total);
-        await saveAuditToEvidence(
-            currentControlId, 
-            selectedControlInfo?.title || currentControlId, 
-            status, score, auditAnswers, 
-            currentSessionId, currentControlDbId
-        );
+        await evidenceSave;
     } catch (e) {
         console.error("Error saving final audit results:", e);
     }
@@ -452,6 +453,17 @@ async function handleUserMessage() {
 
 // دالة مضافة لـ Guide Mode
 async function finishGuide() {
+    const total = auditAnswers.length,
+          yes = auditAnswers.filter(a => a.answer === 'yes').length,
+          partial = auditAnswers.filter(a => a.answer === 'partial').length;
+    const score = total > 0 ? Math.round(((yes + partial * 0.5) / total) * 100) : 0;
+    const status = score >= 80 ? 'Compliant' : score >= 40 ? 'Partial' : 'Non-Compliant';
+    const evidenceSave = saveAuditToEvidence(
+        currentControlId,
+        selectedControlInfo?.title || currentControlId,
+        status, score, auditAnswers,
+        currentSessionId, currentControlDbId
+    );
     appendMsg('ai', `<em style="color:var(--text-muted);font-size:12px">Generating final recommendations...</em>`);
     showTyping();
     const answersText = auditAnswers.map((a,i) => `Q${i+1}: "${a.question}" => ${a.answer.toUpperCase()}`).join('\n');
@@ -490,6 +502,7 @@ async function finishGuide() {
                     priority: 'High'
         });
             } catch(e) { console.error('[❌] Gap save error:', e); }
+            try { await evidenceSave; } catch(e) { console.error('[❌] Evidence save error:', e); }
         } else {
             appendMsg('ai', 'Could not generate recommendations.');
         }
