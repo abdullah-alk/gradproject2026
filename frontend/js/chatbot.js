@@ -223,7 +223,7 @@ async function answerAudit(ans, btn) {
     appendMsg('user', labels[ans]);
     
     const currentQ = currentQuestions[currentQuestionIndex];
-    auditAnswers.push({ question: currentQ.q, answer: ans, evidence: currentQ.ev });
+    auditAnswers.push({ question: currentQ.q, answer: ans, evidence: currentQ.ev, category: currentQ.cat });
     
     if (currentSessionId) {
         try { await saveAuditAnswer(currentSessionId, currentQ.q, ans, currentQ.ev || ''); } catch (e) {}
@@ -304,17 +304,37 @@ async function finishAudit() {
         if (selectedControlInfo) showSubControlOptions(selectedControlInfo);
     }, 3000);
 }
+function saveAuditRecordLocally(auditRecord, controlTitle) {
+    const sessions = JSON.parse(localStorage.getItem('audit_sessions_log') || '[]');
+    const localRecord = {
+        ...auditRecord,
+        control_title: controlTitle
+    };
+    const recordKey = localRecord.session_id
+        ? `session:${localRecord.session_id}`
+        : `${localRecord.control_id}:${localRecord.created_at}:${localRecord.title}`;
+    const filtered = sessions.filter(item => {
+        const itemKey = item.session_id
+            ? `session:${item.session_id}`
+            : `${item.control_id}:${item.created_at}:${item.title}`;
+        return itemKey !== recordKey;
+    });
+    filtered.unshift(localRecord);
+    localStorage.setItem('audit_sessions_log', JSON.stringify(filtered));
+}
+
 async function saveAuditToEvidence(controlId, controlTitle, status, score, answers, sessionId, controlDbId) {
+    const auditedControlId = answers[0]?.category || answers[0]?.cat || controlId;
     const transcript = answers.map((a, i) => {
         const icon = a.answer === 'yes' ? '✅' : a.answer === 'partial' ? '⚠️' : '❌';
         return `Q${i + 1}: ${a.question}\nAnswer: ${icon} ${a.answer.toUpperCase()}${a.evidence ? '\nEvidence required: ' + a.evidence : ''}`;
     }).join('\n\n');
 
-    const summary = `AUDIT REPORT — Control ${controlId}\nStatus: ${status}\nScore: ${score}%\n\n${transcript}`;
+    const summary = `AUDIT REPORT — Control ${auditedControlId}\nStatus: ${status}\nScore: ${score}%\n\n${transcript}`;
     const auditRecord = {
-        control_id: controlId,
+        control_id: auditedControlId,
         session_id: sessionId,
-        title: `Audit Report — ${controlId}: ${controlTitle}`,
+        title: `Audit Report — ${auditedControlId}: ${controlTitle}`,
         description: summary,
         status: status,
         score: score,
@@ -322,6 +342,9 @@ async function saveAuditToEvidence(controlId, controlTitle, status, score, answe
         evidence_type: 'audit_session',
         created_at: new Date().toISOString()
     };
+
+    // Save immediately in-browser so the Evidence page shows the audit even if the API is slow or unavailable.
+    saveAuditRecordLocally(auditRecord, controlTitle);
 
     try {
         const apiRecord = {
@@ -334,13 +357,7 @@ async function saveAuditToEvidence(controlId, controlTitle, status, score, answe
             body: JSON.stringify(apiRecord)
         });
     } catch (e) {
-        console.warn('[Offline Mode] Saving complete audit session locally.');
-        const sessions = JSON.parse(localStorage.getItem('audit_sessions_log') || '[]');
-        sessions.unshift({
-            ...auditRecord,
-            control_title: controlTitle
-        });
-        localStorage.setItem('audit_sessions_log', JSON.stringify(sessions));
+        console.warn('[Offline Mode] Audit session is available from local evidence storage.', e);
     }
 }
 

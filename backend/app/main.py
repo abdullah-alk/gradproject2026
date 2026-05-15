@@ -896,11 +896,21 @@ async def upload_evidence(control_id: str = Form(...), file: UploadFile = File(.
         conn.close()
 
 
+def ensure_evidence_schema(cur):
+    # Keep production databases compatible with the evidence repository features.
+    cur.execute("ALTER TABLE evidence ADD COLUMN IF NOT EXISTS session_id INTEGER")
+    cur.execute("ALTER TABLE evidence ADD COLUMN IF NOT EXISTS evidence_type VARCHAR(100)")
+    cur.execute("ALTER TABLE evidence ADD COLUMN IF NOT EXISTS description TEXT")
+    cur.execute("ALTER TABLE evidence ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()")
+
+
 @app.get("/api/evidence/")
 async def get_evidence(domain: str = None, status: str = None):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
+        ensure_evidence_schema(cur)
+        conn.commit()
         query = """
             SELECT
                 e.id, e.control_id, e.session_id, e.evidence_type, e.title,
@@ -963,6 +973,7 @@ async def _insert_evidence_record(data: dict, evidence_type: str = "audit_sessio
     conn = get_db_connection()
     cur = conn.cursor()
     try:
+        ensure_evidence_schema(cur)
         control_id = data.get("control_id")
         session_id = data.get("session_id")
         title = data.get("title", "Audit Report")
