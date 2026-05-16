@@ -848,13 +848,13 @@ async def get_category_scores(current_user: dict = Depends(get_current_user)):
     cur = conn.cursor()
     try:
         cur.execute("""
-            SELECT ec.control_id as category,
+            SELECT ec.title as category,
                    ROUND(AVG(cs.score), 1) as score
             FROM compliance_scores cs
             JOIN ecc_controls ec ON cs.control_id = ec.id
             WHERE cs.user_id = %s
-            GROUP BY ec.control_id
-            ORDER BY ec.control_id
+            GROUP BY ec.title
+            ORDER BY MIN(ec.control_id)
         """, (user_id,))
         rows = cur.fetchall()
         return [{"category": r["category"], "score": float(r["score"] or 0)} for r in rows]
