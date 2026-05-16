@@ -134,8 +134,15 @@ async function handleScheduleManualAudit() {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
 
-        showToast('success', 'Audit Scheduled', `Successfully scheduled for ${dateStr}`);
+        showToast('success','Audit Scheduled',`Successfully scheduled for ${dateStr}`);
+
+        // Update countdown immediately
+        startCountdown(selectedDate);
+
+        // Reload scheduled audits list
         await loadScheduledAudits();
+
+        // Reset form
         dateInput.value = '';
     } catch (e) {
         console.error('Schedule error:', e);
