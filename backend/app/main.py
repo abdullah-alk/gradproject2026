@@ -1283,24 +1283,25 @@ async def send_audit_reminders():
             
             # تذكير 3 أيام
             if days_left <= 3 and not a['reminder_3_sent']:
-                subject = "⚠️ Audit Reminder — 3 Days Left"
+                subject = "Audit Reminder 3 Days Left"
                 body = build_reminder_email(a['full_name'], date_str, a['scope'], 3)
                 try:
                     send_email(a['email'], subject, body)
                     cur.execute("UPDATE audit_sessions SET reminder_3_sent = true WHERE id = %s", (a['id'],))
                     sent += 1
                 except Exception as e:
-                    print(f"[❌] 3-day reminder error: {e}")
+                    print(f"3-day reminder error: {e}")
 
-             if days_left <= 1 and not a['reminder_1_sent']:
-                 subject = "🚨 Audit Tomorrow — ECC Auditor"
-                 body = build_reminder_email(a['full_name'], date_str, a['scope'], 1)
-                 try:
-                      send_email(a['email'], subject, body)
-                      cur.execute("UPDATE audit_sessions SET reminder_1_sent = true WHERE id = %s", (a['id'],))
-                      sent += 1
-                 except Exception as e:
-                     print(f"[❌] 1-day reminder error: {e}")
+            # تذكير 1 يوم
+            if days_left <= 1 and not a['reminder_1_sent']:
+                subject = "Audit Tomorrow"
+                body = build_reminder_email(a['full_name'], date_str, a['scope'], 1)
+                try:
+                    send_email(a['email'], subject, body)
+                    cur.execute("UPDATE audit_sessions SET reminder_1_sent = true WHERE id = %s", (a['id'],))
+                    sent += 1
+                except Exception as e:
+                    print(f"1-day reminder error: {e}")
         
         conn.commit()
         print(f"[📧] Sent {sent} audit reminders")
