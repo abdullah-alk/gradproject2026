@@ -20,13 +20,6 @@ import asyncio
 
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    asyncio.create_task(daily_reminder_task())
-    yield
-
-app = FastAPI(title="CyberGuard GRC - Production Ready", lifespan=lifespan)
-
 async def daily_reminder_task():
     while True:
         await asyncio.sleep(86400)
@@ -57,12 +50,18 @@ async def daily_reminder_task():
                 if days_left <= 1 and not a['reminder_1_sent']:
                     send_email(a['email'], "🚨 Audit Tomorrow — ECC Auditor", build_reminder_email(a['full_name'], date_str, a['scope'], 1))
                     cur.execute("UPDATE audit_sessions SET reminder_1_sent = true WHERE id = %s", (a['id'],))
-            
             conn.commit()
             cur.close()
             conn.close()
         except Exception as e:
             print(f"[❌] Daily reminder error: {e}")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    asyncio.create_task(daily_reminder_task())
+    yield
+
+app = FastAPI(title="CyberGuard GRC - Production Ready", lifespan=lifespan)
 
 # --- 1. CORS ---
 app.add_middleware(
