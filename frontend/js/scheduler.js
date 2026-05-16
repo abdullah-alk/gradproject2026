@@ -191,10 +191,30 @@ async function loadScheduledAudits() {
         const list = document.getElementById('scheduled-audits-list');
         const count = document.getElementById('audits-count');
         if (!audits || audits.length === 0) {
-            list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);"><i class="fas fa-calendar" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.4;"></i><p>No audits scheduled yet</p></div>`;
-            if (count) count.textContent = '0 Scheduled';
-            return;
+
+        list.innerHTML = `
+            <div style="text-align:center;padding:32px;color:var(--text-muted);">
+                <i class="fas fa-calendar"
+                   style="font-size:32px;margin-bottom:12px;display:block;opacity:0.4;"></i>
+
+                <p>No audits scheduled yet</p>
+            </div>
+        `;
+
+        if (count) {
+            count.textContent = '0 Scheduled';
         }
+
+         // Stop countdown timer
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+        }
+
+        // Reset countdown display
+        updateDisplay(0, 0, 0);
+
+        return;
+    }
         if (count) count.textContent = `${audits.length} Scheduled`;
         list.innerHTML = audits.map(a => `
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg-secondary);border-radius:10px;margin-bottom:10px;border:1px solid var(--border-color);">
