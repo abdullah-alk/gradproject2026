@@ -42,19 +42,19 @@ async def daily_reminder_task():
                 days_left = int(a['days_left'])
                 date_str = a['scheduled_next_audit'].strftime('%B %d, %Y')
                 if days_left <= 7 and not a['reminder_7_sent']:
-                    send_email(a['email'], "📅 Audit Reminder — 7 Days Left", build_reminder_email(a['full_name'], date_str, a['scope'], 7))
+                    send_email(a['email'], "Audit Reminder 7 Days Left", build_reminder_email(a['full_name'], date_str, a['scope'], 7))
                     cur.execute("UPDATE audit_sessions SET reminder_7_sent = true WHERE id = %s", (a['id'],))
                 if days_left <= 3 and not a['reminder_3_sent']:
-                    send_email(a['email'], "⚠️ Audit Reminder — 3 Days Left", build_reminder_email(a['full_name'], date_str, a['scope'], 3))
+                    send_email(a['email'], "Audit Reminder 3 Days Left", build_reminder_email(a['full_name'], date_str, a['scope'], 3))
                     cur.execute("UPDATE audit_sessions SET reminder_3_sent = true WHERE id = %s", (a['id'],))
                 if days_left <= 1 and not a['reminder_1_sent']:
-                    send_email(a['email'], "🚨 Audit Tomorrow — ECC Auditor", build_reminder_email(a['full_name'], date_str, a['scope'], 1))
+                    send_email(a['email'], "Audit Tomorrow", build_reminder_email(a['full_name'], date_str, a['scope'], 1))
                     cur.execute("UPDATE audit_sessions SET reminder_1_sent = true WHERE id = %s", (a['id'],))
             conn.commit()
             cur.close()
             conn.close()
         except Exception as e:
-            print(f"[❌] Daily reminder error: {e}")
+            print(f"Daily reminder error: {e}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
