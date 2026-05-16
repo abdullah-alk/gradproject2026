@@ -95,7 +95,20 @@ async function saveAuditRecommendation(data) {
 
 // Scheduler
 async function getSchedulingRecommendations() { try { return await apiRequest('/scheduler/recommendations'); } catch { return []; } }
-async function scheduleAudit(data) { try { return await apiRequest('/scheduler/schedule', { method: 'POST', body: JSON.stringify(data) }); } catch { return null; } }
+async function scheduleAudit(data) { try { return await apiRequest('/scheduler/schedule', { method: 'POST', body: JSON.stringify({
+
+    audit_date: data.audit_date,
+
+    scope: data.scope,
+
+    assigned_auditor: data.assigned_auditor,
+
+    repeat_enabled: data.repeat_enabled,
+
+    repeat_frequency: data.repeat_frequency,
+
+    repeat_until: data.repeat_until
+}) }); } catch { return null; } }
 async function getScheduledAudits() { try { return await apiRequest('/audit/sessions/scheduled'); } catch { return []; } }
 async function toggleAutoScheduling(enabled) { try { return await apiRequest('/scheduler/auto', { method: 'POST', body: JSON.stringify({ enabled }) }); } catch { return null; } }
 async function deleteScheduledAudit(sessionId) {
