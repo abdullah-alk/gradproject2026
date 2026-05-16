@@ -1290,6 +1290,7 @@ async def get_scheduled_audits(current_user: dict = Depends(get_current_user)):
                 s.id, s.mode, s.status,
                 s.scheduled_next_audit, s.created_at,
                 s.scope, s.assigned_auditor,
+                s.repeat_enabled,s.repeat_frequency,
                 ec.title as control_title, ec.domain
             FROM audit_sessions s
             LEFT JOIN ecc_controls ec ON s.control_id = ec.id
@@ -1337,6 +1338,9 @@ async def get_scheduled_audits(current_user: dict = Depends(get_current_user)):
                     "auditor": auditor_names.get(auditor_raw, auditor_raw),
                     "mode": mode,
                     "domain": r["domain"] or "",
+                    
+                    "repeat_enabled": r["repeat_enabled"],
+                    "repeat_frequency": r["repeat_frequency"],
                 }
             )
         print(f"[📅] Upcoming scheduled audits: {len(result)}")
