@@ -1295,7 +1295,7 @@ async def get_scheduled_audits(current_user: dict = Depends(get_current_user)):
             FROM audit_sessions s
             LEFT JOIN ecc_controls ec ON s.control_id = ec.id
             WHERE s.status = 'scheduled'
-            AND s.scheduled_next_audit > NOW()
+            AND DATE(s.scheduled_next_audit) >= CURRENT_DATE
             AND s.user_id = %s
             ORDER BY s.scheduled_next_audit ASC
             LIMIT 20
