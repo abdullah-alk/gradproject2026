@@ -15,8 +15,54 @@ import random
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.config import settings
+from contextlib import asynccontextmanager
+import asyncio
 
-app = FastAPI(title="CyberGuard GRC - Production Ready")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    asyncio.create_task(daily_reminder_task())
+    yield
+
+app = FastAPI(title="CyberGuard GRC - Production Ready", lifespan=lifespan)
+
+async def daily_reminder_task():
+    while True:
+        await asyncio.sleep(86400)
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT s.id, s.scheduled_next_audit, s.scope,
+                       u.email, u.full_name,
+                       s.reminder_7_sent, s.reminder_3_sent, s.reminder_1_sent,
+                       EXTRACT(DAY FROM s.scheduled_next_audit - NOW()) as days_left
+                FROM audit_sessions s
+                JOIN users u ON s.user_id = u.id
+                WHERE s.status = 'scheduled'
+                AND s.scheduled_next_audit > NOW()
+                AND s.scheduled_next_audit <= NOW() + INTERVAL '7 days'
+            """)
+            audits = cur.fetchall()
+            for a in audits:
+                days_left = int(a['days_left'])
+                date_str = a['scheduled_next_audit'].strftime('%B %d, %Y')
+                if days_left <= 7 and not a['reminder_7_sent']:
+                    send_email(a['email'], "📅 Audit Reminder — 7 Days Left", build_reminder_email(a['full_name'], date_str, a['scope'], 7))
+                    cur.execute("UPDATE audit_sessions SET reminder_7_sent = true WHERE id = %s", (a['id'],))
+                if days_left <= 3 and not a['reminder_3_sent']:
+                    send_email(a['email'], "⚠️ Audit Reminder — 3 Days Left", build_reminder_email(a['full_name'], date_str, a['scope'], 3))
+                    cur.execute("UPDATE audit_sessions SET reminder_3_sent = true WHERE id = %s", (a['id'],))
+               if days_left <= 1 and not a['reminder_1_sent']:
+                    send_email(a['email'], "🚨 Audit Tomorrow — ECC Auditor", build_reminder_email(a['full_name'], date_str, a['scope'], 1))
+                    cur.execute("UPDATE audit_sessions SET reminder_1_sent = true WHERE id = %s", (a['id'],))
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as e:
+            print(f"[❌] Daily reminder error: {e}")
 
 # --- 1. CORS ---
 app.add_middleware(
@@ -1201,6 +1247,107 @@ async def schedule_audit_endpoint(data: dict = Body(...), current_user: dict = D
     finally:
         cur.close()
         conn.close() 
+
+
+@app.post("/api/scheduler/send-reminders")
+async def send_audit_reminders():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT s.id, s.scheduled_next_audit, s.scope,
+                   u.email, u.full_name,
+                   s.reminder_7_sent, s.reminder_3_sent, s.reminder_1_sent,
+                   EXTRACT(DAY FROM s.scheduled_next_audit - NOW()) as days_left
+            FROM audit_sessions s
+            JOIN users u ON s.user_id = u.id
+            WHERE s.status = 'scheduled'
+            AND s.scheduled_next_audit > NOW()
+            AND s.scheduled_next_audit <= NOW() + INTERVAL '7 days'
+        """)
+        audits = cur.fetchall()
+        sent = 0
+        for a in audits:
+            days_left = int(a['days_left'])
+            date_str = a['scheduled_next_audit'].strftime('%B %d, %Y')
+            
+            # تذكير 7 أيام
+            if days_left <= 7 and not a['reminder_7_sent']:
+                subject = "📅 Audit Reminder — 7 Days Left"
+                body = build_reminder_email(a['full_name'], date_str, a['scope'], 7)
+                try:
+                    send_email(a['email'], subject, body)
+                    cur.execute("UPDATE audit_sessions SET reminder_7_sent = true WHERE id = %s", (a['id'],))
+                    sent += 1
+                except Exception as e:
+                    print(f"[❌] 7-day reminder error: {e}")
+            
+            # تذكير 3 أيام
+            if days_left <= 3 and not a['reminder_3_sent']:
+                subject = "⚠️ Audit Reminder — 3 Days Left"
+                body = build_reminder_email(a['full_name'], date_str, a['scope'], 3)
+                try:
+                    send_email(a['email'], subject, body)
+                    cur.execute("UPDATE audit_sessions SET reminder_3_sent = true WHERE id = %s", (a['id'],))
+                    sent += 1
+                except Exception as e:
+                    print(f"[❌] 3-day reminder error: {e}")
+
+             if days_left <= 1 and not a['reminder_1_sent']:
+                 subject = "🚨 Audit Tomorrow — ECC Auditor"
+                 body = build_reminder_email(a['full_name'], date_str, a['scope'], 1)
+                 try:
+                      send_email(a['email'], subject, body)
+                      cur.execute("UPDATE audit_sessions SET reminder_1_sent = true WHERE id = %s", (a['id'],))
+                      sent += 1
+                 except Exception as e:
+                     print(f"[❌] 1-day reminder error: {e}")
+        
+        conn.commit()
+        print(f"[📧] Sent {sent} audit reminders")
+        return {"message": f"Sent {sent} reminders"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+def build_reminder_email(name, date_str, scope, days):
+    color = '#f59e0b' if days == 7 else '#ef4444'
+    icon = '📅' if days == 7 else '⚠️' if days == 3 else '🚨'
+    days_text = f"{days} days" if days > 1 else "Tomorrow!"
+    return f"""
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#0f172a;color:#f1f5f9;padding:32px;border-radius:12px">
+        <div style="text-align:center;margin-bottom:24px">
+            <div style="font-size:32px">🛡️</div>
+            <h2 style="color:#06b6d4;margin:8px 0">ECC Auditor</h2>
+        </div>
+        <p style="color:#94a3b8;margin-bottom:20px">Dear <strong>{name}</strong>,</p>
+        <div style="background:#1e293b;border:1px solid {color}40;border-radius:8px;padding:20px;margin-bottom:20px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">{icon}</div>
+            <p style="color:{color};font-weight:700;font-size:18px;margin:0">
+                Your audit is in <strong>{days} days</strong>
+            </p>
+            <p style="font-size:24px;font-weight:800;color:#06b6d4;margin:10px 0">{date_str}</p>
+            <p style="color:#94a3b8;margin:0;font-size:13px">Scope: {scope or 'Full Audit'}</p>
+        </div>
+        <p style="color:#94a3b8;font-size:13px;margin-bottom:20px">
+            Please prepare your documentation and evidence before the audit date.
+        </p>
+        <a href="https://proactive-playfulness-production.up.railway.app/scheduler.html" 
+           style="display:block;text-align:center;background:#06b6d4;color:white;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;margin-bottom:12px">
+            View Scheduler
+        </a>
+        <a href="https://proactive-playfulness-production.up.railway.app/chatbot.html" 
+           style="display:block;text-align:center;background:transparent;border:1px solid #06b6d4;color:#06b6d4;padding:14px;border-radius:8px;text-decoration:none;font-weight:700">
+            Start Audit Now
+        </a>
+        <p style="color:#475569;font-size:11px;margin-top:20px;text-align:center">
+            ECC Auditor — CyberGuard GRC Platform
+        </p>
+    </div>
+    """
 
 @app.delete("/api/scheduler/schedule/{session_id}")
 async def delete_scheduled_audit(session_id: int, current_user: dict = Depends(get_current_user)):
