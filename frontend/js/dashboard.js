@@ -151,7 +151,8 @@ function renderGapsAndRecs(gaps) {
         if (rEl) rEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center"><i class="fas fa-check-circle" style="color:#10b981;margin-right:8px"></i>Use Guide Mode to generate recommendations</div>';
         return;
     }
-    if (gEl) gEl.innerHTML = gaps.map(g => `
+    const auditGaps = gaps.filter(g => g.mode !== 'guide');
+    if (gEl) gEl.innerHTML = auditGaps.length ? auditGaps.map(g => `
         <div style="border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:14px;margin-bottom:10px;background:rgba(239,68,68,.05)">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
                 <span style="font-size:13px;font-weight:600;color:#ef4444">${g.control_id} — ${g.control_title}</span>
@@ -159,7 +160,7 @@ function renderGapsAndRecs(gaps) {
             </div>
             <div style="font-size:12px;color:var(--text-secondary)">${g.gap_description ? g.gap_description.substring(0,150)+'...' : 'Gap identified in last audit'}</div>
         </div>
-    `).join('');
+    `).join('') : '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center"><i class="fas fa-check-circle" style="color:#10b981;margin-right:8px"></i>No critical gaps found</div>';
     const guideGaps = gaps.filter(g => g.mode === 'guide');
     if (rEl) rEl.innerHTML = guideGaps.length ? guideGaps.map(g => `
         <div style="border:1px solid rgba(139,92,246,.2);border-radius:8px;padding:14px;margin-bottom:10px;background:rgba(139,92,246,.05)">
@@ -171,4 +172,5 @@ function renderGapsAndRecs(gaps) {
             <a href="chatbot.html?control=${g.control_id}" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:var(--accent-primary);text-decoration:none"><i class="fas fa-arrow-right"></i> Start Audit</a>
         </div>
     `).join('') : '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center"><i class="fas fa-check-circle" style="color:#10b981;margin-right:8px"></i>Use Guide Mode to generate recommendations</div>';
+    
 }
