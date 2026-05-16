@@ -1128,6 +1128,9 @@ async def schedule_audit_endpoint(data: dict = Body(...), current_user: dict = D
         audit_date = data.get("audit_date")
         scope = data.get("scope", "full")
         auditor = data.get("assigned_auditor", "security-team")
+        repeat_enabled = data.get("repeat_enabled", False)
+        repeat_frequency = data.get("repeat_frequency")
+        repeat_until = data.get("repeat_until")
 
         try:
             scheduled_date = datetime.fromisoformat(audit_date)
@@ -1140,14 +1143,45 @@ async def schedule_audit_endpoint(data: dict = Body(...), current_user: dict = D
         user_id = current_user["id"]
 
         cur.execute(
-            """
-            INSERT INTO audit_sessions
-            (user_id, mode, status, scheduled_next_audit, scope, assigned_auditor, created_at)
-            VALUES (%s, 'scheduled', 'scheduled', %s, %s, %s, NOW())
-            RETURNING id
-            """,
-            (user_id, scheduled_date, scope, auditor),
-        )
+                        """
+                INSERT INTO audit_sessions
+            (
+                    user_id,
+                     mode,
+                    status,
+                    scheduled_next_audit,
+                    scope,
+                    assigned_auditor,
+                    repeat_enabled,
+                    repeat_frequency,
+                    repeat_until,
+                    created_at
+            )
+                  VALUES
+                (
+                    %s,
+                    'scheduled',
+                    'scheduled',
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        NOW()
+                )
+                RETURNING id
+                """,
+             (
+        user_id,
+        scheduled_date,
+        scope,
+        auditor,
+        repeat_enabled,
+        repeat_frequency,
+        repeat_until
+        ),
+    )
 
         session = cur.fetchone()
         conn.commit()
