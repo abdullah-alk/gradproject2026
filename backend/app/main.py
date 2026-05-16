@@ -1527,12 +1527,13 @@ async def get_dashboard_gaps(current_user: dict = Depends(get_current_user)):
     try:
         cur.execute("""
             SELECT gr.gap_description, gr.recommendation, gr.priority,
-                 ec.control_id, ec.title as control_title,
-                 s.mode
+                   ec.control_id, ec.title as control_title,
+                   s.mode
             FROM gaps_recommendations gr
             JOIN audit_sessions s ON gr.session_id = s.id
             LEFT JOIN ecc_controls ec ON gr.control_id = ec.id
             WHERE s.user_id = %s AND gr.control_id IS NOT NULL
+            AND s.mode = 'guide'
             ORDER BY gr.created_at DESC LIMIT 5
         """, (user_id,))
         return [dict(r) for r in cur.fetchall()]
