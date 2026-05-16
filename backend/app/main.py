@@ -54,7 +54,7 @@ async def daily_reminder_task():
                 if days_left <= 3 and not a['reminder_3_sent']:
                     send_email(a['email'], "⚠️ Audit Reminder — 3 Days Left", build_reminder_email(a['full_name'], date_str, a['scope'], 3))
                     cur.execute("UPDATE audit_sessions SET reminder_3_sent = true WHERE id = %s", (a['id'],))
-               if days_left <= 1 and not a['reminder_1_sent']:
+                if days_left <= 1 and not a['reminder_1_sent']:
                     send_email(a['email'], "🚨 Audit Tomorrow — ECC Auditor", build_reminder_email(a['full_name'], date_str, a['scope'], 1))
                     cur.execute("UPDATE audit_sessions SET reminder_1_sent = true WHERE id = %s", (a['id'],))
             
