@@ -1484,7 +1484,7 @@ async def get_scheduled_audits(current_user: dict = Depends(get_current_user)):
                     "status": "Scheduled",
                     "date": date_str,
                     "scope": scope_names.get(scope_raw, scope_raw),
-                    "priority": priority_raw,
+                    "priority": r["priority_level"] or "medium",
                     "mode": mode,
                     "domain": r["domain"] or "",
                     
