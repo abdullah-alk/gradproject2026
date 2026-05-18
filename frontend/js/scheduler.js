@@ -49,17 +49,36 @@ async function loadSchedulerData() {
 
 if (rawAudits && rawAudits.length > 0) {
 
-    const nearestAudit = rawAudits.reduce((closest, current) => {
+    const validAudits = rawAudits.filter(a =>
+        a.scheduled_next_audit || a.date
+    );
 
-        const currentDate = new Date(current.scheduled_next_audit);
-        const closestDate = new Date(closest.scheduled_next_audit);
+    if (validAudits.length > 0) {
 
-        return currentDate < closestDate ? current : closest;
+        const nearestAudit = validAudits.reduce((closest, current) => {
 
-    });
+            const currentDate = new Date(
+                current.scheduled_next_audit || current.date
+            );
 
-    startCountdown(new Date(nearestAudit.scheduled_next_audit));
-}   
+            const closestDate = new Date(
+                closest.scheduled_next_audit || closest.date
+            );
+
+            return currentDate < closestDate ? current : closest;
+
+        });
+
+        startCountdown(
+            new Date(nearestAudit.scheduled_next_audit || nearestAudit.date)
+        );
+
+    } else {
+
+        updateDisplay(0,0,0);
+
+    }
+}  
       } else if (stats.next_audit_date) {
     startCountdown(new Date(stats.next_audit_date));
       } else {
