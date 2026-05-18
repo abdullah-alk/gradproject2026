@@ -40,10 +40,26 @@ async function loadSchedulerData() {
     const res = await fetch('https://gradproject2026-production-821d.up.railway.app/api/audit/sessions/scheduled', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
        });
-    const rawAudits = await res.json();
-    if (rawAudits && rawAudits.length > 0) {
-        startCountdown(new Date(rawAudits[0].scheduled_next_audit || rawAudits[0].date));
-    }
+   // const rawAudits = await res.json();
+   // if (rawAudits && rawAudits.length > 0) {
+     //   startCountdown(new Date(rawAudits[0].scheduled_next_audit || rawAudits[0].date));
+   // }
+
+     const rawAudits = await res.json();
+
+if (rawAudits && rawAudits.length > 0) {
+
+    const nearestAudit = rawAudits.reduce((closest, current) => {
+
+        const currentDate = new Date(current.scheduled_next_audit);
+        const closestDate = new Date(closest.scheduled_next_audit);
+
+        return currentDate < closestDate ? current : closest;
+
+    });
+
+    startCountdown(new Date(nearestAudit.scheduled_next_audit));
+}   
       } else if (stats.next_audit_date) {
     startCountdown(new Date(stats.next_audit_date));
       } else {
