@@ -1172,7 +1172,7 @@ async def schedule_audit_endpoint(data: dict = Body(...), current_user: dict = D
     try:
         audit_date = data.get("audit_date")
         scope = data.get("scope", "full")
-        auditor = data.get("assigned_auditor", "security-team")
+        priority = data.get("priority_level", "medium")
         repeat_enabled = data.get("repeat_enabled", False)
         repeat_frequency = data.get("repeat_frequency")
         repeat_until = data.get("repeat_until")
@@ -1196,7 +1196,7 @@ async def schedule_audit_endpoint(data: dict = Body(...), current_user: dict = D
                     status,
                     scheduled_next_audit,
                     scope,
-                    assigned_auditor,
+                    priority_level,
                     repeat_enabled,
                     repeat_frequency,
                     repeat_until,
@@ -1221,7 +1221,7 @@ async def schedule_audit_endpoint(data: dict = Body(...), current_user: dict = D
         user_id,
         scheduled_date,
         scope,
-        auditor,
+        priority,
         repeat_enabled,
         repeat_frequency,
         repeat_until
