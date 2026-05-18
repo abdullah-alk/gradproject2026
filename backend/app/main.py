@@ -1335,13 +1335,9 @@ def build_reminder_email(name, date_str, scope, days):
         <p style="color:#94a3b8;font-size:13px;margin-bottom:20px">
             Please prepare your documentation and evidence before the audit date.
         </p>
-        <a href="https://proactive-playfulness-production.up.railway.app/scheduler.html" 
-           style="display:block;text-align:center;background:#06b6d4;color:white;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;margin-bottom:12px">
+        <a href="https://cyberguards.up.railway.app/scheduler.html" 
+           style="display:block;text-align:center;background:#06b6d4;color:white;padding:14px;border-radius:8px;text-decoration:none;font-weight:700">
             View Scheduler
-        </a>
-        <a href="https://proactive-playfulness-production.up.railway.app/chatbot.html" 
-           style="display:block;text-align:center;background:transparent;border:1px solid #06b6d4;color:#06b6d4;padding:14px;border-radius:8px;text-decoration:none;font-weight:700">
-            Start Audit Now
         </a>
         <p style="color:#475569;font-size:11px;margin-top:20px;text-align:center">
             ECC Auditor — CyberGuard GRC Platform
