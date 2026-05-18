@@ -1432,7 +1432,7 @@ async def get_scheduled_audits(current_user: dict = Depends(get_current_user)):
             SELECT
                 s.id, s.mode, s.status,
                 s.scheduled_next_audit, s.created_at,
-                s.scope, s.assigned_auditor,
+                s.scope, s.priority_level,
                 s.repeat_enabled,s.repeat_frequency,
                 ec.title as control_title, ec.domain
             FROM audit_sessions s
@@ -1448,12 +1448,18 @@ async def get_scheduled_audits(current_user: dict = Depends(get_current_user)):
         rows = cur.fetchall()
 
         scope_names = {
-            "full": "Full Audit (All 10 Controls)",
-            "governance": "Governance Domain",
-            "data": "Data Protection Domain",
-            "identity": "Identity & Access Domain",
-            "network": "Network Hardening Domain",
-            "custom": "Custom Scope",
+            "full": "Full ECC Assessment",
+
+            "1-1": "1-1 Cybersecurity Strategy",
+            "1-2": "1-2 Cybersecurity Management",
+            "1-3": "1-3 Policies & Procedures",
+            "1-4": "1-4 Roles & Responsibilities",
+            "1-5": "1-5 Risk Management",
+            "1-6": "1-6 IT Project Management",
+            "1-7": "1-7 Compliance & Regulations",
+            "1-8": "1-8 Review & Audit",
+            "1-9": "1-9 Cybersecurity in HR",
+            "1-10": "1-10 Awareness & Training",
         }
         auditor_names = {
             "security-team": "Security Team",
@@ -1468,7 +1474,7 @@ async def get_scheduled_audits(current_user: dict = Depends(get_current_user)):
             date_str = raw_date.strftime("%b %d, %Y") if raw_date and hasattr(raw_date, "strftime") else str(raw_date or "")[:10]
             mode = r["mode"] or ""
             scope_raw = r["scope"] or "full"
-            auditor_raw = r["assigned_auditor"] or "security-team"
+            priority_raw = r["priority_level"] or "medium"
             title = "AI-Scheduled Audit" if "ai" in mode else "Scheduled Compliance Audit"
 
             result.append(
@@ -1478,7 +1484,7 @@ async def get_scheduled_audits(current_user: dict = Depends(get_current_user)):
                     "status": "Scheduled",
                     "date": date_str,
                     "scope": scope_names.get(scope_raw, scope_raw),
-                    "auditor": auditor_names.get(auditor_raw, auditor_raw),
+                    "priority": priority_raw,
                     "mode": mode,
                     "domain": r["domain"] or "",
                     
