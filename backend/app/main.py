@@ -1512,7 +1512,7 @@ async def get_audit_sessions():
             SELECT
                 s.id, s.mode, s.status, s.score,
                 s.started_at, s.completed_at, s.created_at,
-                s.scope, s.assigned_auditor,
+                s.scope, s.priority_level,
                 ec.control_id as control_code, ec.title as control_title, ec.domain
             FROM audit_sessions s
             LEFT JOIN ecc_controls ec ON s.control_id = ec.id
@@ -1574,7 +1574,7 @@ async def get_audit_sessions():
                     "status": display_status,
                     "score": r["score"],
                     "date": date_str,
-                    "auditor": r["assigned_auditor"] or "Security Team",
+                    "priority": r["priority_level"] or "medium",
                     "domain": r["domain"] or "",
                     "mode": r["mode"] or "",
                 }
