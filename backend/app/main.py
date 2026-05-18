@@ -1440,7 +1440,7 @@ async def get_scheduled_audits(current_user: dict = Depends(get_current_user)):
             WHERE s.status = 'scheduled'
             AND DATE(s.scheduled_next_audit) >= CURRENT_DATE
             AND s.user_id = %s
-            ORDER BY s.scheduled_next_audit ASC
+            ORDER BY s.scheduled_next_audit::timestamp ASC
             LIMIT 20
             """,
             (current_user["id"],)
