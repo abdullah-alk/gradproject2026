@@ -120,7 +120,7 @@ async function handleScheduleManualAudit() {
         await scheduleAudit({
             audit_date: dateInput.value,
             scope: document.getElementById('audit-scope-select')?.value || 'full',
-            
+            priority_level: document.getElementById('priority-level-select')?.value || 'medium'
 
             repeat_enabled: document.getElementById('repeat-toggle')?.checked || false,
             repeat_frequency: document.getElementById('repeat-frequency')?.value || null,
