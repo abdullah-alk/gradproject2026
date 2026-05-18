@@ -242,22 +242,32 @@ async function loadScheduledAudits() {
                                 font-weight:600;
                                 background:${
                                     a.priority === 'critical'
-                                        ? 'rgba(127,29,29,0.18)'
+                                        ? 'rgba(220,38,38,0.22)'
                                         : a.priority === 'high'
-                                        ? 'rgba(239,68,68,0.15)'
+                                        ? 'rgba(249,115,22,0.22)'
                                         : a.priority === 'medium'
-                                        ? 'rgba(245,158,11,0.15)'
-                                        : 'rgba(16,185,129,0.15)'
+                                        ? 'rgba(234,179,8,0.20)'
+                                        : 'rgba(34,197,94,0.20)'
                                 };
 
                                 color:${
                                     a.priority === 'critical'
-                                        ? '#dc2626'
+                                        ? '#ff4d4f'
                                         : a.priority === 'high'
-                                        ? '#ef4444'
+                                        ? '#fb923c'
                                         : a.priority === 'medium'
-                                        ? '#f59e0b'
-                                        : '#10b981'
+                                        ? '#facc15'
+                                        : '#4ade80'
+                                };
+
+                                border:1px solid ${
+                                    a.priority === 'critical'
+                                        ? 'rgba(255,77,79,0.45)'
+                                        : a.priority === 'high'
+                                        ? 'rgba(251,146,60,0.45)'
+                                        : a.priority === 'medium'
+                                        ? 'rgba(250,204,21,0.45)'
+                                        : 'rgba(74,222,128,0.45)'
                                 };
                             ">
                                 ${a.priority ? a.priority.toUpperCase() : 'MEDIUM'}
