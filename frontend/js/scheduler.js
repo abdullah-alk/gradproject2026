@@ -233,7 +233,30 @@ async function loadScheduledAudits() {
                         <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
                             <i class="fas fa-clock" style="margin-right:4px;"></i>${a.date}
                             &nbsp;·&nbsp;
-                            <i class="fas fa-user" style="margin-right:4px;"></i>${a.auditor}
+                            <i class="fas fa-shield-halved" style="margin-right:4px;"></i>${a.scope}
+                            &nbsp;·&nbsp;
+                            <span style="
+                                padding:3px 10px;
+                                border-radius:20px;
+                                font-size:11px;
+                                font-weight:600;
+                                background:${
+                                    a.priority === 'high'
+                                        ? 'rgba(239,68,68,0.15)'
+                                        : a.priority === 'medium'
+                                        ? 'rgba(245,158,11,0.15)'
+                                        : 'rgba(16,185,129,0.15)'
+                                };
+                                color:${
+                                    a.priority === 'high'
+                                        ? '#ef4444'
+                                        : a.priority === 'medium'
+                                        ? '#f59e0b'
+                                        : '#10b981'
+                                };
+                            ">
+                                ${a.priority ? a.priority.toUpperCase() : 'MEDIUM'}
+                            </span>
                         </div>
                     </div>
                 </div>
