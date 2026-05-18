@@ -241,14 +241,19 @@ async function loadScheduledAudits() {
                                 font-size:11px;
                                 font-weight:600;
                                 background:${
-                                    a.priority === 'high'
+                                    a.priority === 'critical'
+                                        ? 'rgba(127,29,29,0.18)'
+                                        : a.priority === 'high'
                                         ? 'rgba(239,68,68,0.15)'
                                         : a.priority === 'medium'
                                         ? 'rgba(245,158,11,0.15)'
                                         : 'rgba(16,185,129,0.15)'
                                 };
+
                                 color:${
-                                    a.priority === 'high'
+                                    a.priority === 'critical'
+                                        ? '#dc2626'
+                                        : a.priority === 'high'
                                         ? '#ef4444'
                                         : a.priority === 'medium'
                                         ? '#f59e0b'
