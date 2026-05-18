@@ -46,38 +46,22 @@ async function loadSchedulerData() {
    // }
 
      const rawAudits = await res.json();
+      if (rawAudits && rawAudits.length > 0) {
 
-if (rawAudits && rawAudits.length > 0) {
+    const nearestDate = rawAudits[0].scheduled_next_audit;
 
-    const now = new Date();
-
-    const upcomingAudits = rawAudits
-        .map(a => ({
-            ...a,
-            parsedDate: new Date(a.scheduled_next_audit)
-        }))
-        .filter(a =>
-            a.parsedDate instanceof Date &&
-            !isNaN(a.parsedDate) &&
-            a.parsedDate > now
-        )
-        .sort((a, b) => a.parsedDate - b.parsedDate);
-
-    if (upcomingAudits.length > 0) {
-
-        startCountdown(upcomingAudits[0].parsedDate);
-
+    if (nearestDate) {
+        startCountdown(new Date(nearestDate));
     } else {
-
         updateDisplay(0,0,0);
-
     }
 
 } else {
 
     updateDisplay(0,0,0);
 
-}  
+}
+  
       } else if (stats.next_audit_date) {
     startCountdown(new Date(stats.next_audit_date));
       } else {
