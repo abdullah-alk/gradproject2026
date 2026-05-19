@@ -325,6 +325,7 @@ async function handleDeleteAudit(sessionId) {
             await deleteScheduledAudit(sessionId);
             showToast('success', 'Deleted', 'Scheduled audit removed.');
             await loadScheduledAudits();
+            await loadSchedulerData();
         } catch (e) {
             showToast('error', 'Failed', 'Could not delete audit.');
         } finally {
