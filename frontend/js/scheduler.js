@@ -154,10 +154,11 @@ async function handleScheduleManualAudit() {
         showToast('success','Audit Scheduled',`Successfully scheduled for ${dateStr}`);
 
         // Update countdown immediately
-        startCountdown(selectedDate);
+        
 
         // Reload scheduled audits list
         await loadScheduledAudits();
+        await loadSchedulerData();
 
         // Reset form
         dateInput.value = '';
