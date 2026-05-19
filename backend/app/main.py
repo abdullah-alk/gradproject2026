@@ -9,6 +9,7 @@ import uuid
 import json
 import re
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from typing import Optional
 import smtplib
 import random
@@ -105,6 +106,81 @@ def get_db_connection():
         cursor_factory=RealDictCursor,
         connect_timeout=10,
     )
+
+async def process_recurring_audits():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+
+        cur.execute(
+            """
+            SELECT
+                id,
+                scheduled_next_audit,
+                repeat_frequency,
+                repeat_until
+            FROM audit_sessions
+            WHERE repeat_enabled = true
+            AND status = 'scheduled'
+            AND scheduled_next_audit <= NOW()
+            """
+        )
+
+        audits = cur.fetchall()
+
+        for audit in audits:
+
+            current_date = audit["scheduled_next_audit"]
+            frequency = audit["repeat_frequency"]
+            repeat_until = audit["repeat_until"]
+
+            if not current_date or not frequency:
+                continue
+
+            if frequency == 'weekly':
+                next_date = current_date + timedelta(days=7)
+
+            elif frequency == 'monthly':
+                next_date = current_date + relativedelta(months=1)
+
+            elif frequency == 'quarterly':
+                next_date = current_date + relativedelta(months=3)
+
+            else:
+                continue
+
+            if repeat_until and next_date.date() > repeat_until:
+
+                cur.execute(
+                    """
+                    UPDATE audit_sessions
+                    SET status = 'completed'
+                    WHERE id = %s
+                    """,
+                    (audit["id"],)
+                )
+
+            else:
+
+                cur.execute(
+                    """
+                    UPDATE audit_sessions
+                    SET scheduled_next_audit = %s
+                    WHERE id = %s
+                    """,
+                    (next_date, audit["id"])
+                )
+
+        conn.commit()
+
+    except Exception as e:
+        conn.rollback()
+        print(f"[❌] Recurring Audit Error: {e}")
+
+    finally:
+        cur.close()
+        conn.close()
 
 
 # --- 4. Auth helpers ---
@@ -1427,6 +1503,8 @@ async def get_scheduled_audits(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
+        process_recurring_audits()
+        
         cur.execute(
             """
             SELECT
