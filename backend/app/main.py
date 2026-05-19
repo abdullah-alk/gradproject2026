@@ -107,81 +107,51 @@ def get_db_connection():
         connect_timeout=10,
     )
 
-async def process_recurring_audits():
+from datetime import datetime, timedelta
+
+def process_recurring_audits():
     conn = get_db_connection()
     cur = conn.cursor()
 
     try:
-
-        cur.execute(
-            """
-            SELECT
-                id,
-                scheduled_next_audit,
-                repeat_frequency,
-                repeat_until
+        cur.execute("""
+            SELECT id, scheduled_next_audit, repeat_frequency
             FROM audit_sessions
-            WHERE repeat_enabled = true
-            AND status = 'scheduled'
+            WHERE repeat_enabled = TRUE
             AND scheduled_next_audit <= NOW()
-            """
-        )
+        """)
 
-        audits = cur.fetchall()
+        rows = cur.fetchall()
 
-        for audit in audits:
+        for r in rows:
+            next_date = r["scheduled_next_audit"]
 
-            current_date = audit["scheduled_next_audit"]
-            frequency = audit["repeat_frequency"]
-            repeat_until = audit["repeat_until"]
+            if r["repeat_frequency"] == "weekly":
+                next_date = next_date + timedelta(days=7)
 
-            if not current_date or not frequency:
-                continue
+            elif r["repeat_frequency"] == "monthly":
+                next_date = next_date + timedelta(days=30)
 
-            if frequency == 'weekly':
-                next_date = current_date + timedelta(days=7)
+            elif r["repeat_frequency"] == "quarterly":
+                next_date = next_date + timedelta(days=90)
 
-            elif frequency == 'monthly':
-                next_date = current_date + relativedelta(months=1)
+            cur.execute("""
+                UPDATE audit_sessions
+                SET scheduled_next_audit = %s
+                WHERE id = %s
+            """, (next_date, r["id"]))
 
-            elif frequency == 'quarterly':
-                next_date = current_date + relativedelta(months=3)
-
-            else:
-                continue
-
-            if repeat_until and next_date.date() > repeat_until:
-
-                cur.execute(
-                    """
-                    UPDATE audit_sessions
-                    SET status = 'completed'
-                    WHERE id = %s
-                    """,
-                    (audit["id"],)
-                )
-
-            else:
-
-                cur.execute(
-                    """
-                    UPDATE audit_sessions
-                    SET scheduled_next_audit = %s
-                    WHERE id = %s
-                    """,
-                    (next_date, audit["id"])
-                )
+            print(f"[REPEAT] Audit {r['id']} updated to {next_date}")
 
         conn.commit()
 
     except Exception as e:
         conn.rollback()
-        print(f"[❌] Recurring Audit Error: {e}")
+        print(f"[REPEAT ERROR] {e}")
 
     finally:
         cur.close()
         conn.close()
-
 
 # --- 4. Auth helpers ---
 def hash_password(password: str) -> str:
