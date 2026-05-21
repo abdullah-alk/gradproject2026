@@ -23,6 +23,8 @@
         .step-indicator{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:28px;}
         .step-dot{width:10px;height:10px;border-radius:50%;background:var(--border-color);transition:0.3s;}
         .step-dot.active{background:var(--accent-primary);width:24px;border-radius:5px;}
+        .field-error{color:#ef4444;font-size:12px;margin-top:4px;display:flex;align-items:center;gap:4px;}
+        .field-success{color:#10b981;font-size:12px;margin-top:4px;display:flex;align-items:center;gap:4px;}
     </style>
 </head>
 <body>
@@ -102,7 +104,8 @@
 
         function showError(msg) {
             const el = document.getElementById('error-box');
-            el.textContent = msg; el.classList.add('show');
+            el.innerHTML = '<i class="fas fa-exclamation-circle" style="margin-right:6px"></i>' + msg;
+            el.classList.add('show');
             document.getElementById('success-box').classList.remove('show');
         }
         function showSuccess(msg) {
@@ -117,18 +120,127 @@
             document.getElementById('success-box').classList.remove('show');
         }
 
+        // ── Validation functions ──
+        function validateFullName(v) {
+            if (!v) return 'Full name is required.';
+            if (v.length < 2) return 'Name must be at least 2 characters.';
+            return '';
+        }
+        function validateUsername(v) {
+            if (!v) return 'Username is required.';
+            if (v.length < 3) return 'Username must be at least 3 characters.';
+            if (!/^[a-zA-Z0-9._]+$/.test(v)) return 'Only letters, numbers, dots and underscores allowed.';
+            return '';
+        }
+        function validateEmail(v) {
+            if (!v) return 'Email is required.';
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return 'Please enter a valid email address.';
+            return '';
+        }
+        function validatePassword(v) {
+            if (!v) return 'Password is required.';
+            if (v.length < 8) return 'Password must be at least 8 characters.';
+            if (!/[A-Z]/.test(v)) return 'Must contain at least one uppercase letter (A-Z).';
+            if (!/[a-z]/.test(v)) return 'Must contain at least one lowercase letter (a-z).';
+            if (!/\d/.test(v)) return 'Must contain at least one number (0-9).';
+            if (!/[@$!%*?&#]/.test(v)) return 'Must contain at least one special character (@$!%*?&#).';
+            return '';
+        }
+
+        function setFieldState(id, errMsg) {
+            const input = document.getElementById(id);
+            const parent = input.parentElement;
+            const existing = parent.querySelector('.field-error, .field-success');
+            if (existing) existing.remove();
+            if (errMsg) {
+                input.style.borderColor = '#ef4444';
+                const err = document.createElement('div');
+                err.className = 'field-error';
+                err.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${errMsg}`;
+                parent.appendChild(err);
+            } else if (input.value) {
+                input.style.borderColor = '#10b981';
+                const ok = document.createElement('div');
+                ok.className = 'field-success';
+                ok.innerHTML = `<i class="fas fa-check-circle"></i> Looks good!`;
+                parent.appendChild(ok);
+            }
+        }
+
+        // ── Password strength bar ──
+        function updatePasswordStrength(v) {
+            let score = 0;
+            if (v.length >= 8) score++;
+            if (/[A-Z]/.test(v)) score++;
+            if (/[a-z]/.test(v)) score++;
+            if (/\d/.test(v)) score++;
+            if (/[@$!%*?&#]/.test(v)) score++;
+            const colors = ['#ef4444','#f59e0b','#f59e0b','#06b6d4','#10b981'];
+            const labels = ['Very Weak','Weak','Fair','Good','Strong'];
+            const pwdParent = document.getElementById('password').parentElement;
+            let bar = document.getElementById('pwd-strength-bar');
+            if (!bar) {
+                bar = document.createElement('div');
+                bar.id = 'pwd-strength-bar';
+                bar.style = 'margin-top:6px;height:4px;background:#1e293b;border-radius:2px;overflow:hidden;';
+                bar.innerHTML = '<div id="pwd-bar-fill" style="height:100%;border-radius:2px;transition:all 0.3s;width:0%"></div>';
+                const hint = document.createElement('div');
+                hint.id = 'pwd-hint';
+                hint.style = 'font-size:11px;margin-top:4px;font-weight:600;';
+                pwdParent.appendChild(bar);
+                pwdParent.appendChild(hint);
+            }
+            if (v) {
+                document.getElementById('pwd-bar-fill').style.width = (score * 20) + '%';
+                document.getElementById('pwd-bar-fill').style.background = colors[score-1] || '#ef4444';
+                document.getElementById('pwd-hint').style.color = colors[score-1] || '#ef4444';
+                document.getElementById('pwd-hint').textContent = labels[score-1] || 'Very Weak';
+            } else {
+                document.getElementById('pwd-bar-fill').style.width = '0%';
+                document.getElementById('pwd-hint').textContent = '';
+            }
+        }
+
+        // ── Live validation listeners ──
+        document.getElementById('full_name').addEventListener('blur', function() {
+            setFieldState('full_name', validateFullName(this.value.trim()));
+        });
+        document.getElementById('username').addEventListener('blur', function() {
+            setFieldState('username', validateUsername(this.value.trim()));
+        });
+        document.getElementById('email').addEventListener('blur', function() {
+            setFieldState('email', validateEmail(this.value.trim()));
+        });
+        document.getElementById('password').addEventListener('input', function() {
+            setFieldState('password', validatePassword(this.value));
+            updatePasswordStrength(this.value);
+        });
+
+        // ── Form submit ──
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const loader = document.getElementById('loader');
-            loader.classList.add('active');
             const data = {
                 full_name: document.getElementById('full_name').value.trim(),
                 username: document.getElementById('username').value.trim(),
                 email: document.getElementById('email').value.trim(),
                 password: document.getElementById('password').value
             };
+            // Validate all fields before anything
+            const nameErr = validateFullName(data.full_name);
+            const userErr = validateUsername(data.username);
+            const emailErr = validateEmail(data.email);
+            const pwdErr = validatePassword(data.password);
+            setFieldState('full_name', nameErr);
+            setFieldState('username', userErr);
+            setFieldState('email', emailErr);
+            setFieldState('password', pwdErr);
+            if (nameErr || userErr || emailErr || pwdErr) {
+                showError('Please fix the errors above before continuing.');
+                return;
+            }
+            const loader = document.getElementById('loader');
+            loader.classList.add('active');
             try {
-                // 1. تحقق من التوفر فقط
                 const checkRes = await fetch(API + '/api/auth/check-availability', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -139,7 +251,6 @@
                     showError(checkResult.detail || 'Username or email already exists.');
                     return;
                 }
-                // 2. أرسل OTP فقط — لا تسجل في DB
                 const otpRes = await fetch(API + '/api/auth/send-otp', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -161,54 +272,55 @@
             }
         });
 
-async function verifyOTP() {
-    const otp = Array.from(document.querySelectorAll('.otp-digit')).map(i => i.value).join('');
-    if (otp.length < 6) { showError('Please enter the complete 6-digit code.'); return; }
-    const loader = document.getElementById('loader');
-    loader.classList.add('active');
-    try {
-        const res = await fetch(API + '/api/auth/verify-otp', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ email: pendingData.email, otp: otp })
-        });
-        const result = await res.json();
-        if (res.ok && result.verified) {
-            const regRes = await fetch(API + '/api/register', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(pendingData)
-            });
-            const regResult = await regRes.json();
-            if (regRes.ok) {
-                const loginForm = new FormData();
-                loginForm.append('username', pendingData.username);
-                loginForm.append('password', pendingData.password);
-                const loginRes = await fetch(API + '/api/auth/login', {
+        async function verifyOTP() {
+            const otp = Array.from(document.querySelectorAll('.otp-digit')).map(i => i.value).join('');
+            if (otp.length < 6) { showError('Please enter the complete 6-digit code.'); return; }
+            const loader = document.getElementById('loader');
+            loader.classList.add('active');
+            try {
+                const res = await fetch(API + '/api/auth/verify-otp', {
                     method: 'POST',
-                    body: loginForm
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email: pendingData.email, otp: otp })
                 });
-                const loginResult = await loginRes.json();
-                if (loginRes.ok) {
-                    localStorage.setItem('authToken', loginResult.access_token);
-                    localStorage.setItem('userInfo', JSON.stringify(loginResult.user));
-                    localStorage.setItem('user', JSON.stringify(loginResult.user));
-                    window.location.href = 'index.html';
+                const result = await res.json();
+                if (res.ok && result.verified) {
+                    const regRes = await fetch(API + '/api/register', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(pendingData)
+                    });
+                    const regResult = await regRes.json();
+                    if (regRes.ok) {
+                        const loginForm = new FormData();
+                        loginForm.append('username', pendingData.username);
+                        loginForm.append('password', pendingData.password);
+                        const loginRes = await fetch(API + '/api/auth/login', {
+                            method: 'POST',
+                            body: loginForm
+                        });
+                        const loginResult = await loginRes.json();
+                        if (loginRes.ok) {
+                            localStorage.setItem('authToken', loginResult.access_token);
+                            localStorage.setItem('userInfo', JSON.stringify(loginResult.user));
+                            localStorage.setItem('user', JSON.stringify(loginResult.user));
+                            window.location.href = 'index.html';
+                        } else {
+                            window.location.href = 'login.html';
+                        }
+                    } else {
+                        showError(regResult.detail || 'Registration failed.');
+                    }
                 } else {
-                    window.location.href = 'login.html';
+                    showError(result.detail || 'Invalid OTP.');
                 }
-            } else {
-                showError(regResult.detail || 'Registration failed.');
+            } catch (err) {
+                showError('Verification failed.');
+            } finally {
+                loader.classList.remove('active');
             }
-        } else {
-            showError(result.detail || 'Invalid OTP.');
         }
-    } catch (err) {
-        showError('Verification failed.');
-    } finally {
-        loader.classList.remove('active');
-    }
-}
+
         async function resendOTP() {
             if (!pendingData) return;
             try {
@@ -224,20 +336,19 @@ async function verifyOTP() {
         function setupOTPInputs() {
             const inputs = document.querySelectorAll('.otp-digit');
             inputs.forEach((input, i) => {
-            input.value = '';
-            input.addEventListener('input', () => {
-            if (input.value && i < inputs.length - 1) inputs[i+1].focus();
-            // لما يكتمل الكود تلقائياً يضغط
-            const otp = Array.from(inputs).map(x => x.value).join('');
-            if (otp.length === 6) verifyOTP();
-        });
-            input.addEventListener('keydown', (e) => {
-            if (e.key === 'Backspace' && !input.value && i > 0) inputs[i-1].focus();
-            if (e.key === 'Enter') verifyOTP();
-        });
-    });
-    inputs[0].focus();
-}
+                input.value = '';
+                input.addEventListener('input', () => {
+                    if (input.value && i < inputs.length - 1) inputs[i+1].focus();
+                    const otp = Array.from(inputs).map(x => x.value).join('');
+                    if (otp.length === 6) verifyOTP();
+                });
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !input.value && i > 0) inputs[i-1].focus();
+                    if (e.key === 'Enter') verifyOTP();
+                });
+            });
+            inputs[0].focus();
+        }
     </script>
 </body>
 </html>
