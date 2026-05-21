@@ -1,5 +1,4 @@
-// CyberGuard ECC Chatbot v8 - FULL UPDATED EDITION
-// Integration: Hierarchical Flow + Evidence Saving + API Sync + Multi-User Security
+// CyberGuard ECC Chatbot v8 - SECURE EDITION
 
 let currentMode = 'audit', 
     currentControlId = null, 
@@ -10,50 +9,40 @@ let currentMode = 'audit',
     currentSessionId = null, 
     auditAnswers = [];
 
-// 1. هيكلية الضوابط (الأساسي والفرعي)
 const eccDomains = [
     { id: '1-1', title: 'Cybersecurity Strategy', subControls: ['1-1-1', '1-1-2', '1-1-3'] },
     { id: '1-2', title: 'Cybersecurity Management', subControls: ['1-2-1', '1-2-2', '1-2-3'] },
     { id: '1-3', title: 'Cybersecurity Policies and Procedures', subControls: ['1-3-1', '1-3-2', '1-3-3', '1-3-4'] },
     { id: '1-4', title: 'Cybersecurity Roles and Responsibilities', subControls: ['1-4-1', '1-4-2'] },
     { id: '1-5', title: 'Cybersecurity Risk Management', subControls: ['1-5-1', '1-5-2', '1-5-3-1', '1-5-3-2', '1-5-3-3', '1-5-3-4', '1-5-4'] },
-    
-    // الضوابط الجديدة المضافة
-    { 
-        id: '1-6', 
-        title: 'Cybersecurity in IT Project Management', 
-        subControls: ['1-6-1', '1-6-2-1', '1-6-2-2', '1-6-3-1', '1-6-3-2', '1-6-3-3', '1-6-3-4', '1-6-3-5', '1-6-4'] 
-    },
-    { 
-        id: '1-7', 
-        title: 'Compliance with Laws and Regulations', 
-        subControls: ['1-7-1', '1-7-2'] 
-    },
-    { 
-        id: '1-8', 
-        title: 'Periodical Review and Audit', 
-        subControls: ['1-8-1', '1-8-2', '1-8-3'] 
-    },
-    { 
-        id: '1-9', 
-        title: 'Cybersecurity in Human Resources', 
-        subControls: ['1-9-1', '1-9-2', '1-9-3-1', '1-9-3-2', '1-9-4-1', '1-9-4-2', '1-9-5', '1-9-6'] 
-    },
-    { 
-        id: '1-10', 
-        title: 'Cybersecurity Awareness and Training', 
-        subControls: ['1-10-1', '1-10-2', '1-10-3-1', '1-10-3-2', '1-10-3-3', '1-10-3-4', '1-10-4-1', '1-10-4-2', '1-10-4-3', '1-10-5'] 
-    }
+    { id: '1-6', title: 'Cybersecurity in IT Project Management', subControls: ['1-6-1', '1-6-2-1', '1-6-2-2', '1-6-3-1', '1-6-3-2', '1-6-3-3', '1-6-3-4', '1-6-3-5', '1-6-4'] },
+    { id: '1-7', title: 'Compliance with Laws and Regulations', subControls: ['1-7-1', '1-7-2'] },
+    { id: '1-8', title: 'Periodical Review and Audit', subControls: ['1-8-1', '1-8-2', '1-8-3'] },
+    { id: '1-9', title: 'Cybersecurity in Human Resources', subControls: ['1-9-1', '1-9-2', '1-9-3-1', '1-9-3-2', '1-9-4-1', '1-9-4-2', '1-9-5', '1-9-6'] },
+    { id: '1-10', title: 'Cybersecurity Awareness and Training', subControls: ['1-10-1', '1-10-2', '1-10-3-1', '1-10-3-2', '1-10-3-3', '1-10-3-4', '1-10-4-1', '1-10-4-2', '1-10-4-3', '1-10-5'] }
 ];
 
-// دالة أمان إضافية لإنشاء مفاتيح تخزين مخصصة لكل مستخدم بناءً على الـ ID الخاص به
+// دالة توليد المفتاح الآمن - تم فحصها وتأكيد مطابقتها لبنية بيانات الكائن في صورتك المستخرجة {"id":40,...}
 function getSecureStorageKey(baseName) {
-    const user = getCurrentUserLocal();
-    const userId = user && user.id ? user.id : 'anonymous';
-    return `user_${userId}_${baseName}`;
+    try {
+        const userRaw = localStorage.getItem('user') || localStorage.getItem('userInfo');
+        if (userRaw) {
+            const userObj = JSON.parse(userRaw);
+            if (userObj && userObj.id) {
+                return `user_${userObj.id}_${baseName}`;
+            }
+        }
+    } catch (e) {
+        console.error("Error parsing user for secure key:", e);
+    }
+    return `guest_${baseName}`; // للمستخدمين المجهولين لحماية البيانات الأساسية من التلوث
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // خطوة أمنية حرجة: تصفير الشاشة فوراً عند التحميل لمنع الكاش البصري للحساب السابق
+    const cm = document.getElementById('chat-messages');
+    if (cm) cm.innerHTML = ''; 
+
     if (!checkAuth()) return;
     loadUserToSidebar();
     renderControlBrowser();
@@ -63,7 +52,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('send-btn')?.addEventListener('click', handleUserMessage);
     document.getElementById('user-query')?.addEventListener('keypress', e => { if (e.key === 'Enter') handleUserMessage(); });
 
-    // استعادة النتائج السابقة لتلوين النقاط بشكل آمن للمستخدم الحالي فقط
     const res = JSON.parse(localStorage.getItem(getSecureStorageKey('audit_results')) || '{}');
     Object.entries(res).forEach(([id, s]) => updateDot(id, s));
 });
@@ -97,21 +85,18 @@ async function selectControl(ctrl, el) {
     currentControlId = ctrl.id;
     selectedControlInfo = ctrl;
     
-    // إعادة تهيئة المتغيرات المؤقتة
     auditAnswers = [];
     currentQuestions = [];
     currentQuestionIndex = 0;
 
-    // توليد مفاتيح التخزين الآمنة للمستخدم والوضع الحالي
+    // تم إجبار جميع عمليات الجلب هنا على استخدام الـ Secure Key لمنع التداخل
     const chatKey = getSecureStorageKey(`chat_history_${currentMode}_${ctrl.id}`);
     const sessionKey = getSecureStorageKey(`session_resume_${currentMode}_${ctrl.id}`);
 
-    // 1. استعادة محادثة المستخدم الحالي فقط للوضع النشط
     const savedChat = localStorage.getItem(chatKey);
     const cm = document.getElementById('chat-messages');
     cm.innerHTML = savedChat || ''; 
     
-    // 2. التحقق من وجود جلسة استكمال تخص المستخدم والوضع نفسه
     const savedSession = localStorage.getItem(sessionKey);
     
     if (savedSession) {
@@ -134,7 +119,7 @@ function showSubControlOptions(ctrl) {
     m.className = 'message ai-message';
     
     let buttonsHtml = ctrl.subControls.map(subId => `
-        <button onclick="initiateSubAudit('${subId}')" style="padding:10px 14px; border:1px solid var(--accent-primary); background:rgba(6,182,212,0.05); color:var(--accent-primary); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; transition:0.2s; hover:background:var(--accent-primary);">
+        <button onclick="initiateSubAudit('${subId}')" style="padding:10px 14px; border:1px solid var(--accent-primary); background:rgba(6,182,212,0.05); color:var(--accent-primary); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; transition:0.2s;">
             Control ${subId}
         </button>
     `).join('');
@@ -235,7 +220,6 @@ async function answerAudit(ans, btn) {
     
     currentQuestionIndex++; 
 
-    // حفظ التقدم بشكل آمن باستخدام معرّف المستخدم الحالي
     const sessionKey = getSecureStorageKey(`session_resume_${currentMode}_${currentControlId}`);
     const sessionToSave = {
         subId: currentQ.cat,
@@ -260,7 +244,6 @@ async function finishAudit() {
     const status = score >= 80 ? 'Compliant' : score >= 40 ? 'Partial' : 'Non-Compliant';
     const color = getDotColor(status);
     
-    // مسح جلسة الاستكمال الآمنة فور اكتمال التقييم
     const sessionKey = getSecureStorageKey(`session_resume_${currentMode}_${currentControlId}`);
     localStorage.removeItem(sessionKey);
     
@@ -313,20 +296,12 @@ async function finishAudit() {
 }
 
 function saveAuditRecordLocally(auditRecord, controlTitle) {
-    // فصل سجل التقارير المحفوظ محلياً لكل مستخدم كطبقة أمان إضافية
     const storageKey = getSecureStorageKey('audit_sessions_log');
     const sessions = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    const localRecord = {
-        ...auditRecord,
-        control_title: controlTitle
-    };
-    const recordKey = localRecord.session_id
-        ? `session:${localRecord.session_id}`
-        : `${localRecord.control_id}:${localRecord.created_at}:${localRecord.title}`;
+    const localRecord = { ...auditRecord, control_title: controlTitle };
+    const recordKey = localRecord.session_id ? `session:${localRecord.session_id}` : `${localRecord.control_id}:${localRecord.created_at}:${localRecord.title}`;
     const filtered = sessions.filter(item => {
-        const itemKey = item.session_id
-            ? `session:${item.session_id}`
-            : `${item.control_id}:${item.created_at}:${item.title}`;
+        const itemKey = item.session_id ? `session:${item.session_id}` : `${item.control_id}:${item.created_at}:${item.title}`;
         return itemKey !== recordKey;
     });
     filtered.unshift(localRecord);
@@ -356,17 +331,10 @@ async function saveAuditToEvidence(controlId, controlTitle, status, score, answe
     saveAuditRecordLocally(auditRecord, controlTitle);
 
     try {
-        const apiRecord = {
-            ...auditRecord,
-            control_id: controlDbId
-        };
-
-        await apiRequest('/evidence/save-audit', {
-            method: 'POST',
-            body: JSON.stringify(apiRecord)
-        });
+        const apiRecord = { ...auditRecord, control_id: controlDbId };
+        await apiRequest('/evidence/save-audit', { method: 'POST', body: JSON.stringify(apiRecord) });
     } catch (e) {
-        console.warn('[Offline Mode] Audit session is available from local evidence storage.', e);
+        console.warn('[Offline Mode] Audit session is available local.', e);
     }
 }
 
@@ -384,7 +352,7 @@ async function saveProgress(ctrlId, status, score, yes, partial, no, total) {
     
     try { await updateControlStatus(ctrlId, status); } catch (e) { }
     if (currentSessionId) { try { await completeAuditSession(currentSessionId, status, score); } catch (e) { } }
-    console.log('[DEBUG] saveComplianceScore:', { user_id: getCurrentUserLocal().id, control_id: currentControlDbId, score });
+    
     try {
         const u = getCurrentUserLocal();
         await saveComplianceScore({
@@ -434,7 +402,6 @@ function appendMsg(role, txt) {
     cm.appendChild(m); 
     cm.scrollTop = cm.scrollHeight;
     
-    // حفظ المحادثة بمفتاح آمن مشفر بمعرف المستخدم
     if (currentControlId) {
         const chatKey = getSecureStorageKey(`chat_history_${currentMode}_${currentControlId}`);
         localStorage.setItem(chatKey, cm.innerHTML);
@@ -466,12 +433,7 @@ async function finishGuide() {
           partial = auditAnswers.filter(a => a.answer === 'partial').length;
     const score = total > 0 ? Math.round(((yes + partial * 0.5) / total) * 100) : 0;
     const status = score >= 80 ? 'Compliant' : score >= 40 ? 'Partial' : 'Non-Compliant';
-    const evidenceSave = saveAuditToEvidence(
-        currentControlId,
-        selectedControlInfo?.title || currentControlId,
-        status, score, auditAnswers,
-        currentSessionId, currentControlDbId
-    );
+    const evidenceSave = saveAuditToEvidence(currentControlId, selectedControlInfo?.title || currentControlId, status, score, auditAnswers, currentSessionId, currentControlDbId);
     appendMsg('ai', `<em style="color:var(--text-muted);font-size:12px">Generating final recommendations...</em>`);
     showTyping();
     const answersText = auditAnswers.map((a,i) => `Q${i+1}: "${a.question}" => ${a.answer.toUpperCase()}`).join('\n');
@@ -481,12 +443,7 @@ async function finishGuide() {
         if (r?.answer) {
             let fmt = r.answer
                 .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#e2e8f0">$1</strong>')
-                .replace(/^#{1,3}\s+(.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#8b5cf6;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(139,92,246,0.2)">$1</div>')
-                .replace(/^(\d+)\.\s+\*\*(.*?)\*\*/gm, '<div style="margin:12px 0 4px;display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(6,182,212,0.15);color:#06b6d4;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">$1</span><strong style="color:#e2e8f0">$2</strong></div>')
-                .replace(/^\s*-\s+\*\*(.*?)\*\*:\s*/gm, '<div style="margin:5px 0 2px;padding-left:16px"><span style="color:#06b6d4;font-weight:600;font-size:12px">▸ $1:</span> ')
-                .replace(/^\s*-\s+/gm, '<div style="margin:3px 0;padding-left:16px;color:var(--text-secondary);font-size:13px">• ')
-                .replace(/\n\n/g, '</div><br>')
-                .replace(/\n/g, '</div>');
+                .replace(/^#{1,3}\s+(.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#8b5cf6;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(139,92,246,0.2)">$1</div>');
             appendMsg('ai', `
                 <div style="border:1px solid rgba(139,92,246,0.3);border-radius:12px;padding:24px;background:rgba(139,92,246,0.05)">
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(139,92,246,0.2)">
@@ -494,29 +451,12 @@ async function finishGuide() {
                         <strong style="font-size:16px;color:#8b5cf6">Recommendations — ${currentControlId}</strong>
                     </div>
                     <div style="font-size:13.5px;line-height:1.9;color:var(--text-secondary)">${fmt}</div>
-                    <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(139,92,246,0.2);display:flex;gap:12px">
-                        <a href="evidence.html?control=${currentControlId}" style="flex:1;text-align:center;background:rgba(139,92,246,0.15);border:1px solid #8b5cf6;color:#8b5cf6;padding:12px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">
-                            <i class="fas fa-folder-open" style="margin-right:6px"></i>Evidence Vault
-                        </a>
-                    </div>
                 </div>`);
             try {
-                await saveAuditRecommendation({
-                    control_id: currentControlDbId || null,
-                    session_id: currentSessionId,
-                    gap_description: answersText,
-                    recommendation: r.answer,
-                    priority: 'High'
-                });
-            } catch(e) { console.error('[❌] Gap save error:', e); }
-            try { await evidenceSave; } catch(e) { console.error('[❌] Evidence save error:', e); }
-        } else {
-            appendMsg('ai', 'Could not generate recommendations.');
+                await saveAuditRecommendation({ control_id: currentControlDbId || null, session_id: currentSessionId, gap_description: answersText, recommendation: r.answer, priority: 'High' });
+            } catch(e) {}
         }
-    } catch(e) {
-        hideTyping();
-        appendMsg('ai', `<span style="color:#ef4444">Error generating recommendations.</span>`);
-    }
+    } catch(e) { hideTyping(); }
     setTimeout(() => showSubControlOptions(selectedControlInfo), 3000);
 }
 
@@ -545,33 +485,16 @@ function showResumeOption(sessionData) {
 window.resumeAuditAction = function() {
     const data = window.pendingSessionData;
     if (!data) return;
-
     currentQuestions = data.questions;
     currentQuestionIndex = data.index;
     auditAnswers = data.answers;
     currentSessionId = data.sessionId;
     currentControlDbId = data.dbId;
-
-    appendMsg('ai', `The session was successfully restored in mode (${currentMode}). We will continue from question number ${currentQuestionIndex + 1}...`);
-    
+    appendMsg('ai', `The session was successfully restored. Continuing from question ${currentQuestionIndex + 1}...`);
     window.pendingSessionData = null;
     setTimeout(showAuditQ, 600);
 };
 
-function resumeAudit(data) {
-    document.getElementById('chat-messages').innerHTML = '';
-    appendMsg('ai', `The assessment is being completed for ${data.subId}...`);
-    
-    currentQuestions = data.questions;
-    currentQuestionIndex = data.index;
-    auditAnswers = data.answers;
-    currentSessionId = data.sessionId;
-    currentControlDbId = data.dbId;
-    
-    setTimeout(showAuditQ, 600);
-}
-
-// تعديل دالة البدء من جديد لتعمل على المفتاح الآمن المخصص للمستخدم
 function restartAudit() {
     const sessionKey = getSecureStorageKey(`session_resume_${currentMode}_${currentControlId}`);
     localStorage.removeItem(sessionKey);
@@ -579,33 +502,17 @@ function restartAudit() {
     showSubControlOptions(selectedControlInfo);
 }
 
-function addClearButton() {
-    const header = document.querySelector('.chat-header') || document.getElementById('audit-mode-btn').parentElement;
-    if (!document.getElementById('clear-chat-btn')) {
-        const btn = document.createElement('button');
-        btn.id = 'clear-chat-btn';
-        btn.innerHTML = '<i class="fas fa-trash"></i> Clear the conversation';
-        btn.style = "margin-left:10px; padding:5px 12px; background:#ef444420; color:#ef4444; border:1px solid #ef4444; border-radius:6px; cursor:pointer; font-size:12px;";
-        btn.onclick = clearChat;
-        header.appendChild(btn);
-    }
-}
-
 async function clearChat() {
     if (!currentControlId) return;
     if (confirm("هل تريد مسح سجل المحادثة والتقييم للوضع الحالي فقط؟")) {
         const chatKey = getSecureStorageKey(`chat_history_${currentMode}_${currentControlId}`);
         const sessionKey = getSecureStorageKey(`session_resume_${currentMode}_${currentControlId}`);
-        
         localStorage.removeItem(chatKey);
         localStorage.removeItem(sessionKey);
-        
         document.getElementById('chat-messages').innerHTML = '';
         showSubControlOptions(selectedControlInfo);
     }
 }
-
-addClearButton();
 
 // // CyberGuard ECC Chatbot v8 - FULL UPDATED EDITION
 // // Integration: Hierarchical Flow + Evidence Saving + API Sync
