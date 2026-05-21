@@ -1745,7 +1745,6 @@ async def get_dashboard_gaps(current_user: dict = Depends(get_current_user)):
             JOIN audit_sessions s ON gr.session_id = s.id
             LEFT JOIN ecc_controls ec ON gr.control_id = ec.id
             WHERE s.user_id = %s AND gr.control_id IS NOT NULL
-            AND s.mode = 'guide'
             ORDER BY gr.created_at DESC LIMIT 5
         """, (user_id,))
         return [dict(r) for r in cur.fetchall()]
