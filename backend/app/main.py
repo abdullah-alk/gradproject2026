@@ -124,7 +124,12 @@ def process_recurring_audits():
         rows = cur.fetchall()
 
         for r in rows:
-            next_date = r["scheduled_next_audit"]
+            next_date = r["scheduled_next_audit"].replace(
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0
+            )
 
             if r["repeat_frequency"] == "weekly":
                 next_date = next_date + timedelta(days=7)
@@ -135,6 +140,14 @@ def process_recurring_audits():
             elif r["repeat_frequency"] == "quarterly":
                 next_date = next_date + relativedelta(months=3)
 
+            next_date = next_date.replace(
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0
+            )
+
+            
             cur.execute("""
                 UPDATE audit_sessions
                 SET scheduled_next_audit = %s
