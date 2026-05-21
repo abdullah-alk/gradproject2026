@@ -60,7 +60,7 @@ function updateCards(s) {
 
     if (s.next_audit_date) {
         const d = new Date(s.next_audit_date);
-        const diff = Math.ceil((d - new Date()) / 86400000);
+        const diff = Math.floor((d - new Date()) / 86400000);
         set('next-audit-days', (diff > 0 ? diff : 0) + 'd');
         set('next-audit-date', 'Scheduled: ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
     } else {
