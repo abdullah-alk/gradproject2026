@@ -890,9 +890,13 @@ async def get_stats(current_user: dict = Depends(get_current_user)):
         cur.execute(
             """
             SELECT scheduled_next_audit FROM audit_sessions
-            WHERE scheduled_next_audit IS NOT NULL AND scheduled_next_audit > NOW()
+            WHERE scheduled_next_audit IS NOT NULL 
+            AND scheduled_next_audit > NOW()
+            AND user_id = %s
+            AND status = 'scheduled'
             ORDER BY scheduled_next_audit ASC LIMIT 1
-            """
+            """,
+            (user_id,)
         )
         next_audit = cur.fetchone()
 
