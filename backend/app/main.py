@@ -124,6 +124,8 @@ def process_recurring_audits():
         rows = cur.fetchall()
 
         for r in rows:
+            
+            print(f"ORIGINAL DATE = {r['scheduled_next_audit']}")
 
             original_date = r["scheduled_next_audit"]
 
