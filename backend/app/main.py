@@ -118,7 +118,8 @@ def process_recurring_audits():
             SELECT id, scheduled_next_audit, repeat_frequency
             FROM audit_sessions
             WHERE repeat_enabled = TRUE
-            AND id IN (744, 745, 746)
+            AND scheduled_next_audit <= NOW()
+            AND scheduled_next_audit >= NOW() - INTERVAL '1 day'
         """)
 
         rows = cur.fetchall()
