@@ -42,12 +42,30 @@ async function login(username, password) {
 function logout() {
     authToken = null;
     
-    // 🛡️ تصفير وتطهير الـ LocalStorage والـ SessionStorage بالكامل لضمان عدم تسريب أي محادثة للحساب الجديد
-    localStorage.clear();
+    // 1. جلب بيانات المستخدم الحالي قبل حذفها لمعرفة الـ ID الخاص به
+    let userId = null;
+    try {
+        const userObj = JSON.parse(localStorage.getItem('userInfo') || localStorage.getItem('user'));
+        if (userObj && userObj.id) {
+            userId = userObj.id;
+        }
+    } catch(e) {
+        console.error("Error reading user before logout:", e);
+    }
+
+    // 2. مسح بيانات الجلسة الأساسية التي تميز الحساب المفتوح حالياً فقط
+    const coreKeys = ['authToken', 'userInfo', 'user', 'audit_results', 'audit_scores'];
+    coreKeys.forEach(k => localStorage.removeItem(k));
+    
+    // 3. خطوة اختيارية وموصى بها: مسح كاش الاستكمال العام (غير المرتبط بـ ID) إن وجد
+    // لضمان عدم تسربه، بينما سجلات "user_40_..." المربوطة بالـ ID ستبقى آمنة ومحفوظة
+    ['chat_history_audit_1-1', 'chat_history_audit_1-3', 'session_resume_audit_1-1', 'session_resume_audit_1-3'].forEach(k => localStorage.removeItem(k));
+
+    // 4. تصفير الـ SessionStorage الخاص بالجلسة المتصفح الحالية فقط
     sessionStorage.clear();
     
-    // التوجيه إلى صفحة الهبوط أو تسجيل الدخول
-    window.location.href = 'landing.html'; 
+    // 5. التوجيه لصفحة الهبوط
+    window.location.href = 'landing.html';
 }
 
 function getCurrentUserLocal() {
