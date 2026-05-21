@@ -130,10 +130,10 @@ def process_recurring_audits():
                 next_date = next_date + timedelta(days=7)
 
             elif r["repeat_frequency"] == "monthly":
-                next_date = next_date + timedelta(days=30)
+                next_date = next_date + relativedelta(months=1)
 
             elif r["repeat_frequency"] == "quarterly":
-                next_date = next_date + timedelta(days=90)
+                next_date = next_date + relativedelta(months=3)
 
             cur.execute("""
                 UPDATE audit_sessions
