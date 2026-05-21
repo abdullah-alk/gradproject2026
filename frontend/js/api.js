@@ -34,10 +34,20 @@ async function login(username, password) {
     return data;
 }
 
+// function logout() {
+//     authToken = null;
+//     ['authToken','userInfo','user','audit_results','audit_scores'].forEach(k => localStorage.removeItem(k));
+//     window.location.href = 'landing.html';
+// }
 function logout() {
     authToken = null;
-    ['authToken','userInfo','user','audit_results','audit_scores'].forEach(k => localStorage.removeItem(k));
-    window.location.href = 'landing.html';
+    
+    // 🛡️ تصفير وتطهير الـ LocalStorage والـ SessionStorage بالكامل لضمان عدم تسريب أي محادثة للحساب الجديد
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // التوجيه إلى صفحة الهبوط أو تسجيل الدخول
+    window.location.href = 'landing.html'; 
 }
 
 function getCurrentUserLocal() {
