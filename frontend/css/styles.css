@@ -571,19 +571,6 @@ tbody td {
     .stats-grid {
         grid-template-columns: 1fr;
     }
-   
-   .custom-logo{
-    display:flex;
-    align-items:center;
-    justify-content:flex-start;
-    padding-left:8px;
-}
-
-.custom-logo img{
-    width:220px;
-    height:auto;
-    object-fit:contain;
-}
 }
 /* === Message Bubble Styles (Chatbot) === */
 .message { display: flex; flex-direction: column; }
