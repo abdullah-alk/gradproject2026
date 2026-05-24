@@ -97,12 +97,8 @@ body {
 }
 
 .sidebar-header {
-    padding: 10px 12px;
-    height: 90px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom: 1px solid var(--border-color);
+    padding: 16px 20px;
+    height: auto;
 }
 
 .sidebar-logo {
