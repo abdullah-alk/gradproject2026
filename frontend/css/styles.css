@@ -110,10 +110,9 @@ body {
     width: 100%;
 }
 .sidebar-logo img {
-    width: 180px;
+    width: 200px;
     height: auto;
     object-fit: contain;
-    mix-blend-mode: screen;
 }
 
 .logo-icon {
