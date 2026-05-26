@@ -124,12 +124,14 @@
         function validateFullName(v) {
             if (!v) return 'Full name is required.';
             if (v.length < 2) return 'Name must be at least 2 characters.';
+            if (!/^[A-Za-z\s]+$/.test(v)) return 'Full name must contain English letters only. Arabic is not allowed.';
             return '';
         }
         function validateUsername(v) {
             if (!v) return 'Username is required.';
             if (v.length < 3) return 'Username must be at least 3 characters.';
-            if (!/^[a-zA-Z0-9._]+$/.test(v)) return 'Only letters, numbers, dots and underscores allowed.';
+            if (!/^[a-zA-Z0-9._]+$/.test(v)) return 'Only English letters, numbers, dots and underscores allowed.';
+            if (!/[a-zA-Z]/.test(v)) return 'Username must contain at least one English letter, not numbers only.';
             return '';
         }
         function validateEmail(v) {
