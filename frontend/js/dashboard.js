@@ -57,18 +57,25 @@ function updateCards(s) {
     if (bar) { bar.style.width = pct + '%'; }
     
     set('audit-progress-text', `${s.audited_controls || 0} of 10 controls reviewed`);
-
+    
     if (s.next_audit_date) {
         const d = new Date(s.next_audit_date);
-        const diff = Math.floor((d - new Date()) / 86400000);
-        set('next-audit-days', (diff > 0 ? diff : 0) + 'd');
+        const diffMs = d - new Date();
+        const diffDays = Math.floor(diffMs / 86400000);
+        const diffHours = Math.floor((diffMs % 86400000) / 3600000);
+        if (diffDays > 0) {
+            set('next-audit-days', diffDays + 'd');
+        } else if (diffHours > 0) {
+            set('next-audit-days', diffHours + 'h');
+        } else {
+            set('next-audit-days', '<1h');
+        }
         set('next-audit-date', 'Scheduled: ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
     } else {
         set('next-audit-days', '—');
         set('next-audit-date', 'No audit scheduled yet');
     }
-}
-
+    
 function renderRadar(data) {
     const c = document.getElementById('domainsRadarChart');
     if (!c || !data?.length) return;
