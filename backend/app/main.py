@@ -1385,7 +1385,7 @@ def build_reminder_email(name, date_str, scope, days):
     <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#0f172a;color:#f1f5f9;padding:32px;border-radius:12px">
         <div style="text-align:center;margin-bottom:24px">
             <div style="font-size:32px">🛡️</div>
-            <h2 style="color:#06b6d4;margin:8px 0">ECC Auditor</h2>
+            <h2 style="color:#06b6d4;margin:8px 0">ImtiCore</h2>
         </div>
         <p style="color:#94a3b8;margin-bottom:20px">Dear <strong>{name}</strong>,</p>
         <div style="background:#1e293b;border:1px solid {color}40;border-radius:8px;padding:20px;margin-bottom:20px;text-align:center">
@@ -1404,7 +1404,7 @@ def build_reminder_email(name, date_str, scope, days):
             View Scheduler
         </a>
         <p style="color:#475569;font-size:11px;margin-top:20px;text-align:center">
-            ECC Auditor — CyberGuard GRC Platform
+            ImtiCore — Intelligent Compliance Platform
         </p>
     </div>
     """
@@ -1935,7 +1935,7 @@ def send_email(to_email: str, subject: str, body: str):
             "Content-Type": "application/json"
         },
         json={
-            "from": "ECC Auditor <noreply@xn--mgb2dctb.online>",
+            "from": "ImtiCore <noreply@xn--mgb2dctb.online>",
             "to": [to_email],
             "subject": subject,
             "html": body
@@ -1960,12 +1960,12 @@ async def send_otp(data: dict = Body(...)):
                 raise HTTPException(status_code=404, detail="No account found with this email")
         otp = str(random.randint(100000, 999999))
         otp_store[email] = {"otp": otp, "expires": datetime.now() + timedelta(minutes=10), "purpose": purpose}
-        subject = "ECC Auditor — Your Verification Code"
+        subject = "ImtiCore — Your Verification Code"
         body = f"""
         <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#0f172a;color:#f1f5f9;padding:32px;border-radius:12px">
             <div style="text-align:center;margin-bottom:24px">
                 <div style="font-size:32px">🛡️</div>
-                <h2 style="color:#06b6d4;margin:8px 0">ECC Auditor</h2>
+                <h2 style="color:#06b6d4;margin:8px 0">ImtiCore</h2>
             </div>
             <p style="color:#94a3b8;margin-bottom:20px">Your verification code is:</p>
             <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:20px;text-align:center;margin-bottom:20px">
@@ -2087,7 +2087,7 @@ async def change_email(data: dict = Body(...), current_user: dict = Depends(get_
         <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#0f172a;color:#f1f5f9;padding:32px;border-radius:12px">
             <div style="text-align:center;margin-bottom:24px">
                 <div style="font-size:32px">🛡️</div>
-                <h2 style="color:#06b6d4;margin:8px 0">ECC Auditor</h2>
+                <h2 style="color:#06b6d4;margin:8px 0">ImtiCore</h2>
             </div>
             <p style="color:#94a3b8;margin-bottom:20px">Verify your new email address:</p>
             <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:20px;text-align:center;margin-bottom:20px">
