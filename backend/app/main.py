@@ -128,7 +128,7 @@ def process_recurring_audits():
             
             print(f"ORIGINAL DATE = {r['scheduled_next_audit']}")
 
-            original_date = r["scheduled_next_audit"]
+            original_date = r["scheduled_next_audit"].date()
 
             if r["repeat_frequency"] == "weekly":
                 next_date = original_date + timedelta(days=7)
@@ -138,6 +138,11 @@ def process_recurring_audits():
 
             elif r["repeat_frequency"] == "quarterly":
                 next_date = original_date + relativedelta(months=3)
+
+            next_date = datetime.combine(
+                next_date,
+                datetime.min.time()
+            )
 
             else:
                 continue
