@@ -1488,10 +1488,13 @@ async def toggle_auto_scheduling(data: dict = Body(...)):
 
 @app.get("/api/audit/sessions/scheduled")
 async def get_scheduled_audits(current_user: dict = Depends(get_current_user)):
+  
+    process_recurring_audits()
+    
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        process_recurring_audits()
+        
         
         cur.execute(
             """
