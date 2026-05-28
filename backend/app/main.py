@@ -139,19 +139,14 @@ def process_recurring_audits():
             elif r["repeat_frequency"] == "quarterly":
                 next_date = original_date + relativedelta(months=3)
 
-            next_date = datetime.combine(
-                next_date,
-                datetime.min.time()
-            )
+            
 
             else:
                 continue
 
-            next_date = next_date.replace(
-                hour=0,
-                minute=0,
-                second=0,
-                microsecond=0
+            next_date = datetime.combine(
+                next_date,
+                datetime.min.time()
             )
 
             cur.execute("""
