@@ -1,6 +1,3 @@
-// ===================================================
-// CyberGuard GRC - Unified API Layer v5
-// ===================================================
 const API_BASE_URL = 'https://gradproject2026-production-821d.up.railway.app/api';
 let authToken = localStorage.getItem('authToken');
 
@@ -146,3 +143,37 @@ function loadUserToSidebar() {
     set('user-role', user.role || 'Cyber Auditor'); set('user-role-display', user.role || 'Cyber Auditor');
     set('user-initials', initials);
 }
+
+function showToast(msg, type = 'error') {
+    const existing = document.getElementById('toast-notification');
+    if (existing) existing.remove();
+    const colors = {
+        error: { border: 'rgba(239,68,68,.3)', text: '#ef4444', icon: 'fa-exclamation-circle', label: 'Error' },
+        warning: { border: 'rgba(245,158,11,.3)', text: '#f59e0b', icon: 'fa-exclamation-triangle', label: 'Warning' },
+        success: { border: 'rgba(16,185,129,.3)', text: '#10b981', icon: 'fa-check-circle', label: 'Success' },
+        info: { border: 'rgba(6,182,212,.3)', text: '#06b6d4', icon: 'fa-info-circle', label: 'Info' }
+    };
+    const c = colors[type] || colors.error;
+    const toast = document.createElement('div');
+    toast.id = 'toast-notification';
+    toast.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:99999;background:var(--bg-card);border:1px solid ${c.border};border-left:4px solid ${c.text};border-radius:12px;padding:16px 20px;min-width:300px;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.3);display:flex;align-items:flex-start;gap:12px;animation:slideIn .3s ease;`;
+    toast.innerHTML = `
+        <i class="fas ${c.icon}" style="color:${c.text};font-size:18px;margin-top:2px;flex-shrink:0"></i>
+        <div style="flex:1">
+            <div style="font-size:13px;font-weight:600;color:${c.text};margin-bottom:4px">${c.label}</div>
+            <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">${msg}</div>
+        </div>
+        <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0;flex-shrink:0"><i class="fas fa-times"></i></button>
+    `;
+    document.head.insertAdjacentHTML('beforeend','<style>@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}</style>');
+    document.body.appendChild(toast);
+    setTimeout(() => toast?.remove(), 5000);
+}
+
+window.addEventListener('unhandledrejection', e => {
+    const msg = e.reason?.message || e.reason?.detail || 'An unexpected error occurred.';
+    if (!msg.includes('authToken') && !msg.includes('checkAuth') && !msg.includes('Unauthorized')) {
+        showToast(msg);
+    }
+});
+window.onerror = () => showToast('Unexpected error. Please refresh the page.');
