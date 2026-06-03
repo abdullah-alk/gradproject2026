@@ -75,7 +75,7 @@ function updateCards(s) {
         set('next-audit-days', '—');
         set('next-audit-date', 'No audit scheduled yet');
     }
-    
+}
 function renderRadar(data) {
     const c = document.getElementById('domainsRadarChart');
     if (!c || !data?.length) return;
