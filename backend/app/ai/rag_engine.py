@@ -33,7 +33,7 @@ class RAGEngine:
         api_key = os.getenv("GROQ_API_KEY")
         if api_key and api_key.startswith("gsk_"):
             self.llm = ChatGroq(
-                model_name="llama-3.1-8b-instant",
+                model_name="llama-3.3-70b-versatile",
                 temperature=0,
                 groq_api_key=api_key
             )
