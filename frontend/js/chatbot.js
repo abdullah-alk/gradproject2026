@@ -573,12 +573,8 @@ function showControlInfo(controlId) {
                 <ul style="margin:0;padding-left:0;list-style:none">
                     ${data.deliverables.map(d => `<li style="font-size:12.5px;color:var(--text-secondary);padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><i class="fas fa-check" style="color:#10b981;font-size:10px;margin-top:4px;flex-shrink:0"></i>${d}</li>`).join('')}
                 </ul>
-            </div>
-            <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between">
+            <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border-color)">
                 <span style="font-size:11px;color:var(--text-muted)">Sub-controls: ${domain?.subControls.join(', ')}</span>
-                <button onclick="document.getElementById('control-info-overlay').remove();selectControl(eccDomains.find(d=>d.id==='${controlId}'),document.querySelector('.control-item[data-id=\\'${controlId}\\']'))" style="padding:8px 16px;background:var(--accent-primary);color:white;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">
-                    <i class="fas fa-play" style="margin-right:5px"></i>Start Audit
-                </button>
             </div>
         </div>`;
     document.body.appendChild(overlay);
