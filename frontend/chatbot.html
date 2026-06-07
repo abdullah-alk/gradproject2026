@@ -30,6 +30,10 @@
         .user-message{align-items:flex-end;}
         .user-message .message-header{color:var(--accent-primary);}
         .user-message .message-text{background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.2);border-radius:12px 0 12px 12px;padding:11px 15px;color:var(--text-primary);font-size:13.5px;max-width:80%;}
+        .control-info-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;}
+        .control-info-modal{background:#0f172a;border:1px solid rgba(6,182,212,0.3);border-radius:16px;padding:28px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;}
+        .info-btn{background:none;border:none;color:var(--accent-primary);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px;opacity:0.7;transition:0.2s;}
+        .info-btn:hover{opacity:1;background:rgba(6,182,212,0.1);}
     </style>
 </head>
 <body>
