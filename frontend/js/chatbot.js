@@ -68,16 +68,20 @@ function renderControlBrowser() {
         item.className = 'control-item'; 
         item.dataset.id = c.id;
         item.innerHTML = `
-            <div style="display:flex;align-items:center;gap:8px">
-                <span class="status-dot" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${getDotColor(res[c.id] || '')}"></span>
-                <small style="color:var(--accent-primary);font-weight:600">${c.id}</small>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <span class="status-dot" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${getDotColor(res[c.id] || '')}"></span>
+                    <small style="color:var(--accent-primary);font-weight:600">${c.id}</small>
+                </div>
+                <button class="info-btn" onclick="event.stopPropagation();showControlInfo('${c.id}')" title="Control details">
+                    <i class="fas fa-info-circle"></i>
+                </button>
             </div>
             <div style="font-weight:500;font-size:13px;margin-top:3px;padding-left:16px">${c.title}</div>`;
-        item.onclick = () => selectControl(c, item);
+         item.onclick = () => selectControl(c, item);
         b.appendChild(item);
     });
 }
-
 async function selectControl(ctrl, el) {
     document.querySelectorAll('.control-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
@@ -512,6 +516,72 @@ async function clearChat() {
         document.getElementById('chat-messages').innerHTML = '';
         showSubControlOptions(selectedControlInfo);
     }
+}
+
+const ECC_DATA = {
+    '1-1': { objective: 'To ensure that cybersecurity plans, goals, initiatives and projects are contributing to compliance with related laws and regulations.', guidelines: ['Define and document a cybersecurity strategy supported by senior leadership.', 'Execute a roadmap for implementing the cybersecurity strategy.', 'Review the strategy periodically or upon material changes.'], deliverables: ['Approved cybersecurity strategy document.', 'Strategy implementation roadmap.', 'Updated cybersecurity strategy document.'] },
+    '1-2': { objective: 'To ensure effective management of cybersecurity programs within the organization as per related laws and regulations.', guidelines: ['Establish a dedicated cybersecurity function independent from IT/ICT.', 'Fill critical cybersecurity positions with qualified Saudi professionals.', 'Establish a cybersecurity steering committee.'], deliverables: ['Organization structure covering the cybersecurity function.', 'Job descriptions of cybersecurity positions.', 'Supervisory committee charter and meeting minutes.'] },
+    '1-3': { objective: 'To ensure that cybersecurity requirements are documented, communicated and complied with by the organization.', guidelines: ['Define and document cybersecurity policies, procedures, and technical standards.', 'Implement policies through an action plan and periodic monitoring.', 'Review policies periodically or upon changes to laws and regulations.'], deliverables: ['All cybersecurity policies and procedures documented and approved.', 'Technical cybersecurity standard controls documents.', 'Periodic review reports of policies.'] },
+    '1-4': { objective: 'To ensure that roles and responsibilities are defined for all parties participating in implementing cybersecurity controls.', guidelines: ['Define and document cybersecurity roles and responsibilities for all parties.', 'Assign roles ensuring no conflict of interest.', 'Review roles and responsibilities periodically.'], deliverables: ['Cybersecurity roles and responsibilities document.', 'Assignment document of cybersecurity roles to personnel.'] },
+    '1-5': { objective: 'To ensure managing cybersecurity risks in a methodological approach to protect the organization\'s assets and comply with policies and related laws.', guidelines: ['Define and document risk management methodology covering asset identification, risk assessment, risk response, and monitoring.', 'Implement risk register and treatment plans.', 'Conduct risk assessments during projects, infrastructure changes, third-party planning, and new product releases.'], deliverables: ['Approved cybersecurity risk management methodology.', 'Cybersecurity risk register and treatment plan.', 'Risk assessment reports for all specified scenarios.'] },
+    '1-6': { objective: 'To ensure that cybersecurity requirements are included in project management methodology to protect information and technology assets.', guidelines: ['Include cybersecurity requirements in project and asset change management.', 'Conduct vulnerability assessment and secure configuration review before going live.', 'Apply secure coding standards for software development projects.'], deliverables: ['Project management methodology document.', 'Vulnerability assessment and remediation reports.', 'Secure coding standard controls approved by the organization.'] },
+    '1-7': { objective: 'To ensure that the organization\'s cybersecurity program is in compliance with related laws and regulations.', guidelines: ['Identify and comply with all national cybersecurity laws and regulations issued by NCA.', 'Comply with nationally-approved international cybersecurity agreements.', 'Prepare periodic compliance reports to be submitted to NCA.'], deliverables: ['Updated list of applicable national cybersecurity laws and regulations.', 'Compliance report with national and international cybersecurity requirements.'] },
+    '1-8': { objective: 'To ensure that cybersecurity controls are implemented and in compliance with organizational policies and related laws and regulations.', guidelines: ['Conduct periodic internal cybersecurity reviews by the cybersecurity function.', 'Conduct independent cybersecurity audits by parties outside the cybersecurity function.', 'Document and present audit results to the cybersecurity steering committee.'], deliverables: ['Approved plan to review cybersecurity controls.', 'Periodic review reports of cybersecurity controls.', 'Audit reports presented to the steering committee.'] },
+    '1-9': { objective: 'To ensure that cybersecurity risks related to personnel are managed efficiently prior to, during, and after employment.', guidelines: ['Define personnel cybersecurity requirements covering the full employee lifecycle.', 'Include cybersecurity responsibilities and NDAs in employment contracts.', 'Screen and vet candidates for cybersecurity and privileged positions.', 'Revoke access immediately upon termination or separation.'], deliverables: ['Cybersecurity policy for human resources.', 'Personnel contract forms with cybersecurity clauses.', 'Screening or vetting evidence for privileged personnel.'] },
+    '1-10': { objective: 'To ensure that personnel are aware of their cybersecurity responsibilities and provided with required training and skills.', guidelines: ['Develop and implement a cybersecurity awareness program through multiple channels.', 'Cover topics including phishing emails, mobile devices, internet browsing, and social media.', 'Provide tailored cybersecurity training for cybersecurity staff, developers, and executive positions.'], deliverables: ['Approved cybersecurity awareness program document.', 'Training plans and certificates for cybersecurity personnel.', 'Awareness content evidence provided to all employees.'] }
+};
+
+function showControlInfo(controlId) {
+    const data = ECC_DATA[controlId];
+    if (!data) return;
+    const domain = eccDomains.find(d => d.id === controlId);
+    const existing = document.getElementById('control-info-overlay');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'control-info-overlay';
+    overlay.className = 'control-info-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `
+        <div class="control-info-modal">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+                <div>
+                    <div style="font-family:monospace;color:var(--accent-primary);font-size:22px;font-weight:800">${controlId}</div>
+                    <div style="font-size:15px;font-weight:600;color:white;margin-top:4px">${domain?.title || ''}</div>
+                </div>
+                <button onclick="document.getElementById('control-info-overlay').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;padding:0">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div style="margin-bottom:18px">
+                <div style="font-size:10px;color:var(--accent-primary);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">
+                    <i class="fas fa-bullseye" style="margin-right:5px"></i>Objective
+                </div>
+                <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;background:rgba(6,182,212,0.05);border-left:3px solid var(--accent-primary);padding:12px;border-radius:0 8px 8px 0">${data.objective}</div>
+            </div>
+            <div style="margin-bottom:18px">
+                <div style="font-size:10px;color:#8b5cf6;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">
+                    <i class="fas fa-list-check" style="margin-right:5px"></i>Key Requirements
+                </div>
+                <ul style="margin:0;padding-left:0;list-style:none">
+                    ${data.guidelines.map(g => `<li style="font-size:12.5px;color:var(--text-secondary);padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><i class="fas fa-chevron-right" style="color:#8b5cf6;font-size:10px;margin-top:4px;flex-shrink:0"></i>${g}</li>`).join('')}
+                </ul>
+            </div>
+            <div>
+                <div style="font-size:10px;color:#10b981;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">
+                    <i class="fas fa-file-check" style="margin-right:5px"></i>Expected Deliverables
+                </div>
+                <ul style="margin:0;padding-left:0;list-style:none">
+                    ${data.deliverables.map(d => `<li style="font-size:12.5px;color:var(--text-secondary);padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><i class="fas fa-check" style="color:#10b981;font-size:10px;margin-top:4px;flex-shrink:0"></i>${d}</li>`).join('')}
+                </ul>
+            </div>
+            <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:11px;color:var(--text-muted)">Sub-controls: ${domain?.subControls.join(', ')}</span>
+                <button onclick="document.getElementById('control-info-overlay').remove();selectControl(eccDomains.find(d=>d.id==='${controlId}'),document.querySelector('.control-item[data-id=\\'${controlId}\\']'))" style="padding:8px 16px;background:var(--accent-primary);color:white;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">
+                    <i class="fas fa-play" style="margin-right:5px"></i>Start Audit
+                </button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
 }
 
 // // CyberGuard ECC Chatbot v8 - FULL UPDATED EDITION
