@@ -285,96 +285,18 @@ function checkURLParams() {
 // LOAD EVIDENCE LIST
 // ===================================
 async function loadEvidenceList() {
+  showLoader();
   try {
-    showLoader();
-    let data = [];
-    try { data = await getEvidenceList(); } catch (e) { console.error('API error:', e); }
-    data = mergeEvidenceLists(data || [], buildFromLocalStorage());
-    currentEvidenceList = data;
-    renderEvidenceTable(currentEvidenceList);
-    hideLoader();
+    const data = await getEvidenceList();
+    currentEvidenceList = data || [];
   } catch (e) {
-    currentEvidenceList = buildFromLocalStorage();
+    console.error('API error:', e);
+    currentEvidenceList = [];
+    showToast('Could not load evidence from the database. Please try again.', 'error');
+  } finally {
     renderEvidenceTable(currentEvidenceList);
     hideLoader();
   }
-}
-
-
-function getEvidenceKey(item) {
-  return item.session_id
-    ? `session:${item.session_id}`
-    : `${item.control_code || item.control_id}:${item.created_at}:${item.title}`;
-}
-
-function mergeEvidenceLists(apiItems, localItems) {
-  const merged = new Map();
-  localItems.forEach(item => merged.set(getEvidenceKey(item), item));
-  apiItems.forEach(item => {
-    const key = getEvidenceKey(item);
-    const local = merged.get(key) || {};
-    merged.set(key, {
-      ...local,
-      ...item,
-      answers: item.answers && item.answers.length > 0 ? item.answers : local.answers
-    });
-  });
-  return Array.from(merged.values()).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-}
-
-function buildFromLocalStorage() {
-  const items = [];
-  const sessions = JSON.parse(localStorage.getItem('audit_sessions_log') || '[]');
-  sessions.forEach((s, i) => {
-    const controlId = s.control_id || s.control_code;
-    items.push({
-      id: s.id || i + 1,
-      control_code: controlId,
-      control_id: controlId,
-      domain: s.domain || getDomainForControl(controlId),
-      title: s.title || `Audit Report — ${s.control_title || controlId}`,
-      status: s.status,
-      score: s.score,
-      answers: s.answers || [],
-      description: s.description,
-      session_id: s.session_id,
-      created_at: s.created_at,
-      file_path: null,
-      evidence_type: 'audit_session'
-    });
-  });
-
-  // Fallback: build from old audit_results format too, even when structured sessions exist.
-  const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
-  const sco = JSON.parse(localStorage.getItem('audit_scores') || '{}');
-  const titleMap = {
-    '1-1':'Cybersecurity Governance','1-2':'Risk Management','1-3':'Asset Management',
-    '1-4':'Cybersecurity Operations','1-5':'System & Network Hardening',
-    '1-6':'Identity & Access Management','1-7':'Data Protection',
-    '1-8':'Vulnerability Management','1-9':'Incident Defense','1-10':'Physical Security'
-  };
-  Object.entries(res).forEach(([id, status], i) => {
-    items.push({
-      id: `legacy-${i + 1}`, control_code: id, control_id: id,
-      domain: getDomainForControl(id),
-      title: `Audit Report — ${titleMap[id] || id}`,
-      status, score: sco[id] ?? null,
-      created_at: new Date().toISOString(),
-      file_path: null, evidence_type: 'audit_session'
-    });
-  });
-
-  return mergeEvidenceLists([], items);
-}
-
-function getDomainForControl(id) {
-  const map = {
-    '1-1':'Governance','1-2':'Risk','1-3':'Assets','1-4':'Operations',
-    '1-5':'Network','1-6':'Identity','1-7':'Data','1-8':'Vulnerability',
-    '1-9':'Incident','1-10':'Physical'
-  };
-  const mainId = (id || '').split('-').slice(0, 2).join('-');
-  return map[id] || map[mainId] || 'General';
 }
 
 // ===================================

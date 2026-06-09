@@ -17,6 +17,7 @@ async function apiRequest(endpoint, options = {}) {
 
 // Auth
 async function login(username, password) {
+    clearSharedAuditStorage();
     const fd = new URLSearchParams();
     fd.append('username', username); fd.append('password', password);
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -51,8 +52,9 @@ function logout() {
     }
 
     // 2. مسح بيانات الجلسة الأساسية التي تميز الحساب المفتوح حالياً فقط
-    const coreKeys = ['authToken', 'userInfo', 'user', 'audit_results', 'audit_scores'];
+    const coreKeys = ['authToken', 'userInfo', 'user'];
     coreKeys.forEach(k => localStorage.removeItem(k));
+    clearSharedAuditStorage();
     
     // 3. خطوة اختيارية وموصى بها: مسح كاش الاستكمال العام (غير المرتبط بـ ID) إن وجد
     // لضمان عدم تسربه، بينما سجلات "user_40_..." المربوطة بالـ ID ستبقى آمنة ومحفوظة
@@ -68,6 +70,31 @@ function logout() {
 function getCurrentUserLocal() {
     try { return JSON.parse(localStorage.getItem('userInfo') || localStorage.getItem('user') || '{}'); }
     catch { return {}; }
+}
+
+function getCurrentUserIdForStorage() {
+    const tokenMatch = (localStorage.getItem('authToken') || '').match(/token_(\d+)_/);
+    if (tokenMatch) return tokenMatch[1];
+
+    const user = getCurrentUserLocal();
+    return user?.id ? String(user.id) : null;
+}
+
+function getSecureStorageKey(baseName) {
+    const userId = getCurrentUserIdForStorage();
+    return userId ? `user_${userId}_${baseName}` : `guest_${baseName}`;
+}
+
+function clearSharedAuditStorage() {
+    [
+        'audit_sessions_log',
+        'audit_results',
+        'audit_scores',
+        'chat_history_audit_1-1',
+        'chat_history_audit_1-3',
+        'session_resume_audit_1-1',
+        'session_resume_audit_1-3'
+    ].forEach(k => localStorage.removeItem(k));
 }
 
 // Controls
