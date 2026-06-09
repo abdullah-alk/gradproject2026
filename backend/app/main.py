@@ -999,7 +999,7 @@ async def get_category_scores(current_user: dict = Depends(get_current_user)):
 
 # --- 12. Evidence ---
 @app.post("/api/evidence/upload")
-async def upload_evidence(control_id: str = Form(...), file: UploadFile = File(...)):
+async def upload_evidence(control_id: str = Form(...), file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     file_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}_{file.filename}")
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -1012,12 +1012,13 @@ async def upload_evidence(control_id: str = Form(...), file: UploadFile = File(.
         ctrl = cur.fetchone()
         control_db_id = ctrl["id"] if ctrl else None
 
+        ensure_evidence_schema(cur)
         cur.execute(
             """
-            INSERT INTO evidence (control_id, title, file_path, status, created_at, updated_at)
-            VALUES (%s, %s, %s, 'Pending', NOW(), NOW())
+            INSERT INTO evidence (control_id, title, file_path, status, uploaded_by, created_at, updated_at)
+            VALUES (%s, %s, %s, 'Pending', %s, NOW(), NOW())
             """,
-            (control_db_id, file.filename, file_path),
+            (control_db_id, file.filename, file_path, current_user["id"]),
         )
         conn.commit()
         print(f"[📎] Evidence uploaded: {file.filename} for control {control_id}")
@@ -1036,10 +1037,11 @@ def ensure_evidence_schema(cur):
     cur.execute("ALTER TABLE evidence ADD COLUMN IF NOT EXISTS evidence_type VARCHAR(100)")
     cur.execute("ALTER TABLE evidence ADD COLUMN IF NOT EXISTS description TEXT")
     cur.execute("ALTER TABLE evidence ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()")
+    cur.execute("ALTER TABLE evidence ADD COLUMN IF NOT EXISTS uploaded_by INTEGER")
 
 
 @app.get("/api/evidence/")
-async def get_evidence(domain: str = None, status: str = None):
+async def get_evidence(domain: str = None, status: str = None, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -1048,7 +1050,7 @@ async def get_evidence(domain: str = None, status: str = None):
         query = """
             SELECT
                 e.id, e.control_id, e.session_id, e.evidence_type, e.title,
-                e.description, e.file_path, e.status, e.created_at, e.updated_at,
+                e.description, e.file_path, e.status, e.uploaded_by, e.created_at, e.updated_at,
                 ec.control_id as control_code, ec.domain, ec.title as control_name,
                 s.score as session_score,
                 COALESCE(
@@ -1067,9 +1069,10 @@ async def get_evidence(domain: str = None, status: str = None):
             LEFT JOIN ecc_controls ec ON e.control_id = ec.id
             LEFT JOIN audit_sessions s ON e.session_id = s.id
             LEFT JOIN audit_qa qa ON e.session_id = qa.session_id
-            WHERE 1=1
+            WHERE (e.uploaded_by = %s OR s.user_id = %s)
         """
-        params = []
+        user_id = current_user["id"]
+        params = [user_id, user_id]
         if domain:
             query += " AND ec.domain = %s"
             params.append(domain)
@@ -1078,7 +1081,7 @@ async def get_evidence(domain: str = None, status: str = None):
             params.append(status)
         query += """
             GROUP BY e.id, e.control_id, e.session_id, e.evidence_type, e.title,
-                     e.description, e.file_path, e.status, e.created_at, e.updated_at,
+                     e.description, e.file_path, e.status, e.uploaded_by, e.created_at, e.updated_at,
                      ec.control_id, ec.domain, ec.title, s.score
             ORDER BY e.created_at DESC
         """
@@ -1103,7 +1106,7 @@ def _extract_score_from_description(description: str | None):
     return float(match.group(1)) if match else None
 
 
-async def _insert_evidence_record(data: dict, evidence_type: str = "audit_session"):
+async def _insert_evidence_record(data: dict, evidence_type: str = "audit_session", user_id: int | None = None):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -1118,20 +1121,29 @@ async def _insert_evidence_record(data: dict, evidence_type: str = "audit_sessio
         if not description:
             description = f"{domain} — Score: {score}%" if score is not None else domain
 
-        # Audit evidence is append-only so every completed audit remains permanently viewable.
+        if session_id and user_id is not None:
+            cur.execute("SELECT user_id FROM audit_sessions WHERE id = %s", (session_id,))
+            session = cur.fetchone()
+            if session and session["user_id"] != user_id:
+                raise HTTPException(status_code=403, detail="Cannot attach evidence to another user's audit session")
+
+        # Audit evidence is append-only so every completed audit remains permanently viewable by its owner.
         cur.execute(
             """
             INSERT INTO evidence
-            (control_id, session_id, evidence_type, title, description, status, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s, NOW(), NOW())
+            (control_id, session_id, evidence_type, title, description, status, uploaded_by, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
             RETURNING id
             """,
-            (control_id, session_id, evidence_type, title, description, status),
+            (control_id, session_id, evidence_type, title, description, status, user_id),
         )
         ev = cur.fetchone()
         conn.commit()
         print(f"[📋] Evidence saved permanently: {title} — {status} ({score}%)")
         return {"message": "Evidence saved", "evidence_id": ev["id"]}
+    except HTTPException:
+        conn.rollback()
+        raise
     except Exception as e:
         conn.rollback()
         print(f"[❌] Save Evidence Error: {e}")
@@ -1142,13 +1154,13 @@ async def _insert_evidence_record(data: dict, evidence_type: str = "audit_sessio
 
 
 @app.post("/api/evidence/save")
-async def save_evidence(data: dict = Body(...)):
-    return await _insert_evidence_record(data, data.get("evidence_type", "audit_session"))
+async def save_evidence(data: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    return await _insert_evidence_record(data, data.get("evidence_type", "audit_session"), current_user["id"])
 
 
 @app.post("/api/evidence/save-audit")
-async def save_audit_evidence(data: dict = Body(...)):
-    return await _insert_evidence_record(data, "audit_session")
+async def save_audit_evidence(data: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    return await _insert_evidence_record(data, "audit_session", current_user["id"])
 
 
 # --- 13. Gaps ---

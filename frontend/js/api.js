@@ -70,6 +70,19 @@ function getCurrentUserLocal() {
     catch { return {}; }
 }
 
+function getSecureStorageKey(baseName) {
+    try {
+        const userRaw = localStorage.getItem('user') || localStorage.getItem('userInfo');
+        if (userRaw) {
+            const userObj = JSON.parse(userRaw);
+            if (userObj && userObj.id) return `user_${userObj.id}_${baseName}`;
+        }
+    } catch (e) {
+        console.error('Error parsing user for secure storage key:', e);
+    }
+    return `guest_${baseName}`;
+}
+
 // Controls
 async function getAllControls() { return await apiRequest('/controls/'); }
 async function getControlById(id) { return await apiRequest(`/controls/${id}`); }

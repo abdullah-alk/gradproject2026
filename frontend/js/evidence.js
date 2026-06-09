@@ -324,7 +324,7 @@ function mergeEvidenceLists(apiItems, localItems) {
 
 function buildFromLocalStorage() {
   const items = [];
-  const sessions = JSON.parse(localStorage.getItem('audit_sessions_log') || '[]');
+  const sessions = JSON.parse(localStorage.getItem(getSecureStorageKey('audit_sessions_log')) || '[]');
   sessions.forEach((s, i) => {
     const controlId = s.control_id || s.control_code;
     items.push({
@@ -345,8 +345,8 @@ function buildFromLocalStorage() {
   });
 
   // Fallback: build from old audit_results format too, even when structured sessions exist.
-  const res = JSON.parse(localStorage.getItem('audit_results') || '{}');
-  const sco = JSON.parse(localStorage.getItem('audit_scores') || '{}');
+  const res = JSON.parse(localStorage.getItem(getSecureStorageKey('audit_results')) || '{}');
+  const sco = JSON.parse(localStorage.getItem(getSecureStorageKey('audit_scores')) || '{}');
   const titleMap = {
     '1-1':'Cybersecurity Governance','1-2':'Risk Management','1-3':'Asset Management',
     '1-4':'Cybersecurity Operations','1-5':'System & Network Hardening',
