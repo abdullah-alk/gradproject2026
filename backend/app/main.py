@@ -121,7 +121,7 @@ def process_recurring_audits():
             SELECT id, scheduled_next_audit, repeat_frequency, repeat_until
             FROM audit_sessions
             WHERE repeat_enabled = TRUE
-            AND scheduled_next_audit <= NOW() + INTERVAL '10 day'
+            AND scheduled_next_audit <= NOW() 
             AND scheduled_next_audit >= NOW() - INTERVAL '1 day'
         """)
 
@@ -155,6 +155,24 @@ def process_recurring_audits():
                 next_date,
                 datetime.min.time()
             )
+
+            if r["repeat_until"]:
+
+                repeat_until_date = r["repeat_until"].date()
+
+                if next_date > repeat_until_date:
+
+                    cur.execute("""
+                        UPDATE audit_sessions
+                        SET repeat_enabled = FALSE
+                        WHERE id = %s
+                    """, (r["id"],))
+
+                    print(
+                        f"[REPEAT STOPPED] Audit {r['id']} reached Repeat Until date"
+                    )
+
+                    continue
 
             cur.execute("""
                 UPDATE audit_sessions
