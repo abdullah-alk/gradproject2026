@@ -151,16 +151,9 @@ def process_recurring_audits():
             else:
                 continue
 
-            next_date = datetime.combine(
-                next_date,
-                datetime.min.time()
-            )
-
             if r["repeat_until"]:
 
-                repeat_until_date = r["repeat_until"].date()
-
-                if next_date > repeat_until_date:
+                if next_date > r["repeat_until"]:
 
                     cur.execute("""
                         UPDATE audit_sessions
@@ -173,6 +166,13 @@ def process_recurring_audits():
                     )
 
                     continue
+
+
+            next_date = datetime.combine(
+                next_date,
+                datetime.min.time()
+            )
+
 
             cur.execute("""
                 UPDATE audit_sessions
