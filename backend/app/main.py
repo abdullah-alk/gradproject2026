@@ -110,12 +110,15 @@ def get_db_connection():
 from datetime import datetime, timedelta
 
 def process_recurring_audits():
+    
+    print("[DEBUG] process_recurring_audits() called")
+
     conn = get_db_connection()
     cur = conn.cursor()
 
     try:
         cur.execute("""
-            SELECT id, scheduled_next_audit, repeat_frequency
+            SELECT id, scheduled_next_audit, repeat_frequency, repeat_until
             FROM audit_sessions
             WHERE repeat_enabled = TRUE
             AND scheduled_next_audit <= NOW()
