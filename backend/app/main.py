@@ -124,7 +124,11 @@ def process_recurring_audits():
 
         rows = cur.fetchall()
 
+        print(f"[DEBUG] Found {len(rows)} recurring audits")
+
         for r in rows:
+
+            print(f"[DEBUG] Processing audit {r['id']} - {r['scheduled_next_audit']} - {r['repeat_frequency']}")
             
             print(f"ORIGINAL DATE = {r['scheduled_next_audit']}")
 
