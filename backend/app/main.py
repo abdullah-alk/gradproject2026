@@ -733,11 +733,11 @@ async def process_ai(data: dict = Body(...)):
 
 # --- 9. Audit sessions ---
 @app.post("/api/audit/session/start")
-async def start_audit_session(data: dict = Body(...)):
+async def start_audit_session(data: dict = Body(...), current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        user_id = data.get("user_id")
+        user_id = current_user["id"]
         control_id_raw = data.get("control_id")
         mode = data.get("mode", "audit")
         next_audit = datetime.now() + timedelta(days=30)
@@ -1069,7 +1069,8 @@ async def get_evidence(domain: str = None, status: str = None, current_user: dic
             LEFT JOIN ecc_controls ec ON e.control_id = ec.id
             LEFT JOIN audit_sessions s ON e.session_id = s.id
             LEFT JOIN audit_qa qa ON e.session_id = qa.session_id
-            WHERE (e.uploaded_by = %s OR s.user_id = %s)
+            WHERE (e.uploaded_by = %s OR (e.uploaded_by IS NULL AND s.user_id = %s))
+              AND ec.control_id ~ '^[0-9]+-[0-9]+-[0-9]+'
         """
         user_id = current_user["id"]
         params = [user_id, user_id]

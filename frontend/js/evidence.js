@@ -322,11 +322,24 @@ function mergeEvidenceLists(apiItems, localItems) {
   return Array.from(merged.values()).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 }
 
+function isSubControlId(controlId) {
+  return /^\d+-\d+-\d+/.test(String(controlId || ''));
+}
+
+function isCurrentUserLocalRecord(record) {
+  const currentUserId = getCurrentUserIdForStorage?.();
+  return !record.user_id || !currentUserId || String(record.user_id) === String(currentUserId);
+}
+
 function buildFromLocalStorage() {
   const items = [];
   const sessions = JSON.parse(localStorage.getItem(getSecureStorageKey('audit_sessions_log')) || '[]');
   sessions.forEach((s, i) => {
+    if (!isCurrentUserLocalRecord(s)) return;
+
     const controlId = s.control_id || s.control_code;
+    if (!isSubControlId(controlId)) return;
+
     items.push({
       id: s.id || i + 1,
       control_code: controlId,
@@ -354,6 +367,8 @@ function buildFromLocalStorage() {
     '1-8':'Vulnerability Management','1-9':'Incident Defense','1-10':'Physical Security'
   };
   Object.entries(res).forEach(([id, status], i) => {
+    if (!isSubControlId(id)) return;
+
     items.push({
       id: `legacy-${i + 1}`, control_code: id, control_id: id,
       domain: getDomainForControl(id),

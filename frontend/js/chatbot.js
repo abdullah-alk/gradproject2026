@@ -22,20 +22,21 @@ const eccDomains = [
     { id: '1-10', title: 'Cybersecurity Awareness and Training', subControls: ['1-10-1', '1-10-2', '1-10-3-1', '1-10-3-2', '1-10-3-3', '1-10-3-4', '1-10-4-1', '1-10-4-2', '1-10-4-3', '1-10-5'] }
 ];
 
-// دالة توليد المفتاح الآمن - تم فحصها وتأكيد مطابقتها لبنية بيانات الكائن في صورتك المستخرجة {"id":40,...}
+// Keep browser fallback data scoped to the same user as the active auth token.
 function getSecureStorageKey(baseName) {
+    const tokenMatch = (localStorage.getItem('authToken') || '').match(/token_(\d+)_/);
+    if (tokenMatch) return `user_${tokenMatch[1]}_${baseName}`;
+
     try {
         const userRaw = localStorage.getItem('user') || localStorage.getItem('userInfo');
         if (userRaw) {
             const userObj = JSON.parse(userRaw);
-            if (userObj && userObj.id) {
-                return `user_${userObj.id}_${baseName}`;
-            }
+            if (userObj && userObj.id) return `user_${userObj.id}_${baseName}`;
         }
     } catch (e) {
         console.error("Error parsing user for secure key:", e);
     }
-    return `guest_${baseName}`; // للمستخدمين المجهولين لحماية البيانات الأساسية من التلوث
+    return `guest_${baseName}`;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -251,7 +252,8 @@ async function finishAudit() {
     const sessionKey = getSecureStorageKey(`session_resume_${currentMode}_${currentControlId}`);
     localStorage.removeItem(sessionKey);
     
-    const sectionName = auditAnswers[0]?.cat || currentControlId;
+    const auditedControlId = auditAnswers[0]?.category || auditAnswers[0]?.cat || currentControlId;
+    const sectionName = auditedControlId;
     appendMsg('ai', `
         <div style="border:1px solid ${color}30; border-radius:12px; padding:20px; background:${color}08; margin-top:10px">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -266,13 +268,13 @@ async function finishAudit() {
     `);
     
     const evidenceSave = saveAuditToEvidence(
-        currentControlId,
-        selectedControlInfo?.title || currentControlId,
+        auditedControlId,
+        selectedControlInfo?.title || auditedControlId,
         status, score, auditAnswers,
         currentSessionId, currentControlDbId
     );
     try {
-        await saveProgress(currentControlId, status, score, yes, partial, no, total);
+        await saveProgress(auditedControlId, status, score, yes, partial, no, total);
         await evidenceSave;
     } catch (e) {
         console.error("Error saving final audit results:", e);
@@ -285,7 +287,7 @@ async function finishAudit() {
             control_id: currentControlDbId,
             session_id: currentSessionId,
             gap_description: answersText,
-            recommendation: `Gaps identified in ${currentControlId}. Score: ${score}%. Review and remediate the following: ${auditAnswers.filter(a=>a.answer==='no').map(a=>a.question).join(' | ')}`,
+            recommendation: `Gaps identified in ${auditedControlId}. Score: ${score}%. Review and remediate the following: ${auditAnswers.filter(a=>a.answer==='no').map(a=>a.question).join(' | ')}`,
             priority: status === 'Non-Compliant' ? 'High' : status === 'Partial' ? 'Medium' : 'Low'
         });
     } catch(e) { console.error('Gap save error:', e); }
@@ -302,7 +304,8 @@ async function finishAudit() {
 function saveAuditRecordLocally(auditRecord, controlTitle) {
     const storageKey = getSecureStorageKey('audit_sessions_log');
     const sessions = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    const localRecord = { ...auditRecord, control_title: controlTitle };
+    const currentUser = getCurrentUserLocal();
+    const localRecord = { ...auditRecord, control_title: controlTitle, user_id: currentUser?.id || null };
     const recordKey = localRecord.session_id ? `session:${localRecord.session_id}` : `${localRecord.control_id}:${localRecord.created_at}:${localRecord.title}`;
     const filtered = sessions.filter(item => {
         const itemKey = item.session_id ? `session:${item.session_id}` : `${item.control_id}:${item.created_at}:${item.title}`;
@@ -437,7 +440,8 @@ async function finishGuide() {
           partial = auditAnswers.filter(a => a.answer === 'partial').length;
     const score = total > 0 ? Math.round(((yes + partial * 0.5) / total) * 100) : 0;
     const status = score >= 80 ? 'Compliant' : score >= 40 ? 'Partial' : 'Non-Compliant';
-    const evidenceSave = saveAuditToEvidence(currentControlId, selectedControlInfo?.title || currentControlId, status, score, auditAnswers, currentSessionId, currentControlDbId);
+    const auditedControlId = auditAnswers[0]?.category || auditAnswers[0]?.cat || currentControlId;
+    const evidenceSave = saveAuditToEvidence(auditedControlId, selectedControlInfo?.title || auditedControlId, status, score, auditAnswers, currentSessionId, currentControlDbId);
     appendMsg('ai', `<em style="color:var(--text-muted);font-size:12px">Generating final recommendations...</em>`);
     showTyping();
     const answersText = auditAnswers.map((a,i) => `Q${i+1}: "${a.question}" => ${a.answer.toUpperCase()}`).join('\n');
