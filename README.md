@@ -190,7 +190,7 @@ The platform currently covers the first ten ECC governance controls (1-1 to 1-10
 
 Built by a team of four:
 
-- Abdullah Alkhozaai ([@abdullah-alk](https://github.com/abdullah-alk)): gap analysis and compliance scoring, code review, and deployment to Railway
+- Abdullah Alkhozaai ([@abdullah-alk](https://github.com/abdullah-alk))
 - Fahad Alotaibi
 - Omar Al-Waqdani
 - [@0xAzzam](https://github.com/0xAzzam)
